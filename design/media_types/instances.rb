@@ -1,7 +1,7 @@
   module MediaTypes
     class Instance < Praxis::MediaType
 
-      identifier 'vnd.rightscale.instance+json;type=collection'
+      identifier 'vnd.rightscale.instance' #+json;type=collection'
 
       attributes do
         attribute :id, String
