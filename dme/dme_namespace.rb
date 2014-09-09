@@ -6,27 +6,27 @@ namespace "dme" do
       "user-agent" => "self_service"      # special headers as needed
     } end
   end
-  type "record" do                           # defines resource of type "pod"
-    provision "provision_record"             # name of ?
-    delete "delete_record"                   # name of ?
-    path "/records"
+  type "record" do                          
+    provision "provision_record"            
+    delete "delete_record"                  
+    # path "/records" # Unneeded since we'll use the name of the type by default
     fields do
-      id do                               # field of a pod with rules for validation
+      id do                              
         type "number",
-        required
+        required true
       end
       domain do
         type "string",
-        required
+        required true
       end
       name do
         type "string",
-        required
+        required true
       end
       value do
         type "string",
         default "1.1.1.1"
-        required
+        required true
       end
       type do
         type "string"
