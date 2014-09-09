@@ -43,12 +43,12 @@ namespace "google_sql" do
       instance do                               # field of a pod with rules for validation
         type "string"
         regexp "[a-zA-Z0-9\-\.]+"
-        required
+        required true
       end
       tier do                               # field of a pod with rules for validation
         type "string"
         regexp "D[0-8]"
-        required
+        required true
       end
     end
   end
