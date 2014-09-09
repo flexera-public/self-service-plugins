@@ -2,7 +2,7 @@
     class Auth
       include Praxis::ResourceDefinition
 
-      media_type MediaTypes::Auth
+      media_type nil
 
       routing do
         prefix '/acct/:acct/auth'
@@ -19,8 +19,9 @@
           attribute :project, String, required: true
         end
 
-        response :ok
-        response :temporary_redirect
+        response :ok, media_type: nil
+        response :temporary_redirect, media_type: nil
+        response :bad_request, media_type: nil
       end
 
       action :update do
@@ -35,7 +36,8 @@
           attribute :code, String, required: true
         end
 
-        response :ok
+        response :ok, media_type: nil
+        response :bad_request, media_type: nil
       end
     end
   end
