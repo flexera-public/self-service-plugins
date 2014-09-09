@@ -104,6 +104,7 @@ module GoogleCloudSQL
       [nil, nil]
     else
       client.authorization = file_storage.authorization
+      client.authorization.fetch_access_token!
       $auth_cache[account] = [client, file_storage.project]
     end
   end

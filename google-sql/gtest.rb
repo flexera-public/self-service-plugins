@@ -10,7 +10,7 @@ require 'google/api_client/auth/file_storage'
 require 'google/api_client/auth/installed_app'
 
 CACHED_API_FILE = ".sqladmin.cache"
-CREDS_FILE      = ".gc_auth"
+CREDS_FILE      = ".gc_test_auth"
 
 module Google
   class APIClient

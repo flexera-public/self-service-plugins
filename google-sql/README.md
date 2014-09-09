@@ -33,7 +33,7 @@ Cloud and to establish an association with a RightScale account.
   proxy with an authentication code.
   If you need to use curl, grab the code from your browser's address bar and complete the
   request with curl to look something like the following:
-  `curl http://localhost:9292/acct<acct>/auth/redirect?project:<proj>&code=4/XYAAFHGDGKANBDHSU26487GGJGJH`
+  `curl http://localhost:9292/acct<acct>/auth/redirect?project=<proj>&code=4/XYAAFHGDGKANBDHSU26487GGJGJH`
 - The result of all this is a file `.gc_auth/<acct>` that contains the auth token for this
   account, and the project name.
 
