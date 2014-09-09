@@ -2,26 +2,31 @@
 
 require 'google/api_client'
 require 'google/api_client/client_secrets'
-require 'google/api_client/auth/file_storage'
 require 'google/api_client/auth/installed_app'
 
 CACHED_API_FILE = ".sqladmin.cache"
 CREDS_DIR       = ".gc_auth"
+SCOPES          = ['https://www.googleapis.com/auth/sqlservice.admin']
 
 # Include GoogleCloudSQLMixing into all controllers that require access to authenticated Google
 # Cloud SQL APIs. This will add before-action hooks that ensure that the auth context is set,
-# including @gc_sql_client and @gc_sql_api
+# including @gc_sql_client and @gc_sql_api instance variables
 module GoogleCloudSQLMixin
   def self.included(klass)
     klass.class_eval do
+      # TODO: this before-action block should return a result for the errors instead of raising
       before :action do |controller|
-        puts "GoogleCloudSQLMixin before action"
         acct = controller.request.params.acct
         raise "Authentication is missing" unless acct
-        @gc_sql_client = GoogleCloudSQL.client(acct)
-        raise "Authentication failed" unless @gc_sql_client
-        @gc_sql_api = GoogleCloudSQL.api
-        raise "Internal error: cannot retrieve Cloud SQL API definition" unless @gc_sql_api
+        client, project = GoogleCloudSQL.client(acct)
+        raise "Authentication failed" unless client
+        api = GoogleCloudSQL.api
+        raise "Internal error: cannot retrieve Cloud SQL API definition" unless api
+        puts "GoogleCloudSQLMixin: acct=#{acct} project=#{project}"
+        controller.instance_variable_set(:@gc_sql_client, client)
+        controller.instance_variable_set(:@gc_sql_project, project)
+        controller.instance_variable_set(:@gc_sql_api, api)
+        nil
       end
     end
   end
@@ -31,39 +36,45 @@ module GoogleCloudSQL
 
   $auth_cache = {} # hash of account id -> auth'd client
 
-  def self.auth_client(acct)
+  # Internal method to create a Google Auth client that is ready-to-go
+  def self.auth_client(acct, project)
       client_secrets = Google::APIClient::ClientSecrets.load
       Signet::OAuth2::Client.new({
         authorization_uri:    'https://accounts.google.com/o/oauth2/auth',
         token_credential_uri: 'https://accounts.google.com/o/oauth2/token',
         client_id:            client_secrets.client_id,
         client_secret:        client_secrets.client_secret,
-        scope:                ['https://www.googleapis.com/auth/sqlservice.admin'],
-        redirect_uri:         "https://localhost:9/acct/#{acct}/auth/redirect",
+        scope:                SCOPES,
+        redirect_uri:         "https://localhost:9292/acct/#{acct}/auth/redirect?project=#{project}",
       })
   end
 
+  # Verify that we have a valid authorization for the specified account, returns true/false
   def self.auth_test(acct)
     return true if $auth_cache.key?(acct)
-    creds_file = CREDS_DIR + "/#{acct}"
-    file_storage = Google::APIClient::FileStorage.new(creds_file)
+    file_storage = FileStorage.new(CREDS_DIR, acct)
     return !file_storage.authorization.nil?
   end
 
-  def self.auth_redirect(acct)
-    cli = auth_client(acct)
+  # Return the redirect URL pointing to Google where the user gets to accept the auth request
+  # Returns the URL as a string
+  def self.auth_redirect(acct, project)
+    cli = auth_client(acct, project)
     cli.authorization_uri.to_s
   end
 
-  def self.auth_set(acct, code)
-    cli = auth_client(acct)
+  # Saves the authorization code that Google responded with as a result of a successful auth
+  # The project is simply saved with the auth code as a convenience
+  # Returns true if the auth code was found to be valid
+  def self.auth_save(acct, project, code)
+    cli = auth_client(acct, project)
     cli.code = code
-    puts "Fetching access token: #{cli.generate_access_token_request}"
+    #puts "Fetching access token: #{cli.generate_access_token_request}"
     cli.fetch_access_token!
     if cli.access_token
-      file_storage = Google::APIClient::FileStorage.new(creds_file)
+      file_storage = FileStorage.new(CREDS_DIR, acct)
       if file_storage.respond_to?(:write_credentials)
-        file_storage.write_credentials(cli)
+        file_storage.write_credentials(cli, project)
       end
       true
     else
@@ -71,7 +82,9 @@ module GoogleCloudSQL
     end
   end
 
-  # Handle authentication and load the API
+  # Return an authenticated API client based on auth creds stored in a file, i.e., the
+  # whole auth thing is expected to have previously happened.
+  # Returns the client and the project name
   def self.client(account)
     return $auth_cache[account] if $auth_cache.key?(account)
 
@@ -82,26 +95,22 @@ module GoogleCloudSQL
       application_version: "0.0.1",
     )
 
-    unless File.directory?(CREDS_DIR)
-      Dir.mkdir(CREDS_DIR)
-    end
-
     # FileStorage stores auth credentials in a file, so they survive multiple runs
     # of the application. This avoids prompting the user for authorization every
     # time the access token expires, by remembering the refresh token.
     creds_file = CREDS_DIR + "/#{account}"
-    file_storage = Google::APIClient::FileStorage.new(creds_file)
+    file_storage = FileStorage.new(CREDS_DIR, account)
     if file_storage.authorization.nil?
-      nil
+      [nil, nil]
     else
       client.authorization = file_storage.authorization
-      $auth_cache[account] = client
-      client
+      $auth_cache[account] = [client, file_storage.project]
     end
   end
 
   $google_sql = nil # cached API definition
 
+  # Return a reference to the API definition, which can be used ot construct calls
   def self.api
     return $gogle_sql if $gogle_sql
 

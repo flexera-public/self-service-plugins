@@ -1,4 +1,7 @@
 #! /home/tve/.rbenv/shims/ruby
+# This command line utility was used to prototype some of the Google Auth stuff
+# It's probably not useful anymore.
+
 # Google Ruby client docs: https://github.com/google/google-api-ruby-client
 
 require 'google/api_client'

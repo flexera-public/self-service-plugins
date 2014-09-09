@@ -1,7 +1,7 @@
   module MediaTypes
     class Auth < Praxis::MediaType
 
-      identifier 'vnd.rightscale.auth'
+      identifier 'text/plain'
 
       attributes do
       end

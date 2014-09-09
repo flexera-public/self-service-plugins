@@ -16,6 +16,7 @@
         end
 
         params do
+          attribute :project, String, required: true
         end
 
         response :ok
@@ -30,6 +31,7 @@
         end
 
         params do
+          attribute :project, String, required: true
           attribute :code, String, required: true
         end
 

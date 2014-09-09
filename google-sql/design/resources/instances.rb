@@ -15,6 +15,7 @@
           get ''
         end
         response :ok
+        response :bad_request, media_type: 'text/plain'
       end
 
       action :show do
