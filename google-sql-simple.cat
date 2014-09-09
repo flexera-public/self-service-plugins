@@ -41,12 +41,12 @@ namespace "google_sql" do
     delete "delete_google_sql_instance"
     fields do
       instance do                               # field of a pod with rules for validation
-        type "string",
+        type "string"
         regexp "[a-zA-Z0-9\-\.]+"
         required
       end
       tier do                               # field of a pod with rules for validation
-        type "string",
+        type "string"
         regexp "D[0-8]"
         required
       end
@@ -59,5 +59,5 @@ define provision_google_sql_instance(@raw_instance) return @instance do
 end
 
 define delete_google_sql_instance(@instance) do
-  @pod.destroy
+  @instance.destroy
 end
