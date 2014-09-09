@@ -1,0 +1,42 @@
+#! /bin/bash -e
+I=test-$$
+
+if false; then
+
+mkdir -p .gc_auth
+rm -f .gc_auth/1
+
+rackup &
+sleep 2
+echo "====++"
+
+read -p "Enter project [rightscale.com:tve-test]: " PROJ
+PROJ=${PROJ:-rightscale.com:tve-test}
+curl -sf http://localhost:9292/acct/1/auth?project=${PROJ}
+read -p "Enter code (4/....): " CODE
+
+echo "===== AUTH ====="
+curl -sf "http://localhost:9292/acct/1/auth/redirect?project=${PROJ}&code=${CODE}"
+
+fi
+
+set -x
+
+echo "===== CREATE ====="
+curl -gsf -X POST -HContent-type:application/json -d '{"instance": "'$I'", "settings":{"tier": "D0"}}' http://localhost:9292/acct/1/instances
+
+echo "===== SHOW ====="
+curl -sf http://localhost:9292/acct/1/instances/$I
+
+set +x
+while ! (curl -sf http://localhost:9292/acct/1/instances/$I | egrep -q 'RUNNABLE'); do
+  echo "   WAIT..."
+  sleep 5
+done
+set -x
+
+echo "===== DELETE ====="
+curl -sf -X DELETE http://localhost:9292/acct/1/instances/$I
+
+echo "===== SUCCESS ====="
+

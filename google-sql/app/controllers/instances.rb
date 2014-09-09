@@ -59,7 +59,7 @@
     end
 
     def create(acct:, **other_params)
-      i = request.payload.dump
+      i = JSON.parse(request.raw_payload)
       result = @gc_sql_client.execute(
         api_method: @gc_sql_api.instances.insert,
         parameters: { project: @gc_sql_project },
@@ -68,7 +68,7 @@
       puts "Google returned #{result.status.inspect}"
       if result.success?
         Praxis::Responses::Created.new(
-          headers: { 'Location' => make_href(acct, i[:instance]) },
+          headers: { 'Location' => make_href(acct, i['instance']) },
         )
       else
         puts "Error: #{result.inspect}"
@@ -81,7 +81,7 @@
 
     def delete(acct:, id:, **other_params)
       result = @gc_sql_client.execute(
-        api_method: @gc_sql_api.instances.insert,
+        api_method: @gc_sql_api.instances.delete,
         parameters: { project: @gc_sql_project, instance: id },
       )
       puts "Google returned #{result.status.inspect}"

@@ -79,6 +79,7 @@
           delete '/:id'
         end
         params do
+          attribute :id, String, required: true
         end
         response :no_content, media_type: nil
         response :bad_request, media_type: 'text/plain'
