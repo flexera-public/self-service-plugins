@@ -1,0 +1,11 @@
+curl -i http://localhost:8888/api/do_proxy/droplet -H 'X-Api-Version: 1.0' -X GET
+
+curl -i http://localhost:8888/api/do_proxy/droplet -H 'X-Api-Version: 1.0' -H 'Content-Type:application/json' -X POST -d '{"name":"rishi-droplet-03","region":"sfo1","size":"512mb","image":5141286}'
+
+curl -i http://localhost:8888/api/do_proxy/droplet/2579998 -H 'X-Api-Version: 1.0' -X GET
+
+curl -i http://localhost:8888/api/do_proxy/droplet/1/powercycle -H 'X-Api-Version: 1.0' -X GET
+
+curl -i http://localhost:8888/api/do_proxy/droplet/1/poweroff -H 'X-Api-Version: 1.0' -X GET
+
+
