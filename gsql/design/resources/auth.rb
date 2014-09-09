@@ -1,31 +1,38 @@
   module ApiResources
-    class Instances
+    class Auth
       include Praxis::ResourceDefinition
 
-      media_type MediaTypes::Instance
+      media_type MediaTypes::Auth
 
       routing do
-        prefix '/acct/:acct/instances'
-      end
-
-      action :index do
-        use :has_account
-
-        routing do
-          get ''
-        end
-        response :ok
+        prefix '/acct/:acct/auth'
       end
 
       action :show do
         use :has_account
 
         routing do
-          get '/:id'
+          get ''
         end
+
         params do
-          attribute :id, String, required: true
         end
+
+        response :ok
+        response :temporary_redirect
+      end
+
+      action :update do
+        use :has_account
+
+        routing do
+          get '/redirect'
+        end
+
+        params do
+          attribute :code, String, required: true
+        end
+
         response :ok
       end
     end

@@ -1,3 +1,6 @@
+client_secrets.json
+.gc_auth
+
 *.gem
 *.rbc
 /.config

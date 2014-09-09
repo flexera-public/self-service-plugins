@@ -1,7 +1,7 @@
   module MediaTypes
     class Instance < Praxis::MediaType
 
-      identifier 'vnd.rightscale.instance' #+json;type=collection'
+      identifier 'vnd.rightscale.instance'
 
       attributes do
         attribute :id, String
@@ -10,10 +10,10 @@
         attribute :databaseVersion, String
         attribute :currentDiskSize, Integer
         attribute :maxDiskSize, Integer
-        attribute :ipAddresses, String #Attributor::Collection.of(Struct) do
-#          attribute :ipAddress, String
-#          attribute :timeToRetire, DateTime
-#        end
+        attribute :ipAddresses, Attributor::Collection.of(Attributor::Struct) do
+          attribute :ipAddress, String
+          attribute :timeToRetire, DateTime
+        end
 
         attribute :instanceType, String
         attribute :masterInstanceName, String

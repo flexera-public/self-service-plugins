@@ -1,9 +1,25 @@
   class Instances
     include Praxis::Controller
-
     implements ApiResources::Instances
+    include GoogleCloudSQLMixin
 
-    HELLO_WORLD = [ 'Hello world!', 'Привет мир!', 'Hola mundo!', '你好世界!', 'こんにちは世界！' ]
+=begin
+    before :action do |controller|
+#     puts methods.sort.join(" ")
+      puts "Auth befpore filter"
+      acct = controller.request.params.acct
+
+      raise "Authentication is missing" unless acct
+      @gc_sql_client = GoogleCloudSQL.client(acct)
+      raise "Authentication failed" unless @gc_sql_client
+      @gc_sql_api = GoogleCloudSQL.api
+      raise "Internal error: cannot retrieve Cloud SQL API definition" unless @gc_sql_api
+    end
+=end
+
+    before :action do |controller|
+      puts "Instances before action"
+    end
 
     SAMPLE = [
       { id: "i-1234", state: "running", region: "us-central" },
@@ -26,4 +42,5 @@
       response.headers['Content-Type'] = 'vnd.rightscale.instance+json;type=collection'
       response
     end
+
   end
