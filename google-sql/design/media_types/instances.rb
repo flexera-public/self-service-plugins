@@ -4,7 +4,7 @@
       identifier 'vnd.rightscale.instance'
 
       attributes do
-        attribute :id, String
+        attribute :instance, String
         attribute :state, String
         attribute :region, String
         attribute :databaseVersion, String
