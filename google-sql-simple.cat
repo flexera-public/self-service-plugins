@@ -3,7 +3,6 @@ rs_ca_ver 20131202
 short_description "Simple Google Cloud SQL instance"
 long_description "Creates a single Cloud SQL instance"
 
-
 output 'db_ip' do
   label "Database IP"
   category "General"
@@ -55,7 +54,7 @@ namespace "google_sql" do
 end
 
 define provision_google_sql_instance(@raw_instance) return @instance do
-  @instance = google_sql.instance.create(instance: to_object(@raw_instance))
+  @instance = google_sql.instance.create(i: to_object(@raw_instance))
 end
 
 define delete_google_sql_instance(@instance) do
