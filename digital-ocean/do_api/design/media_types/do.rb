@@ -7,6 +7,7 @@ module V1
 
       attributes do
         attribute :id, String
+        attribute :href, String
         attribute :name, String
         attribute :memory, Integer
         attribute :vcpus, Integer
@@ -20,6 +21,7 @@ module V1
 
       view :default do
         attribute :id
+        attribute :href
         attribute :name
         attribute :memory
         attribute :vcpus

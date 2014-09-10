@@ -34,7 +34,7 @@ module V1
 
       action :powercycle do
         routing do
-          get "/:id/powercycle"
+          post "/:id/actions/powercycle"
         end
 
         params do
@@ -45,7 +45,7 @@ module V1
 
       action :poweroff do
         routing do
-          get "/:id/poweroff"
+          post "/:id/actions/poweroff"
         end
 
         params do

@@ -3,8 +3,7 @@ module V1
   class DoCloud
     include Praxis::Controller
 
-    # TODO:~ definitely delete this!
-    DO_TOKEN = ""
+    DO_TOKEN = ENV['TOKEN']
     DO_DROPLET_API = "https://api.digitalocean.com/v2/droplets"
 
     implements V1::ApiResources::DoCloud
@@ -18,24 +17,36 @@ module V1
 
       do_response = do_post(do_uri, do_request)
 
+      resp = JSON.parse(do_response.body)["droplet"]
+      resp["href"] = "/api/do_proxy/droplet/" + resp["id"].to_s
       response.headers['Content-Type'] = 'application/json'
-      response.body = do_response.body
+      response.body = resp
       response
     end
 
     def list(**other_params)
       do_uri = DO_DROPLET_API
       do_response = do_get(do_uri)
+
       response.headers['Content-Type'] = 'application/json'
-      response.body = do_response.body
+
+      ##### binding.pry
+      resp = JSON.parse(do_response.body)["droplets"]
+      resp.each do |r|
+        r["href"] = "/api/do_proxy/droplet/" + r["id"].to_s
+      end
+      response.body = resp
       response
     end
 
     def show(id:, **other_params)
       do_uri = DO_DROPLET_API + "/" + id.to_s
       do_response = do_get(do_uri)
+
+      resp = JSON.parse(do_response.body)["droplet"]
+      resp["href"] = "/api/do_proxy/droplet/" + resp["id"].to_s
       response.headers['Content-Type'] = 'application/json'
-      response.body = do_response.body
+      response.body = resp
       response
     end
 
