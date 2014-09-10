@@ -1,0 +1,31 @@
+##### list all the droplets
+curl -v -X GET "https://api.digitalocean.com/v2/droplets" -H "Authorization: Bearer $TOKEN"
+
+##### list a particular droplet
+curl -v -X GET "https://api.digitalocean.com/v2/droplets/$DROPLET_ID" -H "Authorization: Bearer $TOKEN"
+
+##### power off a particular droplet
+curl -v -X POST "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/actions"  -d '{"type":"power_off"}' -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+
+##### power on a particular droplet
+curl -v -X POST "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/actions"  -d '{"type":"power_on"}' -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+
+##### snapshot particular droplet: NEEDS TO BE DONE AFTER POWER OFF
+curl -v -X POST "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/actions"  -d '{"type":"snapshot"}' -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+
+##### power cycle particular droplet
+curl -v -X POST "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/actions"  -d '{"type":"power_cycle"}' -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+
+##### delete a particular droplet
+curl -v -X DELETE "https://api.digitalocean.com/v2/droplets/$DROPLET_ID" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/x-www-form-urlencoded"
+
+##### create a droplet
+curl -v -X POST "https://api.digitalocean.com/v2/droplets"  -d '{"name":"rishi-droplet-03","region":"sfo1","size":"512mb","image":5141286}' -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+
+####################
+#list all images
+####################
+curl -v -X GET "https://api.digitalocean.com/v2/images" -H "Authorization: Bearer $TOKEN"
+
+Ubuntu Image ID: 5141286
+region: nyc1

@@ -4,7 +4,10 @@
       identifier 'vnd.rightscale.instance'
 
       attributes do
-        attribute :id, String
+        attribute :instance, String
+        attribute :tier, String
+        attribute :etag, String
+        attribute :project, String
         attribute :state, String
         attribute :region, String
         attribute :databaseVersion, String
@@ -17,12 +20,12 @@
 
         attribute :instanceType, String
         attribute :masterInstanceName, String
-        attribute :replicaNames, String
+        attribute :replicaNames, Attributor::Collection.of(String)
 
       end
 
       view :default do
-        attribute :id
+        attribute :instance
         attribute :state
         attribute :region
         attribute :databaseVersion

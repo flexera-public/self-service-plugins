@@ -30,6 +30,15 @@ module V1
         end
         response :ok
       end
+
+      action :bar do
+        routing{ get '/bar' }
+        params do
+          attribute :foo, Attributor::Struct do
+            attribute :foo, String
+          end
+        end
+      end
     end
   end
 end

@@ -1,0 +1,213 @@
+name "3-Tier Application with PHP and Google Cloud SQL for GCE/AWS"
+rs_ca_ver 20131202
+short_description "![logo](http://gravatar.com/avatar/d37c936ae35d87806cff2ab856059fd0.png?d=retro&r=PG&s=48) 3-Tier:LoadBalancer, PHP App & Google Cloud SQL DB "
+long_description "Provides a 3-tier application consisting of 1 HAProxy load balancer, 1 application server, and a Google Cloud SQL database"
+
+
+output 'app_url' do
+  label "Application URL"
+  category "General"
+  description "URL for the DB test for the application"
+  default_value join([@@dns_lb.name,"/dbread"])
+end
+
+output 'lb_status' do
+  label "HAProxy Status"
+  category "General"
+  description "HAProxy Status page showing connected app servers and their status"
+  default_value join([@@dns_lb.name,"/haproxy-status"])
+end
+
+# Cloud Selection
+parameter "cloud" do
+  type "string"
+  label "LB and App Cloud"
+  category "Resource pool"
+  allowed_values "AWS", "GCE"
+  default "AWS"
+  description "The cloud that the LB and application server will launch in"
+end
+
+# Mapping the cloud selection to the right href
+mapping "cloud_mapping" do {
+  "AWS" => {
+    "cloud_href" => "/api/clouds/6",
+    'instance_type' => 'm1.medium',
+    'datacenter' => null,
+    'db_server_template_name' => 'Database Manager for MySQL 5.5 (v13.5.8-LTS)',
+    'db_server_template_rev' => '29',
+    'lb_server_template_name' => 'Load Balancer with HAProxy (v13.5.5-LTS)',
+    'lb_server_template_rev' => '18',
+    'app_server_template_name' => 'PHP App Server (v13.5.5-LTS)',
+    'app_server_template_rev' => '19',
+    'subnets' => null,
+    'ssh_key' => 'default',
+    'security_group' => '3tier-all-oregon',
+    },
+  "GCE" => {
+    "cloud_href" => "/api/clouds/2175",
+    'instance_type' => 'n1-standard-1',
+    'datacenter' => 'us-central1-a',
+    'db_server_template_name' => 'Database Manager for MySQL 5.5 (v13.5.8-LTS)',
+    'db_server_template_rev' => '29',
+    'lb_server_template_name' => 'Load Balancer with HAProxy (v13.5.5-LTS)',
+    'lb_server_template_rev' => '18',
+    'app_server_template_name' => 'PHP App Server (v13.5.5-LTS)',
+    'app_server_template_rev' => '19',
+    'subnets' => null,
+    'ssh_key' => null,
+    'security_group' => '3tier',
+    },
+}
+end
+
+resource 'dns_masterdb', type: 'dme.record' do
+  domain 'rightscaleuniversity.com' # alternatively: domain_id 1234565
+  name join([@@deployment.name,'-db'])
+  type "A"
+  dynamicDns true
+  ttl 30
+end
+
+resource 'dns_lb', type: 'dme.record' do
+  domain 'rightscaleuniversity.com' # alternatively: domain_id 1234565
+  name @@deployment.name
+  type "A"
+  dynamicDns true
+  ttl 30
+end
+
+resource 'srv_db_google', type: '' do
+  instance 'Cloud SQL DB for 3 tier'
+  tier 'D1'
+  #region 'us-east1'
+end
+
+resource 'srv_lb', type: 'server' do
+  name 'HAProxy Load Balancer'
+  cloud_href            map($cloud_mapping, $cloud, 'cloud_href')
+  server_template       find(map($cloud_mapping, $cloud, 'lb_server_template_name'), revision: map($cloud_mapping, $cloud, 'lb_server_template_rev'))
+  instance_type         find(map($cloud_mapping, $cloud, 'instance_type'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  datacenter            find(map($cloud_mapping, $cloud, 'datacenter'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  ssh_key               find(resource_uid: map($cloud_mapping, $cloud, 'ssh_key'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  subnets               find(map($cloud_mapping, $cloud, 'subnets'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  security_groups       find(map($cloud_mapping, $cloud, 'security_group'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+end
+
+resource 'srv_app', type: 'server' do
+  name 'PHP App Server'
+  cloud_href            map($cloud_mapping, $cloud, 'cloud_href')
+  server_template       find(map($cloud_mapping, $cloud, 'app_server_template_name'), revision: map($cloud_mapping, $cloud, 'app_server_template_rev'))
+  instance_type         find(map($cloud_mapping, $cloud, 'instance_type'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  datacenter            find(map($cloud_mapping, $cloud, 'datacenter'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  ssh_key               find(resource_uid: map($cloud_mapping, $cloud, 'ssh_key'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  subnets               find(map($cloud_mapping, $cloud, 'subnets'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+  security_groups       find(map($cloud_mapping, $cloud, 'security_group'), cloud_href: map($cloud_mapping, $cloud, 'cloud_href'))
+
+
+  inputs do {
+    'app/database_name' => 'text:demo-schema',
+    'db/dns/master/fqdn' => join(['text:',@@deployment.name,'.rightscaleuniversity.com']),
+    'db/provider_type' => 'text:db_mysql_5.5',
+    'repo/default/provider' => 'text:repo_git',
+    'repo/default/repository' => 'text:git://github.com/rightscale/examples.git',
+    'repo/default/revision' => 'text:unified_php',
+    'sys_firewall/rule/port' => 'text:22,80,8000',
+  } end
+end
+
+operation "launch" do
+  description "Provisions the 3-tiers of a 3-tier app"
+  definition "launch_3_tier"
+  resource_mappings do {
+    @srv_lb => @@launch_lb,
+    @srv_db_google => @@launch_db_google,
+    @srv_app => @@launch_app,
+    @dns_masterdb => @@launch_dns_db,
+    @dns_lb => @@launch_dns_lb
+  } end
+end
+
+define launch_cloudsql() do
+
+  task_label 'Provisioning Cloud SQL'
+  provision(@@launch_db_google)
+
+  task_label 'Provisioning Cloud SQL - importing'
+  @@launch_db_google.import(uri: 'SOMETHING', database: 'demo-schema')
+
+  task_label 'Provisioning Cloud SQL - waiting for app tier'
+  wait_task 'app_tier'
+
+  task_label 'Provisioning Cloud SQL - updating authorized networks'
+  @@launch_db_google.update(authorizedNetworks: join([@@launch_app.current_instance().public_ip_addresses[0],"/32"]))
+end
+
+define launch_dns() do
+  concurrent do
+    sub do
+      task_label 'Provisioning LB DNS'
+      provision(@@dns_lb)
+
+      task_label 'Provisioning LB DNS - waiting for LB tier'
+      wait_task 'lb_tier'
+
+      task_label 'Provisioning LB DNS - updating IP'
+      @@dns_lb.update(value: @@launch_lb.current_instance().public_ip_addresses[0])
+    end
+    sub do
+      task_label 'Provisioning DB DNS'
+      provision(@@dns_masterdb)
+
+      task_label 'Provisioning DB DNS - waiting for DB tier'
+      wait_task 'db_tier'
+
+      task_label 'Provisioning DB DNS - updating IP'
+      @@dns_masterdb.update(value: @@launch_db_google.ipAddress)
+    end
+end
+
+define launch_3_tier(@srv_lb, @srv_app, @srv_db_google, @dns_masterdb, @dns_lb) return @@launch_lb, @@launch_app, @@launch_db_google, @@launch_dns_db, @@launch_dns_lb do
+
+  @@launch_lb = @srv_lb
+  @@launch_app = @srv_app
+  @@launch_db_google = @srv_db_google
+  @@launch_dns_lb = @dns_lb
+  @@launch_dns_db = @dns_masterdb
+
+
+  task_label("Launch 3-Tier Application")
+
+  concurrent do
+
+    sub task_name: 'lb_tier' do
+      task_label("Launching LB tier")
+      provision(@@launch_lb)
+    end
+
+    sub task_name: 'db_tier' do
+      call launch_cloudsql()
+    end
+
+    sub task_name: 'app_tier' do
+      task_label("Launching application tier")
+      provision(@@launch_app)
+      call run_recipe(@@launch_app, "sys_firewall::setup_rule")
+    end
+
+  end
+
+end
+
+# Helper definition, runs a recipe on given server, waits until recipe completes or fails
+# Raises an error in case of failure
+define run_recipe(@target, $recipe_name) do
+  @task = @target.current_instance().run_executable(recipe_name: $recipe_name, inputs: {})
+  sleep_until(@task.summary =~ "^(completed|failed)")
+  if @task.summary =~ "failed"
+    raise "Failed to run " + $recipe_name
+  end
+end
+
+
+
