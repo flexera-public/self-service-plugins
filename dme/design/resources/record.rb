@@ -89,7 +89,7 @@ module V1
           attribute :account_id, Attributor::Integer, required: true
         end
 
-        response :ok
+        response :no_content
       end
 
 

@@ -58,6 +58,7 @@ module V1
 
       res = api.delete_record(domain, id)
 
+      self.response = Praxis::Responses::NoContent.new()
       response.headers['Content-Type'] = 'application/json'
       response
 
