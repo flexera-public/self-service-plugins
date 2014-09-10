@@ -28,7 +28,7 @@ end
 
 namespace "google_sql" do
   service do
-    host "http://h.voneicken.com:8080"
+    host "http://23.21.158.104"
     path "/acct/:account_id"
     headers do {
       "user-agent" => "self_service"      # special headers as needed
