@@ -1,29 +1,27 @@
 #! /bin/bash -e
 I=test-$$
 
-if false; then
+if [ ! -f .gc_auth/1]; then
 
-mkdir -p .gc_auth
-rm -f .gc_auth/1
+  mkdir -p .gc_auth
 
-rackup &
-sleep 2
-echo "====++"
+  rackup &
+  sleep 2
 
-read -p "Enter project [rightscale.com:tve-test]: " PROJ
-PROJ=${PROJ:-rightscale.com:tve-test}
-curl -sf http://localhost:9292/acct/1/auth?project=${PROJ}
-read -p "Enter code (4/....): " CODE
+  read -p "Enter project [rightscale.com:tve-test]: " PROJ
+  PROJ=${PROJ:-rightscale.com:tve-test}
+  curl -sf http://localhost:9292/acct/1/auth?project=${PROJ}
+  read -p "Enter code (4/....): " CODE
 
-echo "===== AUTH ====="
-curl -sf "http://localhost:9292/acct/1/auth/redirect?project=${PROJ}&code=${CODE}"
+  echo "===== AUTH ====="
+  curl -sf "http://localhost:9292/acct/1/auth/redirect?project=${PROJ}&code=${CODE}"
 
 fi
 
 set -x
 
 echo "===== CREATE ====="
-curl -gsf -X POST -HContent-type:application/json -d '{"instance": "'$I'", "settings":{"tier": "D0"}}' http://localhost:9292/acct/1/instances
+curl -gif -X POST -HContent-length:0 "http://localhost:9292/acct/1/instances?i[instance]=${I}&i[settings][tier]=D0"
 
 echo "===== SHOW ====="
 curl -sf http://localhost:9292/acct/1/instances/$I

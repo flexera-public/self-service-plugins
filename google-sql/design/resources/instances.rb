@@ -40,32 +40,33 @@
           post ''
         end
 
-        payload do
-          attribute :instance, String, required: true
-          attribute :masterInstanceName, String
-          attribute :region, String
-          attribute :settings, Attributor::Struct, required: true do
-            attribute :tier, String, required: true
-            attribute :activationPolicy, String
-            attribute :authorizedGaeApplications, Attributor::Collection.of(String)
-            attribute :backupConfiguration, Attributor::Collection.of(Attributor::Struct) do
-              attribute :binaryLogEnabled, Boolean
-              attribute :enabled, Boolean
-              attribute :startTime, String
+        params do
+          attribute :i, Attributor::Struct, required: true do
+            attribute :instance, String, required: true
+            attribute :masterInstanceName, String
+            attribute :region, String
+            attribute :settings, Attributor::Struct, required: true do
+              attribute :tier, String, required: true
+              attribute :activationPolicy, String
+              attribute :authorizedGaeApplications, Attributor::Collection.of(String)
+              attribute :backupConfiguration, Attributor::Collection.of(Attributor::Struct) do
+                attribute :binaryLogEnabled, Attributor::Boolean
+                attribute :enabled, Attributor::Boolean
+                attribute :startTime, String
+              end
+              attribute :databaseFlags, Attributor::Collection.of(String)
+              attribute :ipConfiguration, Attributor::Collection.of(Attributor::Struct) do
+                attribute :authorizedNetworks, Attributor::Collection.of(String)
+                attribute :enabled, Attributor::Boolean
+                attribute :requireSsl, Attributor::Boolean
+              end
+              attribute :locationPreference, Attributor::Collection.of(Attributor::Struct) do
+                attribute :followGaeApplication, String
+                attribute :zone, String
+              end
+              attribute :pricingPlan, String
+              attribute :replicationType, String
             end
-            attribute :databaseFlags, Attributor::Collection.of(String)
-            attribute :ipConfiguration, Attributor::Collection.of(Attributor::Struct) do
-              attribute :authorizedNetworks, Attributor::Collection.of(String)
-              attribute :enabled, Boolean
-              attribute :requireSsl, Boolean
-            end
-            attribute :locationPreference, Attributor::Collection.of(Attributor::Struct) do
-              attribute :followGaeApplication, String
-              attribute :zone, String
-            end
-            attribute :pricingPlan, String
-            attribute :replicationType, String
-
           end
         end
         response :created, media_type: nil
