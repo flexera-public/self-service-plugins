@@ -1,6 +1,15 @@
 name "Base Linux for DigitalOcean"
 rs_ca_ver 20131202
-short_description "Allows you to launch a machine on DigitalOcean"
+short_description "Allows you to launch a machine on DigitalOcean
+
+
+![logo](http://curvve-curvvemedia.netdna-ssl.com/wp-content/uploads/2013/08/Digital-Ocean-logo-tall-175x100.png)
+"
+
+long_description "Allows you to launch a machine on DigitalOcean
+
+![logo](http://curvve-curvvemedia.netdna-ssl.com/wp-content/uploads/2013/08/Digital-Ocean-logo-tall-175x100.png)
+"
 
 #########
 # Digital Ocean Service
@@ -19,19 +28,19 @@ namespace "do" do
     fields do                             # field of a droplet with rules for validation
       name do                               
         type "string"
-        required
+        required true
       end
       region do                               
         type "string"
-        required
+        required true
       end
       size do                               
         type "string"
-        required
+        required true
       end
       image do                               
-        type "integer"
-        required
+        type "number"
+        required true
       end
     end
   end
@@ -54,6 +63,19 @@ end
 #########
 
 #########
+# Operation
+#########
+operation "Power Cycle" do
+  definition           "do_power_cycle"
+  description          "Power cycle the instance"
+end
+
+operation "Power Off" do
+  definition           "do_power_off"
+  description          "Power off the instance before deleting it"
+end
+
+#########
 # Resources
 #########
 
@@ -64,4 +86,14 @@ resource "base_server", type: "do.droplet" do
   image                 5141286
 end
 
+#########
+# RCL
+#########
 
+define do_power_cycle(@base_server) do
+  @base_server.powercycle()
+end
+
+define do_power_off(@base_server) do
+  @base_server.poweroff()
+end
