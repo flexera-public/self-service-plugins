@@ -4,26 +4,26 @@ module V1
 
     implements V1::ApiResources::Record
 
-    def index(**params)
+    def index(account_id:, **params)
       api = get_api
       response.headers['Content-Type'] = 'application/json'
       
       records = api.records_for('dev.rightscaleit.com')["data"]
       records.each do |r|
-        r["href"] = "/record/dev.rightscaleit.com/" + r["id"].to_s
+        r["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com/" + r["id"].to_s
       end
 
       response.body = records.to_json
       response
     end
 
-    def show(domain:, id:, **other_params)
+    def show(account_id:, domain:, id:, **other_params)
       api = get_api
       records = api.records_for(domain)
       rec = records['data'].select { |r| r['id'] == id }
 
       if rec.size > 0
-        rec[0]["href"] = "/record/dev.rightscaleit.com/" + rec[0]["id"].to_s
+        rec[0]["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com/" + rec[0]["id"].to_s
         response.body = rec[0]
       else
         self.response = Praxis::Responses::NotFound.new()
@@ -33,7 +33,7 @@ module V1
       response
     end
 
-    def create(**other_params)
+    def create(account_id:, **other_params)
 
       api = get_api
       res = api.create_record(request.payload.domain, request.payload.name, request.payload.type, request.payload.value)
@@ -41,7 +41,8 @@ module V1
 
       if res["error"].nil? 
         self.response = Praxis::Responses::Created.new()
-        res["href"] = "/record/dev.rightscaleit.com/" + res["id"].to_s
+        res["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com/" + res["id"].to_s
+        response.headers['Location'] = res["href"]      
         response.body = res
       else
         self.response = Praxis::Responses::UnprocessableEntity.new()

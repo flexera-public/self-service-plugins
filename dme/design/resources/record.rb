@@ -15,6 +15,9 @@ module V1
         routing do
           get ''
         end
+        params do
+          attribute :account_id, Attributor::Integer, required: true
+        end
         response :ok
       end
 
@@ -25,6 +28,7 @@ module V1
           get '/:domain/:id'
         end
         params do
+          attribute :account_id, Attributor::Integer, required: true
           attribute :id, required: true
           attribute :domain, required: true
         end
@@ -36,7 +40,9 @@ module V1
         routing do
           post ''
         end        
-
+        params do
+          attribute :account_id, Attributor::Integer, required: true
+        end
         payload do
           attribute :name, required: true
           attribute :domain, required: true
@@ -57,6 +63,7 @@ module V1
         end        
 
         params do
+          attribute :account_id, Attributor::Integer, required: true
           attribute :id, required: true
           attribute :domain, required: true
         end
@@ -79,6 +86,7 @@ module V1
         params do
           attribute :domain, required: true
           attribute :id, required: true
+          attribute :account_id, Attributor::Integer, required: true
         end
 
         response :ok

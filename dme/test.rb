@@ -28,6 +28,7 @@ require 'json'
 
     puts response.code
     puts response.message
+    puts response.headers
 
     JSON.parse(unparsed_json)
   end
@@ -39,4 +40,4 @@ require 'json'
     }
   end
 
-  post('http://localhost:9292/record', {"domain"=>"dev.rightscaleit.com","name"=>"ryanolearytest","type"=>"A","value"=>"1.1.1.1"})
+  post('http://localhost:9292/dme/accounts/60073/records', {"domain"=>"dev.rightscaleit.com","name"=>"ryanolearytest","type"=>"A","value"=>"1.1.1.1"})
