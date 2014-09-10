@@ -5,7 +5,10 @@ module V1
 
       media_type V1::MediaTypes::Record
       version '1.0'
-
+      routing do
+        prefix '/dme/accounts/:account_id/records'
+      end
+      
       action :index do
         use :versionable
 
