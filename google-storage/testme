@@ -1,0 +1,35 @@
+#! /bin/bash -e
+I=test-$$
+
+if [ ! -f .gc_auth/1 ]; then
+
+  mkdir -p .gc_auth
+
+  rackup &
+  sleep 2
+
+  read -p "Enter project [rightscale.com:tve-test]: " PROJ
+  PROJ=${PROJ:-rightscale.com:tve-test}
+  curl -sf http://localhost:9292/acct/1/auth?project=${PROJ}
+  read -p "Enter code (4/....): " CODE
+
+  echo "===== AUTH ====="
+  curl -sf "http://localhost:9292/acct/1/auth/redirect?project=${PROJ}&code=${CODE}"
+
+fi
+
+set -x
+
+echo "===== CREATE ====="
+curl -gif -X POST -HContent-length:0 "http://localhost:9292/acct/1/buckets?b[name]=${I}"
+
+echo "===== SHOW ====="
+curl -sf http://localhost:9292/acct/1/buckets/$I
+
+sleep 2
+
+echo "===== DELETE ====="
+curl -sf -X DELETE http://localhost:9292/acct/1/buckets/$I
+
+echo "===== SUCCESS ====="
+
