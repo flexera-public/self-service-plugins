@@ -7,10 +7,10 @@ module V1
     def index(account_id:, **params)
       api = get_api
       response.headers['Content-Type'] = 'application/json'
-      
+
       records = api.records_for('dev.rightscaleit.com')["data"]
       records.each do |r|
-        r["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com/" + r["id"].to_s
+        r["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com-" + r["id"].to_s
       end
 
       response.body = records.to_json
@@ -23,7 +23,7 @@ module V1
       rec = records['data'].select { |r| r['id'] == id }
 
       if rec.size > 0
-        rec[0]["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com/" + rec[0]["id"].to_s
+        rec[0]["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com-" + rec[0]["id"].to_s
         response.body = rec[0]
       else
         self.response = Praxis::Responses::NotFound.new()
@@ -39,16 +39,16 @@ module V1
       res = api.create_record(request.payload.domain, request.payload.name, request.payload.type, request.payload.value)
 
 
-      if res["error"].nil? 
+      if res["error"].nil?
         self.response = Praxis::Responses::Created.new()
-        res["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com/" + res["id"].to_s
-        response.headers['Location'] = res["href"]      
+        res["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com-" + res["id"].to_s
+        response.headers['Location'] = res["href"]
         response.body = res
       else
         self.response = Praxis::Responses::UnprocessableEntity.new()
         response.body = { error: '422: Not able to create record' }
       end
-      response.headers['Content-Type'] = 'application/json'      
+      response.headers['Content-Type'] = 'application/json'
       response
 
     end
@@ -68,17 +68,17 @@ module V1
       api = get_api
       res = api.update_record(domain, id, request.payload.name, request.payload.type, request.payload.value)
 
-      if res["error"].nil? 
+      if res["error"].nil?
         self.response = Praxis::Responses::NoContent.new()
         response.body = res
       else
         self.response = Praxis::Responses::UnprocessableEntity.new()
-        response.headers['Content-Type'] = 'application/json'      
+        response.headers['Content-Type'] = 'application/json'
         response.body = { error: '422: Not able to update record' }
       end
       response
 
-    end 
+    end
 
     private
 

@@ -8,7 +8,7 @@ module V1
       routing do
         prefix '/dme/accounts/:account_id/records'
       end
-      
+
       action :index do
         use :versionable
 
@@ -25,7 +25,7 @@ module V1
         use :versionable
 
         routing do
-          get '/:domain/:id'
+          get '/:domain-:id'
         end
         params do
           attribute :account_id, Attributor::Integer, required: true
@@ -39,7 +39,7 @@ module V1
       action :create do
         routing do
           post ''
-        end        
+        end
         params do
           attribute :account_id, Attributor::Integer, required: true
         end
@@ -59,8 +59,8 @@ module V1
 
       action :update do
         routing do
-          put '/:domain/:id'
-        end        
+          put '/:domain-:id'
+        end
 
         params do
           attribute :account_id, Attributor::Integer, required: true
@@ -80,7 +80,7 @@ module V1
 
       action :delete do
         routing do
-          delete '/:domain/:id'
+          delete '/:domain-:id'
         end
 
         params do
