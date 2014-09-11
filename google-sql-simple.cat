@@ -39,12 +39,12 @@ namespace "google_sql" do
     provision "provision_google_sql_instance"
     delete "delete_google_sql_instance"
     fields do
-      instance do                               # field of a pod with rules for validation
+      instance do                         # database instance name
         type "string"
         regexp "[a-zA-Z0-9\-\.]+"
         required true
       end
-      tier do                               # field of a pod with rules for validation
+      tier do                             # database instance type/size
         type "string"
         regexp "D[0-8]"
         required true

@@ -41,7 +41,7 @@
         end
 
         params do
-          attribute :i, Attributor::Struct, required: true do
+          #attribute :i, Attributor::Struct, required: true do
             attribute :instance, String, required: true
             attribute :masterInstanceName, String
             attribute :region, String
@@ -68,7 +68,7 @@
               attribute :replicationType, String
             end
           end
-        end
+        #end
         response :created, media_type: nil
         response :bad_request, media_type: 'text/plain'
       end
