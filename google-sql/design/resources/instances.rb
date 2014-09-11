@@ -10,6 +10,7 @@
 
       action :index do
         use :has_account
+        use :versionable
 
         routing do
           get ''
@@ -20,6 +21,7 @@
 
       action :show do
         use :has_account
+        use :versionable
 
         routing do
           get '/:id', name: :instance_href
@@ -35,12 +37,13 @@
 
       action :create do
         use :has_account
+        use :versionable
 
         routing do
           post ''
         end
 
-        params do
+        payload do
           #attribute :i, Attributor::Struct, required: true do
             attribute :instance, String, required: true
             attribute :masterInstanceName, String
@@ -75,6 +78,7 @@
 
       action :delete do
         use :has_account
+        use :versionable
 
         routing do
           delete '/:id'
