@@ -122,7 +122,7 @@ module GoogleCloudSQL
         $google_sql = Marshal.load(file)
       end
     else
-      $google_sql = client.discovered_api('sqladmin', 'v1beta3')
+      $google_sql = Google::APIClient.new.discovered_api('sqladmin', 'v1beta3')
       File.open(CACHED_API_FILE, 'w') do |file|
         Marshal.dump($google_sql, file)
       end

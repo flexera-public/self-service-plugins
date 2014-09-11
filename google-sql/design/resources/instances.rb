@@ -10,6 +10,7 @@
 
       action :index do
         use :has_account
+        use :versionable
 
         routing do
           get ''
@@ -20,6 +21,7 @@
 
       action :show do
         use :has_account
+        use :versionable
 
         routing do
           get '/:id', name: :instance_href
@@ -35,18 +37,19 @@
 
       action :create do
         use :has_account
+        use :versionable
 
         routing do
           post ''
         end
 
-        params do
-          attribute :i, Attributor::Struct, required: true do
+        payload do
+          #attribute :i, Attributor::Struct, required: true do
             attribute :instance, String, required: true
             attribute :masterInstanceName, String
             attribute :region, String
+            attribute :tier, String, required: true # should be in settings...
             attribute :settings, Attributor::Struct, required: true do
-              attribute :tier, String, required: true
               attribute :activationPolicy, String
               attribute :authorizedGaeApplications, Attributor::Collection.of(String)
               attribute :backupConfiguration, Attributor::Collection.of(Attributor::Struct) do
@@ -68,13 +71,14 @@
               attribute :replicationType, String
             end
           end
-        end
+        #end
         response :created, media_type: nil
         response :bad_request, media_type: 'text/plain'
       end
 
       action :delete do
         use :has_account
+        use :versionable
 
         routing do
           delete '/:id'

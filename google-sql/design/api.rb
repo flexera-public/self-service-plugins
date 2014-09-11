@@ -13,7 +13,7 @@ Praxis::ApiDefinition.define do
   end
   trait :versionable do
     headers do
-      header :X_Api_Version, String, values: ['1.0'], required: true
+      header :X_Api_Version, String, values: ['1.5'], required: false
     end
   end
 end
