@@ -44,13 +44,11 @@ namespace "google_sql" do
         regexp "[a-zA-Z0-9\-\.]+"
         required true
       end
-      settings do
         tier do                             # database instance type/size
           type "string"
           regexp "D[0-8]"
           required true
         end
-      end
     end
   end
 end

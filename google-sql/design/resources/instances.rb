@@ -48,8 +48,8 @@
             attribute :instance, String, required: true
             attribute :masterInstanceName, String
             attribute :region, String
+            attribute :tier, String, required: true # should be in settings...
             attribute :settings, Attributor::Struct, required: true do
-              attribute :tier, String, required: true
               attribute :activationPolicy, String
               attribute :authorizedGaeApplications, Attributor::Collection.of(String)
               attribute :backupConfiguration, Attributor::Collection.of(Attributor::Struct) do
