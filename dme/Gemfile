@@ -6,6 +6,7 @@ gem 'rake'
 gem 'dnsmadeeasy-rest-api'
 gem 'pry'
 gem 'pry-byebug'
+gem 'thin'
 
 group :development, :test do
   gem 'rspec'

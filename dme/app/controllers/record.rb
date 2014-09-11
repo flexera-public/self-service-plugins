@@ -10,7 +10,7 @@ module V1
 
       records = api.records_for('dev.rightscaleit.com')["data"]
       records.each do |r|
-        r["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com-" + r["id"].to_s
+        r["href"] = "/records/dev.rightscaleit.com-" + r["id"].to_s
       end
 
       response.body = records.to_json
@@ -23,7 +23,7 @@ module V1
       rec = records['data'].select { |r| r['id'] == id }
 
       if rec.size > 0
-        rec[0]["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com-" + rec[0]["id"].to_s
+        rec[0]["href"] = "/records/dev.rightscaleit.com-" + rec[0]["id"].to_s
         response.body = rec[0]
       else
         self.response = Praxis::Responses::NotFound.new()
@@ -41,7 +41,7 @@ module V1
 
       if res["error"].nil?
         self.response = Praxis::Responses::Created.new()
-        res["href"] = "/dme/accounts/#{account_id}/records/dev.rightscaleit.com-" + res["id"].to_s
+        res["href"] = "/records/dev.rightscaleit.com-" + res["id"].to_s
         response.headers['Location'] = res["href"]
         response.body = res
       else
