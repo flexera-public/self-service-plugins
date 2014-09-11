@@ -13,6 +13,7 @@ module V1
         attribute :status, Attributor::String, description: "The status of the stack"
         attribute :status_reason, Attributor::String, description: "Success/Failure message associated with the status"
         attribute :template, Attributor::String, description: "Returns the stack's template as a JSON string"
+        attribute :outputs, Attributor::Collection.of(V1::MediaTypes::StackOutput)
       end
 
       view :default do
@@ -23,6 +24,7 @@ module V1
         attribute :name
         attribute :status
         attribute :status_reason
+        attribute :outputs
       end
 
       view :source do

@@ -35,6 +35,16 @@ module V1
       stack = cfm.stacks[name]
 
       if stack.exists?
+
+        outputs = Array.new
+        stack.outputs.each do |o|
+          op = { 
+            "key" => o.key,
+            "value" => o.value,
+            "description" => o.description
+          }
+          outputs.push(op)
+        end
         resp = {
           "id" => stack.stack_id,
           "href" => "/stacks/#{stack.name}",
@@ -43,7 +53,8 @@ module V1
           "name" => stack.name,
           "status" => stack.status,
           "status_reason" => stack.status_reason,
-          "template" => stack.template
+          "template" => stack.template,
+          "outputs" => outputs
         }  
         response.body = JSON.pretty_generate(V1::MediaTypes::Stack.dump(resp, :view=>(view ||= :default).to_sym))
       else
