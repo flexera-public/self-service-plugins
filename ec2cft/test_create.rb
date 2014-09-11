@@ -28,6 +28,7 @@ require 'json'
 
     puts response.code
     puts response.message
+    puts response.header.to_hash
 
     JSON.parse(unparsed_json)
   end
