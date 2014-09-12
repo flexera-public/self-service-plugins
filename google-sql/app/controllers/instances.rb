@@ -64,7 +64,8 @@
       #i = request.raw_params
       i = JSON.parse(request.raw_payload)
       i['settings'] ||= {}
-      i['settings']['tier'] = i['tier']
+      i['settings']['tier'] = i.delete('tier')
+puts "Payload: #{i.inspect}"
       result = @gc_sql_client.execute(
         api_method: @gc_sql_api.instances.insert,
         parameters: { project: @gc_sql_project },
