@@ -58,5 +58,5 @@ define provision_google_sql_instance(@raw_instance) return @instance do
 end
 
 define delete_google_sql_instance(@instance) do
-  @instance.destroy
+  @instance.destroy()
 end
