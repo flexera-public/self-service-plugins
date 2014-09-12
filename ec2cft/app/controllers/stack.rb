@@ -69,7 +69,7 @@ module V1
 
       cfm = AWS::CloudFormation.new
       options = {
-        :parameters => request.payload.parameters.contents ||= {}
+        :parameters => JSON.parse(request.payload.parameters.contents) ||= {}
       }
       begin
         stack = cfm.stacks.create(request.payload.name, request.payload.template, options)
