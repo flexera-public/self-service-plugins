@@ -69,7 +69,7 @@ module V1
 
       cfm = AWS::CloudFormation.new
       options = {
-        :parameters => request.payload.parameters ||= {}
+        :parameters => request.payload.parameters.contents ||= {}
       }
       begin
         stack = cfm.stacks.create(request.payload.name, request.payload.template, options)
@@ -86,9 +86,9 @@ module V1
         }  
         response.headers['Location'] = resp["href"]
         response.body = JSON.pretty_generate(V1::MediaTypes::Stack.dump(resp))        
-      rescue
+      rescue Exception => e  
         self.response = Praxis::Responses::UnprocessableEntity.new()
-        response.body = { error: '422: Not able to create record' }
+        response.body = { error: '422: Not able to create record: ' + e.message }
       end
       response.headers['Content-Type'] = 'application/json'      
       response
