@@ -1,0 +1,70 @@
+name "Simple Google Cloud Storage bucket"
+rs_ca_ver 20131202
+short_description "Simple Google Cloud Storage Bucket
+
+![logo](https://developers.google.com/cloud/images/storage-icon-54x48.png)"
+
+long_description "Creates a single Cloud Storage Bucket
+
+![logo](https://developers.google.com/cloud/images/storage-icon-54x48.png)"
+
+# Bucket
+resource 'bucket', type: 'google_storage.bucket' do
+  name $name
+  predefinedAcl $predefinedAcl
+end
+
+# Name selection
+parameter "name" do
+  type "string"
+  label "Bucket name"
+  category "General"
+  description "The name of the bucket"
+end
+
+# ACL Selection
+parameter "predefinedAcl" do
+  type "string"
+  label "Bucket ACL"
+  category "General"
+  allowed_values "authenticatedRead", "private", "projectPrivate", "publicRead", "publicReadWrite"
+  default "private"
+  description "The predefined access control list for the created bucket"
+end
+
+namespace "google_storage" do
+  service do
+    host "http://23.21.158.104"
+    path "/acct/:account_id"
+    headers do {
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+    } end
+  end
+
+  type "bucket" do
+    provision "provision_google_storage_bucket"
+    delete "delete_google_storage_bucket"
+    fields do
+      name do
+        type "string"
+        regexp "[a-zA-Z0-9\-\.]+"
+        required true
+      end
+      predefinedAcl do
+        type "string"
+        regexp "[a-zA-Z]+"
+        required true
+      end
+    end
+  end
+end
+
+define provision_google_storage_bucket(@raw_bucket) return @bucket do
+  @bucket = google_storage.bucket.create(b: to_object(@raw_bucket))
+end
+
+define delete_google_storage_bucket(@bucket) do
+  @bucket.destroy
+end
+

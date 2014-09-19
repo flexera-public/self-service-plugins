@@ -1,7 +1,12 @@
 name "Simple Google Cloud SQL instance"
 rs_ca_ver 20131202
-short_description "Simple Google Cloud SQL instance"
-long_description "Creates a single Cloud SQL instance"
+short_description "Simple Google Cloud SQL instance
+
+![logo](https://developers.google.com/cloud/images/sql.png)"
+
+long_description "Creates a single Cloud SQL instance
+
+![logo](https://developers.google.com/cloud/images/sql.png)"
 
 output 'db_ip' do
   label "Database IP"
@@ -21,7 +26,7 @@ end
 
 # Database instance
 resource 'db', type: 'google_sql.instance' do
-  instance 'Cloud SQL DB for 3 tier'
+  instance join(['sample-db3-', last(split(@@deployment.href, "/"))])
   tier $tier
   #region 'us-east1'
 end
@@ -31,7 +36,9 @@ namespace "google_sql" do
     host "http://23.21.158.104"
     path "/acct/:account_id"
     headers do {
-      "user-agent" => "self_service"      # special headers as needed
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+      "Content-Wish" => "application/json",
     } end
   end
   # SQL instances
@@ -44,11 +51,11 @@ namespace "google_sql" do
         regexp "[a-zA-Z0-9\-\.]+"
         required true
       end
-        tier do                             # database instance type/size
-          type "string"
-          regexp "D[0-8]"
-          required true
-        end
+      tier do                             # database instance type/size
+        type "string"
+        regexp "D[0-8]"
+        required true
+      end
     end
   end
 end
@@ -60,3 +67,4 @@ end
 define delete_google_sql_instance(@instance) do
   @instance.destroy()
 end
+
