@@ -1,11 +1,13 @@
-curl -i http://localhost:8888/api/do_proxy/droplet -H 'X-Api-Version: 1.0' -X GET
+export DO_PROXY=54.211.211.230
 
-curl -i http://localhost:8888/api/do_proxy/droplet -H 'X-Api-Version: 1.0' -H 'Content-Type:application/json' -X POST -d '{"name":"rishi-droplet-06","region":"sfo1","size":"512mb","image":5141286}'
+curl -i http://$DO_PROXY:8888/api/do_proxy/droplet -H 'X-Api-Version: 1.0' -X GET
 
-curl -i http://localhost:8888/api/do_proxy/droplet/2582236 -H 'X-Api-Version: 1.0' -X GET
+curl -i http://$DO_PROXY:8888/api/do_proxy/droplet -H 'X-Api-Version: 1.0' -H 'Content-Type:application/json' -X POST -d '{"name":"rishi-droplet-06","region":"sfo1","size":"512mb","image":5141286}'
 
-curl -i http://localhost:8888/api/do_proxy/droplet/2582236/actions/powercycle -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
+curl -i http://$DO_PROXY:8888/api/do_proxy/droplet/2582236 -H 'X-Api-Version: 1.0' -X GET
 
-curl -i http://localhost:8888/api/do_proxy/droplet/2582236/actions/poweroff -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
+curl -i http://$DO_PROXY:8888/api/do_proxy/droplet/2582236/actions/powercycle -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
+
+curl -i http://$DO_PROXY:8888/api/do_proxy/droplet/2582236/actions/poweroff -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
 
 

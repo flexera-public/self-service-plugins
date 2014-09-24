@@ -8,7 +8,7 @@ module V1
       version "1.0"
 
       routing do
-        prefix "/api/do_proxy/droplet"
+        prefix "/api/do_proxy/droplets"
       end
 
       action :create do
@@ -29,7 +29,7 @@ module V1
           get ''
         end
 
-        response :ok, media_type: "application/json"
+        response :ok, media_type: "vnd.rightscale.droplet"
       end #show
 
       action :powercycle do

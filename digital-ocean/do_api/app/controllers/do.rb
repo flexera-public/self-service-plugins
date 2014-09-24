@@ -28,7 +28,7 @@ module V1
       do_uri = DO_DROPLET_API
       do_response = do_get(do_uri)
 
-      response.headers['Content-Type'] = 'application/json'
+      response.headers['Content-Type'] = 'vnd.rightscale.droplet+json;type=collection'
 
       ##### binding.pry
       resp = JSON.parse(do_response.body)["droplets"]
