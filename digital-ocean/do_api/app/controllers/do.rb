@@ -18,7 +18,7 @@ module V1
       do_response = do_post(do_uri, do_request)
 
       resp = JSON.parse(do_response.body)["droplet"]
-      resp["href"] = "/api/do_proxy/droplet/" + resp["id"].to_s
+      resp["href"] = "/api/do_proxy/droplets/" + resp["id"].to_s
       response.headers['Content-Type'] = 'application/json'
       response.headers['Location'] = resp["href"]
       response.body = resp
@@ -34,7 +34,7 @@ module V1
       ##### binding.pry
       resp = JSON.parse(do_response.body)["droplets"]
       resp.each do |r|
-        r["href"] = "/api/do_proxy/droplet/" + r["id"].to_s
+        r["href"] = "/api/do_proxy/droplets/" + r["id"].to_s
       end
       response.body = resp
       response
@@ -45,7 +45,7 @@ module V1
       do_response = do_get(do_uri)
 
       resp = JSON.parse(do_response.body)["droplet"]
-      resp["href"] = "/api/do_proxy/droplet/" + resp["id"].to_s
+      resp["href"] = "/api/do_proxy/droplets/" + resp["id"].to_s
       response.headers['Content-Type'] = 'application/json'
       response.body = resp
       response
