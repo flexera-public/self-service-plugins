@@ -20,6 +20,7 @@ module V1
       resp = JSON.parse(do_response.body)["droplet"]
       resp["href"] = "/api/do_proxy/droplet/" + resp["id"].to_s
       response.headers['Content-Type'] = 'application/json'
+      response.headers['Location'] = resp["href"]
       response.body = resp
       response
     end

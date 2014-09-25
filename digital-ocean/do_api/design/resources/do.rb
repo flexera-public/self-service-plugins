@@ -21,6 +21,7 @@ module V1
           attribute :image
           attribute :region
         end
+
         response :ok, media_type: "application/json"
       end # create
 

@@ -1,4 +1,4 @@
-# -p 8888
+# -p 8080
 
 require 'bundler/setup'
 require 'praxis'

@@ -6,17 +6,17 @@ module V1
       identifier 'application/json'
 
       attributes do
-        attribute :id, String
-        attribute :href, String
-        attribute :name, String
-        attribute :memory, Integer
-        attribute :vcpus, Integer
-        attribute :disk, Integer
-        attribute :image, Integer
+        attribute :id, Attributor::String
+        attribute :href, Attributor::String
+        attribute :name, Attributor::String
+        attribute :memory, Attributor::Integer
+        attribute :vcpus, Attributor::Integer
+        attribute :disk, Attributor::Integer
+        attribute :image, Attributor::Integer
         attribute :available, Attributor::Boolean
-        attribute :region, String
-        attribute :size, String
-        attribute :status, String
+        attribute :region, Attributor::String
+        attribute :size, Attributor::String
+        attribute :status, Attributor::String
       end
 
       view :default do
@@ -31,7 +31,11 @@ module V1
         attribute :region
         attribute :status
       end
+
+      view :link do
+        attribute :href
+      end
+
     end
   end
-
 end
