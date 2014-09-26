@@ -1,11 +1,20 @@
 export DO_PROXY=54.90.143.255
+export DROPLET_ID=2582363
 
+##### list the droplets
 curl -i http://$DO_PROXY:8080/api/do_proxy/droplets -H 'X-Api-Version: 1.0' -X GET
 
-curl -i http://$DO_PROXY:8080/api/do_proxy/droplets -H 'X-Api-Version: 1.0' -H 'Content-Type:application/json' -X POST -d '{"name":"rishi-droplet-06","region":"sfo1","size":"512mb","image":5141286}'
+##### create a droplet
+curl -i http://$DO_PROXY:8080/api/do_proxy/droplets -H 'X-Api-Version: 1.0' -H 'Content-Type:application/json' -X POST -d '{"name":"rishi-droplet-06","region":"sfo1","size":"512mb","image":6324931}'
 
-curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/2582236 -H 'X-Api-Version: 1.0' -X GET
+##### show a droplet
+curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/$DROPLET_ID -H 'X-Api-Version: 1.0' -X GET
 
-curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/2582236/actions/powercycle -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
+##### delete a droplet
+curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/$DROPLET_ID -H 'X-Api-Version: 1.0' -X DELETE
 
-curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/2582236/actions/poweroff -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
+##### powercycle a droplet
+curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/$DROPLET_ID/actions/powercycle -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST
+
+##### poweroff a droplet
+curl -i http://$DO_PROXY:8080/api/do_proxy/droplets/$DROPLET_ID/actions/poweroff -H 'X-Api-Version: 1.0' -H 'Content-Length: 0' -X POST

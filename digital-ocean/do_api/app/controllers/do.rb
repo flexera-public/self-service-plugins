@@ -1,12 +1,13 @@
 # app/controllers/do.rb
+require 'logger'
+
 module V1
   class DoCloud
     include Praxis::Controller
+    implements V1::ApiResources::DoCloud
 
     DO_TOKEN = ENV['TOKEN']
     DO_DROPLET_API = "https://api.digitalocean.com/v2/droplets"
-
-    implements V1::ApiResources::DoCloud
 
     def create(**params)
       do_uri = DO_DROPLET_API
@@ -74,7 +75,9 @@ module V1
     end
 
     def delete(id:, **other_params)
+      app = Praxis::Application.instance
       do_uri = DO_DROPLET_API + "/" + id.to_s
+      app.logger.info("DELETE:" + do_uri)
 
       do_uri = URI.parse(do_uri)
       do_http = Net::HTTP.new(do_uri.host, do_uri.port)
@@ -84,6 +87,7 @@ module V1
       do_response = do_http.delete(do_uri,
          'Content-Type' => 'application/x-www-form-urlencoded',  
          'Authorization' => 'Bearer ' + DO_TOKEN)
+      app.logger.info(do_response.body)
 
       response.headers['Content-Type'] = 'application/json'
       response.body = do_response.body
@@ -91,6 +95,8 @@ module V1
     end
 
     def do_post(do_uri, do_request)
+      app = Praxis::Application.instance
+      app.logger.info("GET:" + do_uri)
       do_uri = URI.parse(do_uri)
       do_http = Net::HTTP.new(do_uri.host, do_uri.port)
       do_http.use_ssl = true
@@ -99,10 +105,14 @@ module V1
       do_response = do_http.post(do_uri, do_request, 
         'Content-Type'=>'application/json', 
         'Authorization' => 'Bearer ' + DO_TOKEN)
+      app.logger.info(do_response.body)
       do_response
     end
 
     def do_get(do_uri)
+      app = Praxis::Application.instance
+      app.logger.info("POST:" + do_uri)
+
       do_uri = URI.parse(do_uri)
       do_http = Net::HTTP.new(do_uri.host, do_uri.port)
       do_http.use_ssl = true
@@ -110,6 +120,7 @@ module V1
 
       do_response = do_http.get(do_uri, 
          'Authorization' => 'Bearer ' + DO_TOKEN)
+      app.logger.info(do_response.body)
       do_response
     end
 
