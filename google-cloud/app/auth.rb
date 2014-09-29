@@ -1,17 +1,14 @@
 class Auth < App
 
-=begin
-    get '/'
-    def show(acct:, project:, **other_params)
-      if GoogleCloudSQL.auth_test(acct)
-        response.headers['Content-Type'] = 'text/plain'
-        response.body = "Authentication successful"
+    get '/' do
+      if @client
+        "Authentication successful"
       else
-        self.response = Praxis::Responses::TemporaryRedirect.new
-        redirect_url = GoogleCloudSQL.auth_redirect(acct, project)
-        response.headers['Content-Type'] = 'text/html'
-        response.headers['Location'] = redirect_url
-        response.body = <<"EOM"
+        services = nil
+        services = params[:services].split(',') if params.key?(:services)
+        headers 'Content-Type' => 'text/html'
+        redirect_url = GoogleCloud.auth_redirect(services)
+        redirect redirect_url, <<"EOM"
           <html><body>
             <p>Please visit <a href="#{redirect_url}">Google</a> to authorize</p>
           </body></html>
@@ -19,18 +16,16 @@ EOM
       end
     end
 
-    post '/:services' do
-
-    def update(acct:, project:, **other_params)
-      if GoogleCloudSQL.auth_save(acct, project, request.params.code)
-        response.headers['Content-Type'] = 'text/plain'
-        response.body = "Your account has been linked to Google Cloud SQL\n"
+    get '/redirect' do
+      if params[:code] && creds=GoogleCloud.get_creds(params[:code])
+        headers 'Content-Type' => 'text/plain'
+        "Authentication successful\nCookie=#{creds}"
       else
-        self.response = Praxis::Responses::TemporaryRedirect.new
-        redirect_url = GoogleCloudSQL.auth_redirect(acct, project)
-        response.headers['Content-Type'] = 'text/html'
-        response.headers['Location'] = redirect_url
-        response.body = <<"EOM"
+        #self.response = Praxis::Responses::TemporaryRedirect.new
+        #redirect_url = GoogleCloud.auth_redirect(acct, project)
+        headers 'Content-Type' => 'text/html'
+        #response.headers['Location'] = redirect_url
+        <<"EOM"
           <html><body>
             <p>Authentication failed, please retry at
               <a href="#{redirect_url}">Google</a> to authorize</p>
@@ -38,6 +33,5 @@ EOM
 EOM
       end
     end
-=end
 
 end

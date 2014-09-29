@@ -15,8 +15,8 @@ APIS = {
 
 # Oauth scopes required for each service
 SCOPES = {
-  'sql' => ['https://www.googleapis.com/auth/sqlservice.admin'],
-  'drive' => [],
+  'sql'   => ['https://www.googleapis.com/auth/sqlservice.admin'],
+  'drive' => ['https://www.googleapis.com/auth/devstorage.read_write'],
 }
 
 module GoogleCloud
@@ -31,15 +31,20 @@ module GoogleCloud
         token_credential_uri: 'https://accounts.google.com/o/oauth2/token',
         client_id:            client_secrets.client_id,
         client_secret:        client_secrets.client_secret,
-        scope:                SCOPES,
         redirect_uri:         "https://localhost:9292/auth/redirect",
       })
   end
 
   # Return the redirect URL pointing to Google where the user gets to accept the auth request
   # Returns the URL as a string
-  def self.auth_redirect(acct, project)
-    cli = auth_client
+  def self.auth_redirect(services=nil)
+    scopes = if services
+        services.map{|s| SCOPES[s]}.flatten
+      else
+        SCOPES.values.flatten
+      end
+    cli = auth_client(scopes)
+    cli.scopes = scopes
     cli.authorization_uri.to_s
   end
 
@@ -48,11 +53,7 @@ module GoogleCloud
   end
 
   def self.decode_creds(str)
-    begin
       Yajl::Parser.parse(Zlib.inflate(Base64.decode64(str)))
-    rescue StandardError => e
-      halt 400, "Cannot decode authentication credentials (#{e})"
-    end
   end
 
   # Gets the refresh_token from the authorization code
@@ -82,7 +83,7 @@ module GoogleCloud
 
   # Return a reference to the API definition, which can be used to construct calls
   def self.api(service)
-    return $gogle_api[service] if $gogle_api.key?(service)
+    return $google_api[service] if $google_api.key?(service)
 
     # Load cached discovered API, if it exists. This prevents retrieving the
     # discovery document on every run, saving a round-trip to API servers.

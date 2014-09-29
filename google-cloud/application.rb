@@ -68,16 +68,22 @@ class App < Sinatra::Base
   end
 
   before do
-    puts "request #{request.path} is: #{request.inspect}"
-    binding.pry
+    #puts "request #{request.path} is: #{request.inspect}"
+    #binding.pry
     creds_str = request.cookies['google-cloud']
-    unless creds_str || (request.get? && request.path == "/auth")
+    unless creds_str || (request.get? && request.path =~ /^\/auth/)
       $logger.info "google-cloud cookie missing, path is #{request.path_info}"
       halt 400, "google-cloud cookie missing"
     end
 
-    creds = GoogleCloud.decode_creds(creds_str)
-    @client = GoogleCloud.client(creds)
+    if creds_str
+      begin
+        creds = GoogleCloud.decode_creds(creds_str)
+        @client = GoogleCloud.client(creds)
+      rescue StandardError => e
+        halt 400, "Cannot decode authentication credentials (#{e})"
+      end
+    end
 
     # we allow a header to set the project
     request.params[:project] ||= request.env['X_PROJECT']

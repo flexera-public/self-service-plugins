@@ -1,5 +1,9 @@
   class Instances < App
 
+    before do
+      @api = GoogleCloud.api('sql')
+    end
+
     helpers do
 
       def make_href(acct, id)
