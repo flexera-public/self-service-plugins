@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -16,11 +15,17 @@ func main() {
 		log.Fatalf("Error: %s", err.Error())
 	}
 
-	fmt.Println("package aws")
-	fmt.Print("var Aws = ")
-	def := fmt.Sprintf("%#v\n", aws)
-	def = strings.Replace(def, "struct {", "struct {\n", -1)
-	def = strings.Replace(def, "}{", "}{\n", -1)
-	fmt.Println(def)
-	log.Println("Done")
+	for name, svc := range aws {
+		fmt.Println(svc.String(name))
+	}
+
+	/*
+		fmt.Println("package aws")
+		fmt.Print("var Aws = ")
+		def := fmt.Sprintf("%#v\n", aws)
+		def = strings.Replace(def, "struct {", "struct {\n", -1)
+		def = strings.Replace(def, "}{", "}{\n", -1)
+		fmt.Println(def)
+		log.Println("Done")
+	*/
 }
