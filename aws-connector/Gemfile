@@ -12,6 +12,7 @@ gem 'aws-sdk-core'
 
 group :test do
   gem 'vcr'
+  gem 'rack-test', require: 'rack/test'
   gem 'webmock', '~>1.15.0'
   gem 'rspec', '~> 2.10'
 end
