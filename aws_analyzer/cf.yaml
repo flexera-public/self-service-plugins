@@ -1,106 +1,108 @@
 ---
-service_url: "/aws/cloud_formation"
+name: "cloud_formation"
+url: "/aws/cloud_formation"
 version: "1.0"
 metadata:
-  apiVersion: "2010-05-15"
-  endpointPrefix: "cloudformation"
-  serviceFullName: "AWS CloudFormation"
-  signatureVersion: "v4"
-  xmlNamespace: "http://cloudformation.amazonaws.com/doc/2010-05-15/"
+  api_version: "2010-05-15"
+  endpoint_prefix: "cloudformation"
+  service_full_name: "AWS cloud_formation"
+  signature_version: "v4"
+  xml_namespace: "http://cloudformation.amazonaws.com/doc/2010-05-15/"
   protocol: "query"
 resources:
-  - name: Stack
-    shape: Stack
-    primary_id: StackId
+  - name: stack
+    shape: stack
+    primary_id: stack_id
     secondary_ids:
-      - StackName
+      - stack_name
     actions:
       - name: create
         verb: post
         path: "/"
-        payload: CreateStackInput
+        payload: create_stack_input
         params:
-        response: CreateStackOutput
+        response: create_stack_output
       - name: delete
         verb: post
         path: "/"
-        payload: DeleteStackInput
+        payload: delete_stack_input
         params:
         response:
       - name: update
         verb: post
         path: "/"
-        payload: UpdateStackInput
+        payload: update_stack_input
         params:
-        response: UpdateStackOutput
+        response: update_stack_output
       - name: index
         verb: post
         path: "/"
-        payload: DescribeStacksInput
+        payload: describe_stacks_input
         params:
-        response: DescribeStacksOutput
+        response: describe_stacks_output
     custom_actions:
       - name: cancel_update
         verb: post
         path: "/"
-        payload: CancelUpdateInput
+        payload: cancel_update_input
         params:
-        response: CancelUpdateOutput
+        response: cancel_update_output
     collection_actions:
       - name: list
         verb: post
         path: "/"
-        payload: ListStacksInput
+        payload: list_stacks_input
         params:
-        response: ListStacksOutput
+        response: list_stacks_output
     links:
-  - name: StackEvent
-    shape: StackEvent
-    primary_id: EventId
+  - name: stack_event
+    shape: stack_event
+    primary_id: event_id
     actions:
       # etc...
     link:
-      - stack_id: Stack
-  - name: StackResource
-    shape: StackResource
-    primary_id: LogicalResourceId
+      - stack_id: stack
+  - name: stack_resource
+    shape: stack_resource
+    primary_id: logical_resource_id
     secondary_ids:
-      - PhysicalResourceId
+      - physical_resource_id
     actions:
       # etc...
     link:
-      - stack_id: Stack
+      - stack_id: stack
 shapes:
-  - CreateStackInput:
+  - create_stack_input:
       type: structure
       required: 
-        - StackName
+        - stack_name
       members:
-        StackName:
-          - shape: StackName
-        TemplateBody:
-          - shape: TemplateBody
-        TemplateURL:
-          - shape: TemplateURL
+        stack_name:
+          - shape: stack_name
+        template_body:
+          - shape: template_body
+        template_url:
+          - shape: template_url
         Parameters:
-          - shape: Parameters
-        DisableRollback:
-          - shape: DisableRollback
-        TimeoutInMinutes:
-          - shape: TimeoutMinutes
-        NotificationARNs:
-          - shape: NotificationARNs
+          - shape: parameters
+        disable_rollback:
+          - shape: disable_rollback
+        timeout_in_minutes:
+          - shape: timeout_minutes
+        notification_arns:
+          - shape: notification_arns`
         Capabilities:
-          - shape: Capabilities
-        OnFailure:
-          - shape: OnFailure
-        StackPolicyBody:
-          - shape: StackPolicyBody
-        StackPolicyURL:
-          - shape: StackPolicyURL
+          - shape: capabilities
+        on_failure:
+          - shape: on_failure
+        stack_policy_body:
+          - shape: stack_policy_body
+        stack_policy_url:
+          - shape: stack_policy_url
         Tags:
-          - shape: Tags
-  - StackName:
+          - shape: tags
+              #..
+  - stack_name:
       type: string
 # ...
 
