@@ -1,0 +1,106 @@
+---
+service_url: "/aws/cloud_formation"
+version: "1.0"
+metadata:
+  apiVersion: "2010-05-15"
+  endpointPrefix: "cloudformation"
+  serviceFullName: "AWS CloudFormation"
+  signatureVersion: "v4"
+  xmlNamespace: "http://cloudformation.amazonaws.com/doc/2010-05-15/"
+  protocol: "query"
+resources:
+  - name: Stack
+    shape: *Stack
+    primary_id: StackId
+    secondary_ids:
+      - StackName
+    actions:
+      - name: create
+        verb: post
+        path: "/"
+        payload: *CreateStackInput
+        params:
+        response: *CreateStackOutput
+      - name: delete
+        verb: post
+        path: "/"
+        payload: *DeleteStackInput
+        params:
+        response:
+      - name: update
+        verb: post
+        path: "/"
+        payload: *UpdateStackInput
+        params:
+        response: *UpdateStackOutput
+      - name: index
+        verb: post
+        path: "/"
+        payload: *DescribeStacksInput
+        params:
+        response: *DescribeStacksOutput
+    custom_actions:
+      - name: cancel_update
+        verb: post
+        path: "/"
+        payload: *CancelUpdateInput
+        params:
+        response: *CancelUpdateOutput
+    collection_actions:
+      - name: list
+        verb: post
+        path: "/"
+        payload: *ListStacksInput
+        params:
+        response: *ListStacksOutput
+    links:
+  - name: StackEvent
+    shape: *StackEvent
+    primary_id: EventId
+    actions:
+      # etc...
+    link:
+      - stack_id: Stack
+  - name: StackResource
+    shape: *StackResource
+    primary_id: LogicalResourceId
+    secondary_ids:
+      - PhysicalResourceId
+    actions:
+      # etc...
+    link:
+      - stack_id: Stack
+shapes:
+  - CreateStackInput:
+      type: structure
+      required: 
+        - StackName
+      members:
+        StackName:
+          - shape: "StackName"
+        TemplateBody:
+          - shape: "TemplateBody"
+        TemplateURL:
+          - shape: "TemplateURL"
+        Parameters:
+          - shape: "Parameters"
+        DisableRollback:
+          - shape: "DisableRollback"
+        TimeoutInMinutes:
+          - shape: "TimeoutMinutes"
+        NotificationARNs:
+          - shape: "NotificationARNs"
+        Capabilities:
+          - shape: "Capabilities"
+        OnFailure:
+          - shape: "OnFailure"
+        StackPolicyBody:
+          - shape: "StackPolicyBody"
+        StackPolicyURL:
+          - shape: "StackPolicyURL"
+        Tags:
+          - shape: "Tags"
+  - StackName:
+      type: string
+# ...
+
