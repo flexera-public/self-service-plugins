@@ -1,0 +1,17 @@
+source 'https://rubygems.org'
+gem 'sinatra'
+gem 'sinatra-contrib'
+gem 'multi_json'
+gem 'yajl-ruby'
+gem 'pry'
+gem "rainbows", ">=4.6.1"
+gem "rack-mount"
+gem "eventmachine"
+
+gem 'aws-sdk-core'
+
+group :test do
+  gem 'vcr'
+  gem 'webmock', '~>1.15.0'
+  gem 'rspec', '~> 2.10'
+end
