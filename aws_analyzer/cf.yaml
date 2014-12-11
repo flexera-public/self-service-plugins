@@ -10,7 +10,7 @@ metadata:
   protocol: "query"
 resources:
   - name: Stack
-    shape: *Stack
+    shape: Stack
     primary_id: StackId
     secondary_ids:
       - StackName
@@ -18,51 +18,51 @@ resources:
       - name: create
         verb: post
         path: "/"
-        payload: *CreateStackInput
+        payload: CreateStackInput
         params:
-        response: *CreateStackOutput
+        response: CreateStackOutput
       - name: delete
         verb: post
         path: "/"
-        payload: *DeleteStackInput
+        payload: DeleteStackInput
         params:
         response:
       - name: update
         verb: post
         path: "/"
-        payload: *UpdateStackInput
+        payload: UpdateStackInput
         params:
-        response: *UpdateStackOutput
+        response: UpdateStackOutput
       - name: index
         verb: post
         path: "/"
-        payload: *DescribeStacksInput
+        payload: DescribeStacksInput
         params:
-        response: *DescribeStacksOutput
+        response: DescribeStacksOutput
     custom_actions:
       - name: cancel_update
         verb: post
         path: "/"
-        payload: *CancelUpdateInput
+        payload: CancelUpdateInput
         params:
-        response: *CancelUpdateOutput
+        response: CancelUpdateOutput
     collection_actions:
       - name: list
         verb: post
         path: "/"
-        payload: *ListStacksInput
+        payload: ListStacksInput
         params:
-        response: *ListStacksOutput
+        response: ListStacksOutput
     links:
   - name: StackEvent
-    shape: *StackEvent
+    shape: StackEvent
     primary_id: EventId
     actions:
       # etc...
     link:
       - stack_id: Stack
   - name: StackResource
-    shape: *StackResource
+    shape: StackResource
     primary_id: LogicalResourceId
     secondary_ids:
       - PhysicalResourceId
@@ -77,29 +77,29 @@ shapes:
         - StackName
       members:
         StackName:
-          - shape: "StackName"
+          - shape: StackName
         TemplateBody:
-          - shape: "TemplateBody"
+          - shape: TemplateBody
         TemplateURL:
-          - shape: "TemplateURL"
+          - shape: TemplateURL
         Parameters:
-          - shape: "Parameters"
+          - shape: Parameters
         DisableRollback:
-          - shape: "DisableRollback"
+          - shape: DisableRollback
         TimeoutInMinutes:
-          - shape: "TimeoutMinutes"
+          - shape: TimeoutMinutes
         NotificationARNs:
-          - shape: "NotificationARNs"
+          - shape: NotificationARNs
         Capabilities:
-          - shape: "Capabilities"
+          - shape: Capabilities
         OnFailure:
-          - shape: "OnFailure"
+          - shape: OnFailure
         StackPolicyBody:
-          - shape: "StackPolicyBody"
+          - shape: StackPolicyBody
         StackPolicyURL:
-          - shape: "StackPolicyURL"
+          - shape: StackPolicyURL
         Tags:
-          - shape: "Tags"
+          - shape: Tags
   - StackName:
       type: string
 # ...
