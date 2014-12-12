@@ -17,7 +17,7 @@ resources:
     secondary_ids: 
     actions:
       index:
-        name: DescribeStackEvents
+        name: describe_stack_events
         verb: post
         path: "/"
         payload: describe_stack_events_input
@@ -32,14 +32,14 @@ resources:
     secondary_ids: 
     actions:
       show:
-        name: DescribeStackResource
+        name: describe_stack_resource
         verb: post
         path: "/"
         payload: describe_stack_resource_input
         params: []
         response: describe_stack_resource_output
       index:
-        name: DescribeStackResources
+        name: describe_stack_resources
         verb: post
         path: "/"
         payload: describe_stack_resources_input
@@ -48,7 +48,7 @@ resources:
     custom_actions: {}
     collection_actions:
       list:
-        name: ListStackResources
+        name: list_stack_resources
         verb: post
         path: "/"
         payload: list_stack_resources_input
@@ -61,28 +61,28 @@ resources:
     secondary_ids: 
     actions:
       index:
-        name: DescribeStacks
+        name: describe_stacks
         verb: post
         path: "/"
         payload: describe_stacks_input
         params: []
         response: describe_stacks_output
       create:
-        name: CreateStack
+        name: create_stack
         verb: post
         path: "/"
         payload: create_stack_input
         params: []
         response: create_stack_output
       delete:
-        name: DeleteStack
+        name: delete_stack
         verb: post
         path: "/"
         payload: delete_stack_input
         params: []
         response: 
       update:
-        name: UpdateStack
+        name: update_stack
         verb: post
         path: "/"
         payload: update_stack_input
@@ -90,7 +90,7 @@ resources:
         response: update_stack_output
     custom_actions:
       cancel_update:
-        name: CancelUpdateStack
+        name: cancel_update_stack
         verb: post
         path: "/"
         payload: cancel_update_stack_input
@@ -98,7 +98,7 @@ resources:
         response: 
     collection_actions:
       list:
-        name: ListStacks
+        name: list_stacks
         verb: post
         path: "/"
         payload: list_stacks_input

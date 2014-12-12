@@ -96,7 +96,7 @@ module Analyzer
       #      params:
       #      response: describe_stack_resource_output
       def to_operation(op, name)
-        ::Analyzer::ResourceAction.new(name:     op['name'],
+        ::Analyzer::ResourceAction.new(name:     op['name'].underscore,
                                        verb:     op['http']['method'].downcase,
                                        path:     op['http']['requestUri'],
                                        payload:  op['input']['shape'].underscore,
