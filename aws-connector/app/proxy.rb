@@ -20,7 +20,9 @@
 
   post '/:service/:operation' do
     $logger.info "Params   : #{params.inspect}"
-    $logger.info "Body     : #{request.content_type} (#{request.body.size} bytes)"
+    body_str = request.body.is_a?(String) ? request.body : request.body.read
+    #$logger.info "Body     : #{body_str}"
+    $logger.info "Body     : #{request.content_type} (#{body_str.size} bytes)"
     $logger.info "Service  : #{params['service']}"
     $logger.info "Operation: #{params['operation']}"
 
@@ -33,18 +35,20 @@
 
     # Get the body of the request and make it ready to be the operation's parameter
     body = {}
-    unless request.content_type && request.content_type.start_with?("application/json")
-      halt 400, "Request must contain application/json parameters"
+    if body_str.size > 0
+      unless request.content_type && request.content_type.start_with?("application/json")
+        halt 400, "Request must contain application/json parameters"
+      end
+      begin
+        body = Yajl::Parser.parse(request.body, :symbolize_keys => true)
+      rescue StandardError => e
+        halt 400, "Error parsing json body: #{e}"
+      end
+      unless body.is_a?(Hash)
+        halt 400, "Request body must consist of a json hash"
+      end
+      $logger.info "Request body contains: #{body.keys.sort.join(' ')}"
     end
-    begin
-      body = request.body ? Yajl::Parser.parse(request.body, :symbolize_keys => true) : {}
-    rescue StandardError => e
-      halt 400, "Error parsing json body: #{e}"
-    end
-    unless body.is_a?(Hash)
-      halt 400, "Request body must consist of a json hash"
-    end
-    $logger.info "Request body contains: #{body.keys.sort.join(' ')}"
 
     # Perform the operation
     begin
@@ -71,9 +75,9 @@
         #$logger.info "Result: #{res.data.inspect}"
         #$logger.info "Result code: #{res.context.http_response.status_code}"
         if res.data.is_a?(Struct)
-          return code, { :'content-type' => "application/json" }, Yajl::Encoder.encode(res.data.to_h)
+          return code, { 'content-type' => "application/json" }, Yajl::Encoder.encode(res.data.to_h)
         else
-          return code, { :'content-type' => "application/json" }, Yajl::Encoder.encode(res.data)
+          return code, { 'content-type' => "application/json" }, Yajl::Encoder.encode(res.data)
         end
       end
 
@@ -106,7 +110,7 @@
       response = Yajl::Encoder.encode(response_key => response_array)
       $logger.info "Returning #{response_array.size} elements as #{response.size} bytes"
 
-      return code, { :'content-type' => "application/json" }, response
+      return code, { 'content-type' => "application/json" }, response
     else
       $logger.info "Result: #{res.inspect}"
       $logger.info "Result: #{res.data.inspect}"

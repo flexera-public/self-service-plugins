@@ -1,0 +1,1 @@
+curl -v -XPOST "-HContent-Length: 0" "-HContent-Type: application/json" http://localhost:8080/ec2/describe_availability_zones

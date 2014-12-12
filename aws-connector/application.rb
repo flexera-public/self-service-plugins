@@ -34,7 +34,7 @@ class App < Sinatra::Base
     if env['sinatra.error']
       $logger.info "***** BOOM *****"
       $logger.info env['sinatra.error'].message
-      $logger.info "\n" + env['sinatra.error'].backtrace[0..10].join("\n")
+      $logger.info "\n" + env['sinatra.error'].backtrace[0..20].join("\n")
     end
   end
 
