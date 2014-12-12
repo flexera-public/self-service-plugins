@@ -20,21 +20,23 @@ module Analyzer
       def add_operation(name, res_name, op, is_collection)
         truncate_size = res_name.size + 1
         n = name[0..-truncate_size].underscore
-        operation = to_operation(op)
+        if n == 'describe'
+          n = is_collection ? 'index' : 'show'
+        end
+        operation = to_operation(op, n)
         if is_collection
-          if n == 'describe'
+          if n == 'index'
             @actions['index'] = operation
           else
             @collection_actions[n] = operation
           end
         else
-          if n == 'describe'
+          if n == 'show'
             # Let's set the shape of the resource with the result of a describe
             shape = op['output']['shape']
             if shape.nil?
               raise "No shape for describe??? Resource: #{name}, Operation: #{op['name']}"
             end
-            n = 'show'
           end
           if ['create', 'delete', 'update', 'show'].include?(n)
             @actions[n] = operation
@@ -62,8 +64,8 @@ module Analyzer
       #      payload: describe_stack_resource_input
       #      params:
       #      response: describe_stack_resource_output
-      def to_operation(op)
-        { name:     op['name'].underscore,
+      def to_operation(op, name)
+        { name:     name,
           verb:     op['http']['method'].downcase,
           path:     op['http']['requestUri'],
           payload:  op['input']['shape'].underscore,
