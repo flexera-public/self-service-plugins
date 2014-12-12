@@ -1,81 +1,126 @@
 ---
-name: "cloud_formation"
-url: "/aws/cloud_formation"
-version: "1.0"
-metadata:
-  api_version: "2010-05-15"
-  endpoint_prefix: "cloudformation"
-  service_full_name: "AWS cloud_formation"
-  signature_version: "v4"
-  xml_namespace: "http://cloudformation.amazonaws.com/doc/2010-05-15/"
-  protocol: "query"
-resources:
-  - name: stack
-    shape: stack
-    primary_id: stack_id
-    secondary_ids:
-      - stack_name
-    actions:
-      - name: create
-        verb: post
-        path: "/"
-        payload: create_stack_input
-        params:
-        response: create_stack_output
-      - name: delete
-        verb: post
-        path: "/"
-        payload: delete_stack_input
-        params:
-        response:
-      - name: update
-        verb: post
-        path: "/"
-        payload: update_stack_input
-        params:
-        response: update_stack_output
-      - name: index
-        verb: post
-        path: "/"
-        payload: describe_stacks_input
-        params:
-        response: describe_stacks_output
-    custom_actions:
-      - name: cancel_update
-        verb: post
-        path: "/"
-        payload: cancel_update_input
-        params:
-        response: cancel_update_output
-    collection_actions:
-      - name: list
-        verb: post
-        path: "/"
-        payload: list_stacks_input
-        params:
-        response: list_stacks_output
-    links:
-  - name: stack_event
-    shape: stack_event
-    primary_id: event_id
-    actions:
-      # etc...
-    link:
-      - stack_id: stack
-  - name: stack_resource
-    shape: stack_resource
-    primary_id: logical_resource_id
-    secondary_ids:
-      - physical_resource_id
-    actions:
-      # etc...
-    link:
-      - stack_id: stack
-shapes:
+:name: AWS CloudFormation
+:url: "/aws/cloudformation"
+:version: '1.0'
+:metadata:
+  apiVersion: '2010-05-15'
+  endpointPrefix: cloudformation
+  serviceFullName: AWS CloudFormation
+  signatureVersion: v4
+  xmlNamespace: http://cloudformation.amazonaws.com/doc/2010-05-15/
+  protocol: query
+:resources:
+- :name: stack_event
+  :shape: 
+  :primary_id: 
+  :secondary_ids: 
+  :actions:
+  - :name: index
+    :verb: post
+    :path: "/"
+    :payload: describe_stack_events_input
+    :params: []
+    :response: describe_stack_events_output
+  :custom_actions: []
+  :collection_actions: []
+- :name: stack_resource
+  :shape: 
+  :primary_id: 
+  :secondary_ids: 
+  :actions:
+  - :name: show
+    :verb: post
+    :path: "/"
+    :payload: describe_stack_resource_input
+    :params: []
+    :response: describe_stack_resource_output
+  - :name: index
+    :verb: post
+    :path: "/"
+    :payload: describe_stack_resources_input
+    :params: []
+    :response: describe_stack_resources_output
+  :custom_actions: []
+  :collection_actions:
+  - :name: list
+    :verb: post
+    :path: "/"
+    :payload: list_stack_resources_input
+    :params: []
+    :response: list_stack_resources_output
+- :name: stack
+  :shape: 
+  :primary_id: 
+  :secondary_ids: 
+  :actions:
+  - :name: index
+    :verb: post
+    :path: "/"
+    :payload: describe_stacks_input
+    :params: []
+    :response: describe_stacks_output
+  - :name: create
+    :verb: post
+    :path: "/"
+    :payload: create_stack_input
+    :params: []
+    :response: create_stack_output
+  - :name: delete
+    :verb: post
+    :path: "/"
+    :payload: delete_stack_input
+    :params: []
+    :response: 
+  - :name: update
+    :verb: post
+    :path: "/"
+    :payload: update_stack_input
+    :params: []
+    :response: update_stack_output
+  :custom_actions:
+  - :name: cancel_update
+    :verb: post
+    :path: "/"
+    :payload: cancel_update_stack_input
+    :params: []
+    :response: 
+  :collection_actions:
+  - :name: list
+    :verb: post
+    :path: "/"
+    :payload: list_stacks_input
+    :params: []
+    :response: list_stacks_output
+:shapes:
+  already_exists_exception:
+    type: structure
+    members: {}
+    error:
+      code: already_exists_exception
+      http_status_code: 400
+      sender_fault: true
+    exception: true
+  cancel_update_stack_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+  capabilities:
+    type: list
+    member:
+      shape: capability
+  capabilities_reason:
+    type: string
+  capability:
+    type: string
+    enum:
+    - CAPABILITY_IAM
   create_stack_input:
     type: structure
-    required: 
-      - stack_name
+    required:
+    - stack_name
     members:
       stack_name:
         shape: stack_name
@@ -90,7 +135,7 @@ shapes:
       timeout_in_minutes:
         shape: timeout_minutes
       notification_arns:
-        shape: notification_arns`
+        shape: notification_arns
       capabilities:
         shape: capabilities
       on_failure:
@@ -101,8 +146,655 @@ shapes:
         shape: stack_policy_url
       tags:
         shape: tags
-              #..
-  - stack_name:
-      type: string
-# ...
+  create_stack_output:
+    type: structure
+    members:
+      stack_id:
+        shape: stack_id
+  creation_time:
+    type: timestamp
+  delete_stack_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+  deletion_time:
+    type: timestamp
+  describe_stack_events_input:
+    type: structure
+    members:
+      stack_name:
+        shape: stack_name
+      next_token:
+        shape: next_token
+  describe_stack_events_output:
+    type: structure
+    members:
+      stack_events:
+        shape: stack_events
+      next_token:
+        shape: next_token
+  describe_stack_resource_input:
+    type: structure
+    required:
+    - stack_name
+    - logical_resource_id
+    members:
+      stack_name:
+        shape: stack_name
+      logical_resource_id:
+        shape: logical_resource_id
+  describe_stack_resource_output:
+    type: structure
+    members:
+      stack_resource_detail:
+        shape: stack_resource_detail
+  describe_stack_resources_input:
+    type: structure
+    members:
+      stack_name:
+        shape: stack_name
+      logical_resource_id:
+        shape: logical_resource_id
+      physical_resource_id:
+        shape: physical_resource_id
+  describe_stack_resources_output:
+    type: structure
+    members:
+      stack_resources:
+        shape: stack_resources
+  describe_stacks_input:
+    type: structure
+    members:
+      stack_name:
+        shape: stack_name
+      next_token:
+        shape: next_token
+  describe_stacks_output:
+    type: structure
+    members:
+      stacks:
+        shape: stacks
+      next_token:
+        shape: next_token
+  description:
+    type: string
+  disable_rollback:
+    type: boolean
+  estimate_template_cost_input:
+    type: structure
+    members:
+      template_body:
+        shape: template_body
+      template_url:
+        shape: template_url
+      parameters:
+        shape: parameters
+  estimate_template_cost_output:
+    type: structure
+    members:
+      url:
+        shape: url
+  event_id:
+    type: string
+  get_stack_policy_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+  get_stack_policy_output:
+    type: structure
+    members:
+      stack_policy_body:
+        shape: stack_policy_body
+  get_template_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+  get_template_output:
+    type: structure
+    members:
+      template_body:
+        shape: template_body
+  get_template_summary_input:
+    type: structure
+    members:
+      template_body:
+        shape: template_body
+      template_url:
+        shape: template_url
+      stack_name:
+        shape: stack_name_or_id
+  get_template_summary_output:
+    type: structure
+    members:
+      parameters:
+        shape: parameter_declarations
+      description:
+        shape: description
+      capabilities:
+        shape: capabilities
+      capabilities_reason:
+        shape: capabilities_reason
+      version:
+        shape: version
+  insufficient_capabilities_exception:
+    type: structure
+    members: {}
+    error:
+      code: insufficient_capabilities_exception
+      http_status_code: 400
+      sender_fault: true
+    exception: true
+  last_updated_time:
+    type: timestamp
+  limit_exceeded_exception:
+    type: structure
+    members: {}
+    error:
+      code: limit_exceeded_exception
+      http_status_code: 400
+      sender_fault: true
+    exception: true
+  list_stack_resources_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+      next_token:
+        shape: next_token
+  list_stack_resources_output:
+    type: structure
+    members:
+      stack_resource_summaries:
+        shape: stack_resource_summaries
+      next_token:
+        shape: next_token
+  list_stacks_input:
+    type: structure
+    members:
+      next_token:
+        shape: next_token
+      stack_status_filter:
+        shape: stack_status_filter
+  list_stacks_output:
+    type: structure
+    members:
+      stack_summaries:
+        shape: stack_summaries
+      next_token:
+        shape: next_token
+  logical_resource_id:
+    type: string
+  metadata:
+    type: string
+  next_token:
+    type: string
+    min: 1
+    max: 1024
+  no_echo:
+    type: boolean
+  notification_arn:
+    type: string
+  notification_arns:
+    type: list
+    member:
+      shape: notification_arn
+    max: 5
+  on_failure:
+    type: string
+    enum:
+    - DO_NOTHING
+    - ROLLBACK
+    - DELETE
+  output:
+    type: structure
+    members:
+      output_key:
+        shape: output_key
+      output_value:
+        shape: output_value
+      description:
+        shape: description
+  output_key:
+    type: string
+  output_value:
+    type: string
+  outputs:
+    type: list
+    member:
+      shape: output
+  parameter:
+    type: structure
+    members:
+      parameter_key:
+        shape: parameter_key
+      parameter_value:
+        shape: parameter_value
+      use_previous_value:
+        shape: use_previous_value
+  parameter_declaration:
+    type: structure
+    members:
+      parameter_key:
+        shape: parameter_key
+      default_value:
+        shape: parameter_value
+      parameter_type:
+        shape: parameter_type
+      no_echo:
+        shape: no_echo
+      description:
+        shape: description
+  parameter_declarations:
+    type: list
+    member:
+      shape: parameter_declaration
+  parameter_key:
+    type: string
+  parameter_type:
+    type: string
+  parameter_value:
+    type: string
+  parameters:
+    type: list
+    member:
+      shape: parameter
+  physical_resource_id:
+    type: string
+  resource_properties:
+    type: string
+  resource_signal_status:
+    type: string
+    enum:
+    - SUCCESS
+    - FAILURE
+  resource_signal_unique_id:
+    type: string
+    min: 1
+    max: 64
+  resource_status:
+    type: string
+    enum:
+    - CREATE_IN_PROGRESS
+    - CREATE_FAILED
+    - CREATE_COMPLETE
+    - DELETE_IN_PROGRESS
+    - DELETE_FAILED
+    - DELETE_COMPLETE
+    - DELETE_SKIPPED
+    - UPDATE_IN_PROGRESS
+    - UPDATE_FAILED
+    - UPDATE_COMPLETE
+  resource_status_reason:
+    type: string
+  resource_type:
+    type: string
+  set_stack_policy_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+      stack_policy_body:
+        shape: stack_policy_body
+      stack_policy_url:
+        shape: stack_policy_url
+  signal_resource_input:
+    type: structure
+    required:
+    - stack_name
+    - logical_resource_id
+    - unique_id
+    - status
+    members:
+      stack_name:
+        shape: stack_name_or_id
+      logical_resource_id:
+        shape: logical_resource_id
+      unique_id:
+        shape: resource_signal_unique_id
+      status:
+        shape: resource_signal_status
+  stack:
+    type: structure
+    required:
+    - stack_name
+    - creation_time
+    - stack_status
+    members:
+      stack_id:
+        shape: stack_id
+      stack_name:
+        shape: stack_name
+      description:
+        shape: description
+      parameters:
+        shape: parameters
+      creation_time:
+        shape: creation_time
+      last_updated_time:
+        shape: last_updated_time
+      stack_status:
+        shape: stack_status
+      stack_status_reason:
+        shape: stack_status_reason
+      disable_rollback:
+        shape: disable_rollback
+      notification_arns:
+        shape: notification_arns
+      timeout_in_minutes:
+        shape: timeout_minutes
+      capabilities:
+        shape: capabilities
+      outputs:
+        shape: outputs
+      tags:
+        shape: tags
+  stack_event:
+    type: structure
+    required:
+    - stack_id
+    - event_id
+    - stack_name
+    - timestamp
+    members:
+      stack_id:
+        shape: stack_id
+      event_id:
+        shape: event_id
+      stack_name:
+        shape: stack_name
+      logical_resource_id:
+        shape: logical_resource_id
+      physical_resource_id:
+        shape: physical_resource_id
+      resource_type:
+        shape: resource_type
+      timestamp:
+        shape: timestamp
+      resource_status:
+        shape: resource_status
+      resource_status_reason:
+        shape: resource_status_reason
+      resource_properties:
+        shape: resource_properties
+  stack_events:
+    type: list
+    member:
+      shape: stack_event
+  stack_id:
+    type: string
+  stack_name:
+    type: string
+  stack_name_or_id:
+    type: string
+    min: 1
+    pattern: "([a-zA-Z][-a-zA-Z0-9]*)|(arn:\\b(aws|aws-us-gov|aws-cn)\\b:[-a-zA-Z0-9:/._+]*)"
+  stack_policy_body:
+    type: string
+    min: 1
+    max: 16384
+  stack_policy_during_update_body:
+    type: string
+    min: 1
+    max: 16384
+  stack_policy_during_update_url:
+    type: string
+    min: 1
+    max: 1350
+  stack_policy_url:
+    type: string
+    min: 1
+    max: 1350
+  stack_resource:
+    type: structure
+    required:
+    - logical_resource_id
+    - resource_type
+    - timestamp
+    - resource_status
+    members:
+      stack_name:
+        shape: stack_name
+      stack_id:
+        shape: stack_id
+      logical_resource_id:
+        shape: logical_resource_id
+      physical_resource_id:
+        shape: physical_resource_id
+      resource_type:
+        shape: resource_type
+      timestamp:
+        shape: timestamp
+      resource_status:
+        shape: resource_status
+      resource_status_reason:
+        shape: resource_status_reason
+      description:
+        shape: description
+  stack_resource_detail:
+    type: structure
+    required:
+    - logical_resource_id
+    - resource_type
+    - last_updated_timestamp
+    - resource_status
+    members:
+      stack_name:
+        shape: stack_name
+      stack_id:
+        shape: stack_id
+      logical_resource_id:
+        shape: logical_resource_id
+      physical_resource_id:
+        shape: physical_resource_id
+      resource_type:
+        shape: resource_type
+      last_updated_timestamp:
+        shape: timestamp
+      resource_status:
+        shape: resource_status
+      resource_status_reason:
+        shape: resource_status_reason
+      description:
+        shape: description
+      metadata:
+        shape: metadata
+  stack_resource_summaries:
+    type: list
+    member:
+      shape: stack_resource_summary
+  stack_resource_summary:
+    type: structure
+    required:
+    - logical_resource_id
+    - resource_type
+    - last_updated_timestamp
+    - resource_status
+    members:
+      logical_resource_id:
+        shape: logical_resource_id
+      physical_resource_id:
+        shape: physical_resource_id
+      resource_type:
+        shape: resource_type
+      last_updated_timestamp:
+        shape: timestamp
+      resource_status:
+        shape: resource_status
+      resource_status_reason:
+        shape: resource_status_reason
+  stack_resources:
+    type: list
+    member:
+      shape: stack_resource
+  stack_status:
+    type: string
+    enum:
+    - CREATE_IN_PROGRESS
+    - CREATE_FAILED
+    - CREATE_COMPLETE
+    - ROLLBACK_IN_PROGRESS
+    - ROLLBACK_FAILED
+    - ROLLBACK_COMPLETE
+    - DELETE_IN_PROGRESS
+    - DELETE_FAILED
+    - DELETE_COMPLETE
+    - UPDATE_IN_PROGRESS
+    - UPDATE_COMPLETE_CLEANUP_IN_PROGRESS
+    - UPDATE_COMPLETE
+    - UPDATE_ROLLBACK_IN_PROGRESS
+    - UPDATE_ROLLBACK_FAILED
+    - UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
+    - UPDATE_ROLLBACK_COMPLETE
+  stack_status_filter:
+    type: list
+    member:
+      shape: stack_status
+  stack_status_reason:
+    type: string
+  stack_summaries:
+    type: list
+    member:
+      shape: stack_summary
+  stack_summary:
+    type: structure
+    required:
+    - stack_name
+    - creation_time
+    - stack_status
+    members:
+      stack_id:
+        shape: stack_id
+      stack_name:
+        shape: stack_name
+      template_description:
+        shape: template_description
+      creation_time:
+        shape: creation_time
+      last_updated_time:
+        shape: last_updated_time
+      deletion_time:
+        shape: deletion_time
+      stack_status:
+        shape: stack_status
+      stack_status_reason:
+        shape: stack_status_reason
+  stacks:
+    type: list
+    member:
+      shape: stack
+  tag:
+    type: structure
+    members:
+      key:
+        shape: tag_key
+      value:
+        shape: tag_value
+  tag_key:
+    type: string
+  tag_value:
+    type: string
+  tags:
+    type: list
+    member:
+      shape: tag
+  template_body:
+    type: string
+    min: 1
+  template_description:
+    type: string
+  template_parameter:
+    type: structure
+    members:
+      parameter_key:
+        shape: parameter_key
+      default_value:
+        shape: parameter_value
+      no_echo:
+        shape: no_echo
+      description:
+        shape: description
+  template_parameters:
+    type: list
+    member:
+      shape: template_parameter
+  template_url:
+    type: string
+    min: 1
+    max: 1024
+  timeout_minutes:
+    type: integer
+    min: 1
+  timestamp:
+    type: timestamp
+  update_stack_input:
+    type: structure
+    required:
+    - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+      template_body:
+        shape: template_body
+      template_url:
+        shape: template_url
+      use_previous_template:
+        shape: use_previous_template
+      stack_policy_during_update_body:
+        shape: stack_policy_during_update_body
+      stack_policy_during_update_url:
+        shape: stack_policy_during_update_url
+      parameters:
+        shape: parameters
+      capabilities:
+        shape: capabilities
+      stack_policy_body:
+        shape: stack_policy_body
+      stack_policy_url:
+        shape: stack_policy_url
+      notification_arns:
+        shape: notification_arns
+  update_stack_output:
+    type: structure
+    members:
+      stack_id:
+        shape: stack_id
+  url:
+    type: string
+  use_previous_template:
+    type: boolean
+  use_previous_value:
+    type: boolean
+  validate_template_input:
+    type: structure
+    members:
+      template_body:
+        shape: template_body
+      template_url:
+        shape: template_url
+  validate_template_output:
+    type: structure
+    members:
+      parameters:
+        shape: template_parameters
+      description:
+        shape: description
+      capabilities:
+        shape: capabilities
+      capabilities_reason:
+        shape: capabilities_reason
+  version:
+    type: string
 

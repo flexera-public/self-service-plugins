@@ -2,6 +2,9 @@ module Analyzer
 
   module AWS
 
+    # Resources that have a plural name
+    PLURAL_RESOURCE_NAMES = ['DhcpOptions']
+
     # A service resource, the main point of this class is to make sure that we can easily identify operations that apply
     # to either the resourcd or the collection.
     class Resource
@@ -11,15 +14,20 @@ module Analyzer
       # Initialize with resource name
       def initialize(name)
         @name = name.underscore
+        @orig_name = name
         @actions = {}
         @collection_actions = {}
         @custom_actions = {}
       end
 
       # Register operation
-      def add_operation(name, res_name, op, is_collection)
-        truncate_size = res_name.size + 1
-        n = name[0..-truncate_size].underscore
+      # OK, here is the trick:
+      # name is the CamelCase name of the operation, this name ends with either the ResourceName or ResourceNames
+      # for operations that apply to the collection. We detect which one it is and then infer the final operation
+      # name and type (resource, collection or custom) from that.
+      def add_operation(name, op)
+        is_collection = name !~ /#{@orig_name}$/ # @orig_name is the singular version of ResourceName
+        n = name.gsub(/(#{@orig_name}$|#{@orig_name.pluralize}$)/, '').underscore
         if n == 'describe'
           n = is_collection ? 'index' : 'show'
         end
@@ -99,10 +107,9 @@ module Analyzer
       # Add operation to resource
       # Create resource if non-existent, checks whether operation is collection or resource operation
       def add_resource_operation(res_name, op_name, op)
-        singular = res_name.singularize
-        collection_operation = (singular != res_name)
-        res = @resources[singular] ||= Resource.new(singular)
-        res.add_operation(op_name, res_name, op, collection_operation)
+        canonical = PLURAL_RESOURCE_NAMES.include?(res_name) ? res_name : res_name.singularize
+        res = @resources[canonical] ||= Resource.new(canonical)
+        res.add_operation(op_name, op)
       end
 
       # Known resource names

@@ -26,7 +26,7 @@ module Analyzer
       def analyze(service_name)
         json = File.join(@json_path, service_name.camel_case + '.api.json')
         if !File.exist?(json)
-          puts "Hmm there doesn't seem to be any *.api.json file at #{json}, you sure you got that right? (use --path to specify location of JSON files)"
+          puts "Hmm there doesn't seem to be any *.api.json file at #{json}, you sure you got that right? (use --path to specify the location of the JSON files)"
           exit 1
         end
         service = JSON.load(IO.read(json))
