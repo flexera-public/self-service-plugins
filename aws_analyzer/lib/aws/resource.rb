@@ -25,7 +25,8 @@ module Analyzer
       # name is the CamelCase name of the operation, this name ends with either the ResourceName or ResourceNames
       # for operations that apply to the collection. We detect which one it is and then infer the final operation
       # name and type (resource, collection or custom) from that.
-      def add_operation(name, op)
+      def add_operation(op)
+        name = op['name']
         is_collection = name !~ /#{@orig_name}$/ # @orig_name is the singular version of ResourceName
         n = name.gsub(/(#{@orig_name}$|#{@orig_name.pluralize}$)/, '').underscore
         if n == 'describe'
@@ -74,6 +75,7 @@ module Analyzer
       #      response: describe_stack_resource_output
       def to_operation(op, name)
         { name:     name,
+          original_name: op['name'],
           verb:     op['http']['method'].downcase,
           path:     op['http']['requestUri'],
           payload:  op['input']['shape'].underscore,
@@ -106,10 +108,10 @@ module Analyzer
 
       # Add operation to resource
       # Create resource if non-existent, checks whether operation is collection or resource operation
-      def add_resource_operation(res_name, op_name, op)
+      def add_resource_operation(res_name, op)
         canonical = PLURAL_RESOURCE_NAMES.include?(res_name) ? res_name : res_name.singularize
         res = @resources[canonical] ||= Resource.new(canonical)
-        res.add_operation(op_name, op)
+        res.add_operation(op)
       end
 
       # Known resource names

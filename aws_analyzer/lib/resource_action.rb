@@ -6,6 +6,9 @@ module Analyzer
     # [String] Action name (e.g. "create")
     attr_reader :name
 
+    # [String] Original action name, only set for AWS
+    attr_reader :original_name
+
     # [Symbol] Action verb (one of :get, :post, :put, :delete, ...)
     attr_reader :verb
 

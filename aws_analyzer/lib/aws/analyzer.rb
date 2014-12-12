@@ -37,7 +37,7 @@ module Analyzer
         # 1. Identify resources by using well known operation prefixes
         candidates.each do |c|
           name = c.gsub(/^(#{RESOURCE_ACTIONS.join('|')})/, '')
-          registry.add_resource_operation(name, c, service['operations'][c])
+          registry.add_resource_operation(name, service['operations'][c])
         end
 
         # 2. Collect custom actions that apply to identified resources
@@ -48,7 +48,7 @@ module Analyzer
           matched << r
           candidates.sort { |a, b| b.size <=> a.size } # Longer name first
           name = candidates.first
-          registry.add_resource_operation(name, r, service['operations'][r])
+          registry.add_resource_operation(name, service['operations'][r])
         end
 
         # 3. Collect remaining - unidentified operations
