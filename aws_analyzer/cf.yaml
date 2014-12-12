@@ -72,35 +72,35 @@ resources:
     link:
       - stack_id: stack
 shapes:
-  - create_stack_input:
-      type: structure
-      required: 
-        - stack_name
-      members:
-        stack_name:
-          - shape: stack_name
-        template_body:
-          - shape: template_body
-        template_url:
-          - shape: template_url
-        Parameters:
-          - shape: parameters
-        disable_rollback:
-          - shape: disable_rollback
-        timeout_in_minutes:
-          - shape: timeout_minutes
-        notification_arns:
-          - shape: notification_arns`
-        Capabilities:
-          - shape: capabilities
-        on_failure:
-          - shape: on_failure
-        stack_policy_body:
-          - shape: stack_policy_body
-        stack_policy_url:
-          - shape: stack_policy_url
-        Tags:
-          - shape: tags
+  create_stack_input:
+    type: structure
+    required: 
+      - stack_name
+    members:
+      stack_name:
+        shape: stack_name
+      template_body:
+        shape: template_body
+      template_url:
+        shape: template_url
+      parameters:
+        shape: parameters
+      disable_rollback:
+        shape: disable_rollback
+      timeout_in_minutes:
+        shape: timeout_minutes
+      notification_arns:
+        shape: notification_arns`
+      capabilities:
+        shape: capabilities
+      on_failure:
+        shape: on_failure
+      stack_policy_body:
+        shape: stack_policy_body
+      stack_policy_url:
+        shape: stack_policy_url
+      tags:
+        shape: tags
               #..
   - stack_name:
       type: string

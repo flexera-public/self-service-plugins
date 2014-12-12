@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+require 'optparse'
+require_relative '../analyzer'
+
+Version = [0, 2]
+options = { path: Dir.pwd, cloud: 'aws' }
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: analyze [options]"
+
+  # Optional argument; multi-line description.
+  opts.on('-p', '--path [PATH]', 'Specify path to JSON files (for AWS)') do |p|
+    options[:path] = p
+  end
+
+  opts.on('-c', '--cloud [CLOUD]', 'Specify cloud to analyze: aws or gce') do |c|
+    c = c.downcase
+    if c != 'aws' && c != 'gce'
+      puts "Cloud #{c} not supported, use 'aws' or 'gce'"
+      exit 1
+    end
+    options[:cloud] = c
+  end
+
+  opts.on('-s', '--service [SERVICE]', 'Specify service to analyze, e.g. "cloud_formation"') do |s|
+    options[:service] = s
+  end
+
+  opts.on('-f', '--[no-]force', 'Generate YAML event if analysis yields errors') do |f|
+    options[:force] = f
+  end
+
+  opts.on_tail('-h', '--help', 'Show this message') do
+    puts opts
+    exit
+  end
+
+  # Another typical switch to print the version.
+  opts.on_tail('--version', 'Show version') do
+    puts ::Version.join('.')
+    exit
+  end
+
+end.parse!
+
+service = options.delete(:service)
+force = options.delete(:force)
+if service.nil?
+  puts 'Specify service with --service'
+  exit 1
+end
+a = Analyzer::Analyzer.new(options)
+puts a.analyze_service(service, force)
+
+#services = jsons.map { |j| a.analyze(JSON.load(IO.read(j))) }
+#services.each { |s| puts s.to_s }
+#total_resources = services.map(&:resources).map(&:keys).flatten.size
+#total_operations = services.map(&:operations).map(&:keys).flatten.size
+#total_actions = services.map(&:resources).flatten.map { |r| r.values.map(&:resource_operations).flatten.size + r.values.map(&:collection_operations).flatten.size }.inject(0) {|t, n| n+t}
+#puts "Total: #{services.size} services, #{total_resources} resources with #{total_actions} actions and #{total_operations} unidentified operations"
+
