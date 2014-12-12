@@ -9,14 +9,13 @@ require "net/http"
 require "net/https"
 require "uri"
 require_relative '../../analyzer'
+require_relative "../application.rb"
+require_relative "../app/restifier"
 
 ENV["RACK_ENV"] ||= "development"
 
 $logger = ::Logger.new(STDERR)
 $logger.info "Hello Logger"
-
-require_relative "../application.rb"
-require_relative "../app/restifier"
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods

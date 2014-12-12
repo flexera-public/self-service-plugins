@@ -8,12 +8,10 @@ require 'base64'
 require "net/http"
 require "net/https"
 require "uri"
+require_relative '../analyzer'
+require_relative "application.rb"
 
 ENV["RACK_ENV"] ||= "development"
-
-require "aws-sdk-core"
-
-require "./application.rb"
 
 # load lib directory
 Dir["./lib/*.rb"].each do |file|
@@ -27,40 +25,12 @@ end
 
 # To support rackup (instead of rainbows)
 $logger ||= ::Logger.new(STDERR)
-$logger = ::Logger.new(STDERR)
-puts "config.ru"
-STDERR.puts "config.ru"
+#puts "config.ru"
+#STDERR.puts "config.ru"
 
-
-require './app/proxy'
+require_relative "app/restifier"
 Routes = Rack::Mount::RouteSet.new do |set|
-  set.add_route(Proxy, { path_info: %r{^/} }, {}, :proxy)
+  set.add_route(Restifier, { path_info: %r{^/} }, {}, :restifier)
 end
-
-
-=begin
-def mount_dir(route_set, path, prefix)
-  Dir.entries(path).each do |file|
-    next if file[0] == '.' # skip silently
-    if file =~ /\.rb$/
-      require "#{path}/#{file}"
-      resource_name = file.split(".").first
-      r_class = resource_name.split('-').map{|e| e.capitalize}.join
-      $logger.info "Loading resource type #{r_class} as #{prefix}#{resource_name}"
-      route_set.add_route(Object.const_get(r_class),
-          { :path_info => Rack::Mount::Strexp.compile("#{prefix}#{resource_name}",{},[],false) })
-    elsif Dir.exist?("#{path}/#{file}")
-      mount_dir(route_set, "#{path}/#{file}", "#{prefix}#{file}/")
-    else
-      $logger.warning "Skipping ./app/#{file}"
-    end
-  end
-end
-
-
-Routes = Rack::Mount::RouteSet.new do |set|
-  mount_dir(set, "./app", "/")
-end
-=end
 
 run Routes

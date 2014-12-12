@@ -45,11 +45,14 @@ class Restifier < App
       unless action
         halt 400, "Resource #{res_name} does not have action #{name}"
       end
+      $logger.info "Action: #{action.inspect}"
       action
     end
 
     def process_body(action, req_body)
       body_str = req_body.is_a?(String) ? req_body : req_body.read
+      return body_str
+      # some later day we'll parse the body and valdate it and then re-encode
       body = {}
       if body_str.size > 0
         unless request.content_type && request.content_type.start_with?("application/json")
@@ -69,24 +72,24 @@ class Restifier < App
     end
 
     def perform_request(svc_name, action, req_body)
-      url = URI("%s/%s/%s" % [$connector, svc_name, action.original_name])
+      url = URI("%s/%s/%s" % [$connector, svc_name, action.name])
       $logger.info "URL: #{url}"
       $logger.info "Payload: #{req_body.inspect}"
-      return 200, "OK", { 'content-type' => 'application/json' }
 
       begin
         unless $client
           $client = Net::HTTP.start(url.host, url.port)
         end
 
-        res = $client.request_post(url.path, body, 'content-type'=>'application/json')
+        response = $client.request_post(url.path, req_body, 'content-type'=>'application/json')
       rescue Exception => e
         $logger.info "*** Error: #{e} #{e.inspect}"
-        $logger.info e.backtrace[0..1].join(' | ')
+        $logger.info e.backtrace[0..10].join(' | ')
         halt 500, e.message
       end
 
-      return response.status, { 'content-type' => "application/json" }, response.body
+      $logger.info "Got: #{response.code} #{response.body}"
+      return response.code.to_i, { 'content-type' => "application/json" }, response.body
     end
 
   end
@@ -98,8 +101,18 @@ class Restifier < App
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
     action = get_action(resource, params['resource_type'], "index")
+    return perform_request(params['service'], action, "")
+  end
+
+  get '/:service/:resource_type' do
+    log_info
+
+    # Get the metadata for the service and make sure the resource type exists
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], "index")
     body = process_body(action, request.body)
-    perform_request(action, body)
+    return perform_request(params['service'], action, body)
   end
 
 end
