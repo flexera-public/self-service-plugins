@@ -1,6 +1,11 @@
 module Analyzer
 
   # Generic analyzer
+  #
+  # Example usage:
+  #
+  # a = Analyzer::Analyzer.new(cloud: 'aws')
+  # definition = a.service_definition('cloud_formation')
   class Analyzer
 
     # Initialize
@@ -16,10 +21,15 @@ module Analyzer
       @analyzer = klass.new(options)
     end
 
+    # Return the service definition for the given service
+    def service_definition(service)
+      @analyzer.analyze(service)
+    end
+
     # Analyze service from definition in hash
     def analyze_service(service, force=false)
       begin
-        definition = @analyzer.analyze(service)
+        definition = service_definition(service)
         errors = @analyzer.errors
       rescue Exception => e
         if e.is_a? SystemExit

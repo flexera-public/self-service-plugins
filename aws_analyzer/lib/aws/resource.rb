@@ -10,7 +10,7 @@ module Analyzer
 
       # Initialize with resource name
       def initialize(name)
-        @name = name
+        @name = name.underscore
         @actions = {}
         @collection_actions = {}
         @custom_actions = {}
@@ -18,8 +18,8 @@ module Analyzer
 
       # Register operation
       def add_operation(name, res_name, op, is_collection)
-        truncate_size = res_name.size + 1 + (is_collection ? 1 : 0)
-        n = name[0..-truncate_size]
+        truncate_size = res_name.size + 1
+        n = name[0..-truncate_size].underscore
         operation = to_operation(op)
         if is_collection
           if n == 'describe'
