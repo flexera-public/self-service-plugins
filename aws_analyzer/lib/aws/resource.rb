@@ -28,7 +28,7 @@ module Analyzer
       def add_operation(op)
         name = op['name']
         is_collection = name !~ /#{@orig_name}$/ # @orig_name is the singular version of ResourceName
-        n = name.gsub(/(#{@orig_name}$|#{@orig_name.pluralize}$)/, '').underscore
+        n = name.gsub(/(#{@orig_name}|#{@orig_name.pluralize})$/, '').underscore
         if n == 'describe'
           n = is_collection ? 'index' : 'show'
         end

@@ -15,7 +15,7 @@ module Analyzer
     # [Hash] Cloud provider specific metadata needed by API client
     attr_reader :metadata
 
-    # [Array<Resource>] List of resources exposed by service
+    # [Hash<String, Resource>] Hash of resources exposed by service indexed by name
     attr_reader :resources
 
     # [Array<Shapes>] Request and response body structure descriptions
@@ -32,7 +32,7 @@ module Analyzer
         url:       @url,
         version:   @version || '1.0',
         metadata:  @metadata,
-        resources: @resources.map(&:to_hash),
+        resources: @resources.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
         shapes:    @shapes }
     end
 

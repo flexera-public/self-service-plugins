@@ -58,7 +58,7 @@ module Analyzer
         ::Analyzer::ServiceDefinition.new(name:      service['metadata']['serviceFullName'],
                                           url:       "/aws/#{service['metadata']['endpointPrefix']}",
                                           metadata:  service['metadata'],
-                                          resources: registry.resources.values,
+                                          resources: registry.resources.inject({}) { |m, (k, v)| m[k.underscore] = v; m },
                                           shapes:    to_underscore(service['shapes']))
       end
 
