@@ -3,7 +3,7 @@ module Analyzer
   # A service resource
   class Resource
 
-    # [String] Resource name (e.g. "Stack")
+    # [String] Resource name (e.g. "availability_zone")
     attr_reader :name
 
     # [Shape] Resource shape (structure definition)
