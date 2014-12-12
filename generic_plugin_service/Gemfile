@@ -1,0 +1,12 @@
+source 'https://rubygems.org'
+
+gem 'praxis'
+gem 'rack', '~> 1.0'
+gem 'rake'
+gem 'aws-sdk-core'
+
+group :development, :test do
+  gem 'pry', require: 'pry'
+  gem 'pry-byebug'
+  gem 'rspec'
+end
