@@ -19,13 +19,8 @@ module V1
         # Create a resource
         resource = create_resource(service, res['name'])
 
-        media_type = V1::MediaTypes.const_get(
+        resource.media_type V1::MediaTypes.const_get(
           defn['name'].delete(' ').camel_case).const_get(res['shape'].camel_case)
-        if media_type
-          resource.media_type media_type
-        else
-          resource.media_type 'application/json'
-        end
 
         resource.version defn['version']
         resource.routing do
