@@ -15,13 +15,13 @@ module Analyzer
     # [Array<String>] Resource secondary ids field (e.g. ["StackName"])
     attr_reader :secondary_ids
 
-    # [Array<ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
+    # [Hash<String, ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
     attr_reader :actions
 
-    # [Array<ResourceAction>] Resource custom actions (e.g. cancel_update)
+    # [Hash<String, ResourceAction>] Resource custom actions (e.g. cancel_update)
     attr_reader :custom_actions
 
-    # [Array<ResourceAction>] Resource collection custom actions (e.g. list)
+    # [Hash<String, ResourceAction>] Resource collection custom actions (e.g. list)
     attr_reader :collection_actions
 
     # [Hash<String, String>] Linked resource names indexed by link field name (e.g. { "stack_id" => "Stack" })
@@ -33,14 +33,14 @@ module Analyzer
 
     # YAML representation
     def to_yaml
-      YAML.dump({ name:               @name,
-                  shape:              @shape.to_hash,
-                  primary_id:         @primary_id,
-                  secondary_ids:      @secondary_ids,
-                  actions:            @actions.map(&:to_hash),
-                  custom_actions:     @custom_actiohns.map(&:to_hash),
-                  collection_actions: @collection_actions.map(&:to_hash),
-                  links:              @links })
+      YAML.dump({ 'name'               => @name,
+                  'shape'              => @shape.to_hash,
+                  'primary_id'         => @primary_id,
+                  'secondary_ids'      => @secondary_ids,
+                  'actions'            => @actions.inject({}) { |m, (k, v)| m[k]  = v.to_hash; m },
+                  'custom_actions'     => @custom_actiohns.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
+                  'collection_actions' => @collection_actions.inject({}) { |m, (k, v)| m[k]  = v.to_hash; m },
+                  'links'              => @links })
     end
     alias :to_s :to_yaml
 

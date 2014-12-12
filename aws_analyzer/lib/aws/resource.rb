@@ -13,11 +13,11 @@ module Analyzer
 
       # Initialize with resource name
       def initialize(name)
-        @name = name.underscore
-        @orig_name = name
-        @actions = {}
+        @name               = name.underscore
+        @orig_name          = name
+        @actions            = {}
         @collection_actions = {}
-        @custom_actions = {}
+        @custom_actions     = {}
       end
 
       # Register operation
@@ -42,10 +42,11 @@ module Analyzer
         else
           if n == 'show'
             # Let's set the shape of the resource with the result of a describe
-            shape = op['output']['shape']
-            if shape.nil?
+            @shape = op['output']['shape']
+            if @shape.nil?
               raise "No shape for describe??? Resource: #{name}, Operation: #{op['name']}"
             end
+
           end
           if ['create', 'delete', 'update', 'show'].include?(n)
             @actions[n] = operation
@@ -74,24 +75,24 @@ module Analyzer
       #      params:
       #      response: describe_stack_resource_output
       def to_operation(op, name)
-        { name:     name,
-          original_name: op['name'],
-          verb:     op['http']['method'].downcase,
-          path:     op['http']['requestUri'],
-          payload:  op['input']['shape'].underscore,
-          params:   [],
-          response: (out = op['output']) && out['shape'].underscore }
+        { 'name'          => name,
+          'original_name' => op['name'],
+          'verb'          => op['http']['method'].downcase,
+          'path'          => op['http']['requestUri'],
+          'payload'       => op['input']['shape'].underscore,
+          'params'        => [],
+          'response'      => (out = op['output']) && out['shape'].underscore }
       end
 
       # Hashify
       def to_hash
-        { name:               @name,
-          shape:              @shape,
-          primary_id:         @primary_id,
-          secondary_ids:      @secondary_ids,
-          actions:            @actions.values,
-          custom_actions:     @custom_actions.values,
-          collection_actions: @collection_actions.values }
+        { 'name'               => @name,
+          'shape'              => @shape,
+          'primary_id'         => @primary_id,
+          'secondary_ids'      => @secondary_ids,
+          'actions'            => @actions,
+          'custom_actions'     => @custom_actions,
+          'collection_actions' => @collection_actions }
       end
 
     end
@@ -109,7 +110,7 @@ module Analyzer
       # Add operation to resource
       # Create resource if non-existent, checks whether operation is collection or resource operation
       def add_resource_operation(res_name, op)
-        canonical = PLURAL_RESOURCE_NAMES.include?(res_name) ? res_name : res_name.singularize
+        canonical = canonical_name(res_name)
         res = @resources[canonical] ||= Resource.new(canonical)
         res.add_operation(op)
       end
@@ -117,6 +118,11 @@ module Analyzer
       # Known resource names
       def resource_names
         @resources.keys
+      end
+
+      # Singularize name unless it's in the exception list
+      def canonical_name(base_name)
+        PLURAL_RESOURCE_NAMES.include?(base_name) ? base_name : base_name.singularize
       end
 
     end

@@ -55,11 +55,11 @@ module Analyzer
         not_mapped = remaining - matched
         @errors = ["Failed to identify a resource for the following operations:\n#{not_mapped.join("\n")}"]
 
-        ::Analyzer::ServiceDefinition.new(name:      service['metadata']['serviceFullName'],
-                                          url:       "/aws/#{service['metadata']['endpointPrefix']}",
-                                          metadata:  service['metadata'],
-                                          resources: registry.resources.inject({}) { |m, (k, v)| m[k.underscore] = v; m },
-                                          shapes:    to_underscore(service['shapes']))
+        ::Analyzer::ServiceDefinition.new('name'      => service['metadata']['serviceFullName'],
+                                          'url'       => "/aws/#{service['metadata']['endpointPrefix']}",
+                                          'metadata'  => service['metadata'],
+                                          'resources' => registry.resources.inject({}) { |m, (k, v)| m[k.underscore] = v; m },
+                                          'shapes'    => to_underscore(service['shapes']))
       end
 
       # true if name is an operation on a resource (i.e. has a well-known prefix)

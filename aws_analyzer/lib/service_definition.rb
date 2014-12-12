@@ -28,12 +28,12 @@ module Analyzer
 
     # Convert to hash
     def to_hash
-      { name:      @name,
-        url:       @url,
-        version:   @version || '1.0',
-        metadata:  @metadata,
-        resources: @resources.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
-        shapes:    @shapes }
+      { 'name'      => @name,
+        'url'       => @url,
+        'version'   => @version || '1.0',
+        'metadata'  => @metadata,
+        'resources' => @resources.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
+        'shapes'    => @shapes }
     end
 
     # Is definition empty?

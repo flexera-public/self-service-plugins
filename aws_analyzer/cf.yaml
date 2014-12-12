@@ -1,97 +1,120 @@
 ---
-:name: AWS CloudFormation
-:url: "/aws/cloudformation"
-:version: '1.0'
-:metadata:
+name: AWS CloudFormation
+url: "/aws/cloudformation"
+version: '1.0'
+metadata:
   apiVersion: '2010-05-15'
   endpointPrefix: cloudformation
   serviceFullName: AWS CloudFormation
   signatureVersion: v4
   xmlNamespace: http://cloudformation.amazonaws.com/doc/2010-05-15/
   protocol: query
-:resources:
-- :name: stack_event
-  :shape: 
-  :primary_id: 
-  :secondary_ids: 
-  :actions:
-  - :name: index
-    :verb: post
-    :path: "/"
-    :payload: describe_stack_events_input
-    :params: []
-    :response: describe_stack_events_output
-  :custom_actions: []
-  :collection_actions: []
-- :name: stack_resource
-  :shape: 
-  :primary_id: 
-  :secondary_ids: 
-  :actions:
-  - :name: show
-    :verb: post
-    :path: "/"
-    :payload: describe_stack_resource_input
-    :params: []
-    :response: describe_stack_resource_output
-  - :name: index
-    :verb: post
-    :path: "/"
-    :payload: describe_stack_resources_input
-    :params: []
-    :response: describe_stack_resources_output
-  :custom_actions: []
-  :collection_actions:
-  - :name: list
-    :verb: post
-    :path: "/"
-    :payload: list_stack_resources_input
-    :params: []
-    :response: list_stack_resources_output
-- :name: stack
-  :shape: 
-  :primary_id: 
-  :secondary_ids: 
-  :actions:
-  - :name: index
-    :verb: post
-    :path: "/"
-    :payload: describe_stacks_input
-    :params: []
-    :response: describe_stacks_output
-  - :name: create
-    :verb: post
-    :path: "/"
-    :payload: create_stack_input
-    :params: []
-    :response: create_stack_output
-  - :name: delete
-    :verb: post
-    :path: "/"
-    :payload: delete_stack_input
-    :params: []
-    :response: 
-  - :name: update
-    :verb: post
-    :path: "/"
-    :payload: update_stack_input
-    :params: []
-    :response: update_stack_output
-  :custom_actions:
-  - :name: cancel_update
-    :verb: post
-    :path: "/"
-    :payload: cancel_update_stack_input
-    :params: []
-    :response: 
-  :collection_actions:
-  - :name: list
-    :verb: post
-    :path: "/"
-    :payload: list_stacks_input
-    :params: []
-    :response: list_stacks_output
-:shapes:
+resources:
+  stack_event:
+    name: stack_event
+    shape: 
+    primary_id: 
+    secondary_ids: 
+    actions:
+      index:
+        name: index
+        original_name: DescribeStackEvents
+        verb: post
+        path: "/"
+        payload: describe_stack_events_input
+        params: []
+        response: describe_stack_events_output
+    custom_actions: {}
+    collection_actions: {}
+  stack_resource:
+    name: stack_resource
+    shape: DescribeStackResourceOutput
+    primary_id: 
+    secondary_ids: 
+    actions:
+      show:
+        name: show
+        original_name: DescribeStackResource
+        verb: post
+        path: "/"
+        payload: describe_stack_resource_input
+        params: []
+        response: describe_stack_resource_output
+      index:
+        name: index
+        original_name: DescribeStackResources
+        verb: post
+        path: "/"
+        payload: describe_stack_resources_input
+        params: []
+        response: describe_stack_resources_output
+    custom_actions: {}
+    collection_actions:
+      list:
+        name: list
+        original_name: ListStackResources
+        verb: post
+        path: "/"
+        payload: list_stack_resources_input
+        params: []
+        response: list_stack_resources_output
+  stack:
+    name: stack
+    shape: 
+    primary_id: 
+    secondary_ids: 
+    actions:
+      index:
+        name: index
+        original_name: DescribeStacks
+        verb: post
+        path: "/"
+        payload: describe_stacks_input
+        params: []
+        response: describe_stacks_output
+      create:
+        name: create
+        original_name: CreateStack
+        verb: post
+        path: "/"
+        payload: create_stack_input
+        params: []
+        response: create_stack_output
+      delete:
+        name: delete
+        original_name: DeleteStack
+        verb: post
+        path: "/"
+        payload: delete_stack_input
+        params: []
+        response: 
+      update:
+        name: update
+        original_name: UpdateStack
+        verb: post
+        path: "/"
+        payload: update_stack_input
+        params: []
+        response: update_stack_output
+    custom_actions:
+      cancel_update:
+        name: cancel_update
+        original_name: CancelUpdateStack
+        verb: post
+        path: "/"
+        payload: cancel_update_stack_input
+        params: []
+        response: 
+    collection_actions:
+      list:
+        name: list
+        original_name: ListStacks
+        verb: post
+        path: "/"
+        payload: list_stacks_input
+        params: []
+        response: list_stacks_output
+shapes:
   already_exists_exception:
     type: structure
     members: {}
