@@ -20,8 +20,23 @@ $stdout = STDOUT = IOToLog.new($logger)
 #$stderr.puts "Hello $stderr"
 =end
 
+class String
+  def camel_case
+    return self if self !~ /_/ && self =~ /[A-Z]+.*/
+    split('_').map{|e| e.capitalize}.join
+  end
+end
+
 class App < Sinatra::Base
   helpers Sinatra::JSON
+
+  error 500 do
+    if env['sinatra.error']
+      $logger.info "***** BOOM *****"
+      $logger.info env['sinatra.error'].message
+      $logger.info "\n" + env['sinatra.error'].backtrace[0..10].join("\n")
+    end
+  end
 
   configure do
     disable :show_exceptions

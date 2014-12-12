@@ -1,98 +1,117 @@
   class Proxy < App
 
-  get '/:service/:operation' do
-    puts "Proxy: service=#{params['service']} operation=#{params['operation']}"
-    return "Hello World!\n"
-  end
+    $services = {}
 
-=begin
     helpers do
-
-      def make_href(acct, id)
-        route = ApiResources::Instances.actions[:show].named_routes[:instance_href]
-        route.path.expand(acct: acct, id: id)
-      end
-
-      # Convert the google cloud sql instance representation to "our" representation
-      def convert_instance(acct, i)
-        route = ApiResources::Instances.actions[:show].named_routes[:instance_href]
-        i['href'] = make_href(acct, i['instance'])
-        i
+      def get_client(name)
+        return $services[name] if $services.key?(name)
+        svc_name = name.size < 4 ? name.upcase : name.camel_case
+        $logger.info "Creating client for Aws::#{svc_name}"
+        svc = Aws.const_get(svc_name)
+        unless svc
+          halt 404, "Service #{name} (#{svc_name}) is not supported"
+        end
+        $services[name] = svc.const_get("Client").new(region: 'us-east-1')
+        $services[name]
       end
 
     end
 
-    get '/' do
-      result = @gc_sql_client.execute(
-        api_method: @gc_sql_api.instances.list,
-        parameters: { project: @gc_sql_project },
-      )
-      puts "Google returned #{result.status.inspect}"
 
-      if result.success? && result.data?
-        [ 200, { 'Content-Type' => 'application/json' },
-          MultiJson.load(result.body)['items'].
-            select{|i| i['kind'] == "sql#instance"}.
-            map{|i| convert_instance(acct, i)} ]
-      else
-        puts "Error: #{result.inspect}"
-        halt result.status, result.error_message
-      end
+  post '/:service/:operation' do
+    $logger.info "Params   : #{params.inspect}"
+    $logger.info "Body     : #{request.content_type} (#{request.body.size} bytes)"
+    $logger.info "Service  : #{params['service']}"
+    $logger.info "Operation: #{params['operation']}"
+
+    # Get a client for the service and make sure the operation exists
+    client = get_client(params['service'])
+    #$logger.info "Operations: #{client.operation_names.join(' ')}"
+    unless client.operation_names.include?(params['operation'].to_sym)
+      halt 404, "Operation #{params['operation']} is not supported by service #{params['service']}"
     end
 
-    get '/:id' do
-      result = @gc_sql_client.execute(
-        api_method: @gc_sql_api.instances.get,
-        parameters: { project: @gc_sql_project, instance: params[:id] },
-      )
-      puts "Google returned #{result.status.inspect}"
+    # Get the body of the request and make it ready to be the operation's parameter
+    body = {}
+    unless request.content_type && request.content_type.start_with?("application/json")
+      halt 400, "Request must contain application/json parameters"
+    end
+    begin
+      body = request.body ? Yajl::Parser.parse(request.body, :symbolize_keys => true) : {}
+    rescue StandardError => e
+      halt 400, "Error parsing json body: #{e}"
+    end
+    unless body.is_a?(Hash)
+      halt 400, "Request body must consist of a json hash"
+    end
+    $logger.info "Request body contains: #{body.keys.sort.join(' ')}"
 
-      if result.success? && result.data?
-        [ 200, { 'Content-Type' => 'application/json' },
-          convert_instance(acct, MultiJson.load(result.body)) ]
-      else
-        puts "Error: #{result.inspect}"
-        halt result.status, result.error_message
-      end
+    # Perform the operation
+    begin
+      res = client.send(params['operation'], body)
+    rescue Aws::Errors::ServiceError => e
+      code = e.context.http_response.status_code
+      #$logger.info "*** Service error: #{e.context.http_response.inspect}"
+      $logger.info "*** AWS returned error: #{code} \"#{e}\""
+      halt code, e.message
+    rescue Aws::Errors, ArgumentError => e
+      $logger.info "*** AWS gem error: #{e}"
+      halt 400, e.message
+    rescue Exception => e
+      $logger.info "*** Error: #{e} #{e.inspect}"
+      $logger.info e.backtrace[0..1].join(' | ')
+      halt 400, e.message
     end
 
-    post '/' do
-      #i = JSON.parse(request.raw_payload)
-      #i = request.raw_params['i']
-      #i = request.raw_params
-      i = params[:i]
-      i['settings'] ||= {}
-      i['settings']['tier'] = i.delete('tier')
-      puts "Payload: #{i.inspect}"
-      result = @gc_sql_client.execute(
-        api_method: @gc_sql_api.instances.insert,
-        parameters: { project: @gc_sql_project },
-        body_object: i,
-      )
-      puts "Google returned #{result.status.inspect}"
+    if res.is_a?(Aws::PageableResponse)
+      $logger.info "Pageable response"
 
-      if result.success?
-        [ 201, { 'Location' => make_href(acct, i['instance']) }, nil ]
-      else
-        puts "Error: #{result.inspect}"
-        halt result.status, result.error_message
+      if res.last_page?
+        code = res.context.http_response.status_code
+        #$logger.info "Result: #{res.data.inspect}"
+        #$logger.info "Result code: #{res.context.http_response.status_code}"
+        if res.data.is_a?(Struct)
+          return code, { :'content-type' => "application/json" }, Yajl::Encoder.encode(res.data.to_h)
+        else
+          return code, { :'content-type' => "application/json" }, Yajl::Encoder.encode(res.data)
+        end
       end
-    end
 
-    delete ':id' do
-      result = @gc_sql_client.execute(
-        api_method: @gc_sql_api.instances.delete,
-        parameters: { project: @gc_sql_project, instance: params[:id] },
-      )
-      puts "Google returned #{result.status.inspect}"
-
-      if result.success?
-        [ 204, {}, nil ]
-      else
-        puts "Error: #{result.inspect}"
-        halt result.status, result.error_message
+      response_key = nil
+      response_array = []
+      code = 400
+      res.each_page do |page|
+        data = page.data.to_h
+        #$logger.info "Data: #{data.inspect}"
+        #$logger.info "Page: #{page.inspect}"
+        if !response_key
+          # find something in the response that is an array
+          data.each_pair do |k, v|
+            if v.is_a?(Array)
+              response_key = k
+              break
+            end
+          end
+          #data.each_pair do |k, v|
+          #  $logger.info "Data[#{k}] -> #{v.class}"
+          #end
+          if !response_key
+          halt 500, "Cannot locate an array in AWS response having #{data.keys.join(' ')}"
+          end
+        end
+        # now add what we got to the total
+        response_array += data[response_key]
+        code = page.context.http_response.status_code
       end
+      response = Yajl::Encoder.encode(response_key => response_array)
+      $logger.info "Returning #{response_array.size} elements as #{response.size} bytes"
+
+      return code, { :'content-type' => "application/json" }, response
+    else
+      $logger.info "Result: #{res.inspect}"
+      $logger.info "Result: #{res.data.inspect}"
+      halt 500, "result is not pageable, dunno what to do"
     end
-=end
+  end
 
   end

@@ -27,6 +27,9 @@ end
 
 # To support rackup (instead of rainbows)
 $logger ||= ::Logger.new(STDERR)
+$logger = ::Logger.new(STDERR)
+puts "config.ru"
+STDERR.puts "config.ru"
 
 
 require './app/proxy'
