@@ -17,8 +17,7 @@ resources:
     secondary_ids: 
     actions:
       index:
-        name: index
-        original_name: DescribeStackEvents
+        name: DescribeStackEvents
         verb: post
         path: "/"
         payload: describe_stack_events_input
@@ -28,21 +27,19 @@ resources:
     collection_actions: {}
   stack_resource:
     name: stack_resource
-    shape: DescribeStackResourceOutput
+    shape: describe_stack_resource_output
     primary_id: 
     secondary_ids: 
     actions:
       show:
-        name: show
-        original_name: DescribeStackResource
+        name: DescribeStackResource
         verb: post
         path: "/"
         payload: describe_stack_resource_input
         params: []
         response: describe_stack_resource_output
       index:
-        name: index
-        original_name: DescribeStackResources
+        name: DescribeStackResources
         verb: post
         path: "/"
         payload: describe_stack_resources_input
@@ -51,8 +48,7 @@ resources:
     custom_actions: {}
     collection_actions:
       list:
-        name: list
-        original_name: ListStackResources
+        name: ListStackResources
         verb: post
         path: "/"
         payload: list_stack_resources_input
@@ -65,32 +61,28 @@ resources:
     secondary_ids: 
     actions:
       index:
-        name: index
-        original_name: DescribeStacks
+        name: DescribeStacks
         verb: post
         path: "/"
         payload: describe_stacks_input
         params: []
         response: describe_stacks_output
       create:
-        name: create
-        original_name: CreateStack
+        name: CreateStack
         verb: post
         path: "/"
         payload: create_stack_input
         params: []
         response: create_stack_output
       delete:
-        name: delete
-        original_name: DeleteStack
+        name: DeleteStack
         verb: post
         path: "/"
         payload: delete_stack_input
         params: []
         response: 
       update:
-        name: update
-        original_name: UpdateStack
+        name: UpdateStack
         verb: post
         path: "/"
         payload: update_stack_input
@@ -98,8 +90,7 @@ resources:
         response: update_stack_output
     custom_actions:
       cancel_update:
-        name: cancel_update
-        original_name: CancelUpdateStack
+        name: CancelUpdateStack
         verb: post
         path: "/"
         payload: cancel_update_stack_input
@@ -107,8 +98,7 @@ resources:
         response: 
     collection_actions:
       list:
-        name: list
-        original_name: ListStacks
+        name: ListStacks
         verb: post
         path: "/"
         payload: list_stacks_input
