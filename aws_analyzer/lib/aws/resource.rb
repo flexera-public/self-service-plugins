@@ -9,7 +9,29 @@ module Analyzer
     # to either the resourcd or the collection.
     class Resource
 
+      # [String] Resource name (e.g. "Stack")
       attr_reader :name
+
+      # [String] Resource primary id field (e.g. "StackId")
+      # TBD
+      attr_reader :primary_id
+
+      # [Array<String>] Resource secondary ids field (e.g. ["StackName"])
+      # TBD
+      attr_reader :secondary_ids
+
+      # [Hash<String, ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
+      attr_reader :actions
+
+      # [Hash<String, ResourceAction>] Resource custom actions (e.g. cancel_update)
+      attr_reader :custom_actions
+
+      # [Hash<String, ResourceAction>] Resource collection custom actions (e.g. list)
+      attr_reader :collection_actions
+
+      # [Hash<String, String>] Linked resource names indexed by link field name (e.g. { "stack_id" => "Stack" })
+      # TBD
+      attr_reader :links
 
       # Initialize with resource name
       def initialize(name)
@@ -42,11 +64,10 @@ module Analyzer
         else
           if n == 'show'
             # Let's set the shape of the resource with the result of a describe
-            @shape = op['output']['shape']
+            @shape = op['output']['shape'].underscore
             if @shape.nil?
               raise "No shape for describe??? Resource: #{name}, Operation: #{op['name']}"
             end
-
           end
           if ['create', 'delete', 'update', 'show'].include?(n)
             @actions[n] = operation
@@ -75,13 +96,12 @@ module Analyzer
       #      params:
       #      response: describe_stack_resource_output
       def to_operation(op, name)
-        { 'name'          => name,
-          'original_name' => op['name'],
-          'verb'          => op['http']['method'].downcase,
-          'path'          => op['http']['requestUri'],
-          'payload'       => op['input']['shape'].underscore,
-          'params'        => [],
-          'response'      => (out = op['output']) && out['shape'].underscore }
+        ::Analyzer::ResourceAction.new(name:     op['name'],
+                                       verb:     op['http']['method'].downcase,
+                                       path:     op['http']['requestUri'],
+                                       payload:  op['input']['shape'].underscore,
+                                       params:   [],
+                                       response: (out = op['output']) && out['shape'].underscore)
       end
 
       # Hashify
@@ -90,9 +110,9 @@ module Analyzer
           'shape'              => @shape,
           'primary_id'         => @primary_id,
           'secondary_ids'      => @secondary_ids,
-          'actions'            => @actions,
-          'custom_actions'     => @custom_actions,
-          'collection_actions' => @collection_actions }
+          'actions'            => @actions.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
+          'custom_actions'     => @custom_actions.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
+          'collection_actions' => @collection_actions.inject({}) { |m, (k, v)| m[k] = v.to_hash; m } }
       end
 
     end

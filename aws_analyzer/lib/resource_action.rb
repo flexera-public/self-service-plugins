@@ -3,11 +3,8 @@ module Analyzer
   # A service resource action
   class ResourceAction
 
-    # [String] Action name (e.g. "create")
+    # [String] Action name (e.g. "CreateStack")
     attr_reader :name
-
-    # [String] Original action name, only set for AWS
-    attr_reader :original_name
 
     # [Symbol] Action verb (one of :get, :post, :put, :delete, ...)
     attr_reader :verb
@@ -24,18 +21,19 @@ module Analyzer
     # [Shape] Action response
     attr_reader :response
 
-    # Initialize
-    def initialize
+    # Initialize with hash
+    def initialize(opts)
+      opts.each { |k, v| instance_variable_set("@#{k}", v) }
     end
 
     # Hash representation
     def to_hash
-      { name:     @name,
-        verb:     @verb,
-        path:     @path,
-        payload:  @payload.name,
-        params:   @params.map(&:name),
-        response: @response.name }
+      { 'name'          => @name,
+        'verb'          => @verb,
+        'path'          => @path,
+        'payload'       => @payload,
+        'params'        => @params,
+        'response'      => @response }
     end
 
     # YAML representation
