@@ -53,7 +53,7 @@ module Analyzer
         matched = []
         remaining.each do |r|
           candidates = registry.resource_names.select { |n| r =~ /(#{n}|#{n.pluralize})$/ }
-            next if candidates.empty?
+          next if candidates.empty?
           matched << r
           candidates.sort { |a, b| b.size <=> a.size } # Longer name first
           name = candidates.first
@@ -64,47 +64,44 @@ module Analyzer
         res_json1 = File.join(@json_path, service_name.camel_case + '.resources.json')
         res_json2 = File.join("./apis", service_name.camel_case + '.resources.json')
         shapes = to_underscore(service['shapes'])
-        if File.exist?(res_json)
-          puts "Extracting ids..."
+        begin
+          resources = JSON.load(IO.read(res_json1))
+        rescue Errno::ENOENT => e
+          #puts "Exception: #{e.inspect}"
           begin
-            resources = JSON.load(IO.read(res_json1))
+            resources = JSON.load(IO.read(res_json2))
           rescue Errno::ENOENT => e
-            #puts "Exception: #{e.inspect}"
-            begin
-              resources = JSON.load(IO.read(res_json2))
-            rescue Errno::ENOENT => e
-              puts "Cannot find resources definition for #{service_name} in"
-              puts res_json1, res_json2
-              raise "Ooops"
-            end
+            puts "Cannot find resources definition for #{service_name} in"
+            puts res_json1, res_json2
+            exit 1
           end
+        end
 
-          resources['resources'].each do |name, res|
-            next unless res['shape']
-            existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
-            next if existing.empty?
-            if existing.size > 1
-              puts "Found ambiguous match: multiple resources with shape #{res['shape']}..."
-              next
-            end
-            r = existing.values.first
-            shape = shapes[r.shape]
-            if shape
-              members = shape['members'].keys || []
-              res['identifiers'].each do |i|
-                candidate = i['memberName'] || i['name']
-                next if candidate.nil?
-                candidate = candidate.underscore
-                if !members.include?(candidate)
-                  candidate = "#{r.name}_#{candidate}"
-                  next unless members.include?(candidate)
-                end
-                if r.primary_id.nil?
-                  r.primary_id = candidate
-                else
-                  r.secondary_ids ||= []
-                  r.secondary_ids << candidate
-                end
+        resources['resources'].each do |name, res|
+          next unless res['shape']
+          existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
+          next if existing.empty?
+          if existing.size > 1
+            puts "Found ambiguous match: multiple resources with shape #{res['shape']}..."
+            next
+          end
+          r = existing.values.first
+          shape = shapes[r.shape]
+          if shape
+            members = shape['members'].keys || []
+            res['identifiers'].each do |i|
+              candidate = i['memberName'] || i['name']
+              next if candidate.nil?
+              candidate = candidate.underscore
+              if !members.include?(candidate)
+                candidate = "#{r.name}_#{candidate}"
+                next unless members.include?(candidate)
+              end
+              if r.primary_id.nil?
+                r.primary_id = candidate
+              else
+                r.secondary_ids ||= []
+                r.secondary_ids << candidate
               end
             end
           end
