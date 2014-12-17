@@ -6,6 +6,8 @@ module Analyzer
 
     # Resource operation prefixes used by heuristic
     RESOURCE_ACTIONS = ['Describe']
+    SECONDARY_RESOURCE_ACTIONS = ['List', 'Get']
+    ALL_ACTIONS = RESOURCE_ACTIONS + SECONDARY_RESOURCE_ACTIONS
 
     # Anayze a single service hash
     class Analyzer
@@ -32,12 +34,19 @@ module Analyzer
         service = JSON.load(IO.read(json))
         registry = ResourceRegistry.new
         operations = service['operations'].keys
-        candidates, remaining = operations.partition { |o| is_resource_action?(o) }
+        # First try with RESOURCE_ACTIONS operation prefixes
+        candidates, remaining = operations.partition { |o| is_resource_action?(o, primary_only: true) }
+        # If no results then try with SECONDARY_RESOURCE_ACTIONS operation prefixes
+        if candidates.empty?
+          candidates, remaining = operations.partition { |o| is_resource_action?(o) }
+        end
 
         # 1. Identify resources by using well known operation prefixes
         candidates.each do |c|
-          name = c.gsub(/^(#{RESOURCE_ACTIONS.join('|')})/, '')
-          registry.add_resource_operation(name, service['operations'][c], service['shapes'])
+          name = c.gsub(/^(#{ALL_ACTIONS.join('|')})/, '')
+          unless name.underscore =~ /_for_/
+            registry.add_resource_operation(name, service['operations'][c], service['shapes'])
+          end
         end
 
         # 2. Collect custom actions that apply to identified resources
@@ -57,6 +66,7 @@ module Analyzer
           puts "Extracting ids..."
           resources = JSON.load(IO.read(res_json))
           resources['resources'].each do |name, res|
+            next unless res['shape']
             existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
             next if existing.empty?
             if existing.size > 1
@@ -89,8 +99,11 @@ module Analyzer
       end
 
       # true if name is an operation on a resource (i.e. has a well-known prefix)
-      def is_resource_action?(name)
-        !!RESOURCE_ACTIONS.any? { |s| name =~ /^#{s}/ }
+      def is_resource_action?(name, opts={})
+        res = !!RESOURCE_ACTIONS.any? { |s| name =~ /^#{s}/ }
+        return res if res
+        return false if opts[:primary_only]
+        res = !!SECONDARY_RESOURCE_ACTIONS.any? { |s| name =~ /^#{s}/ }
       end
 
       # Keys whose values should not be underscorized - might need to be smarter here

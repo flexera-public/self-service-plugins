@@ -54,7 +54,7 @@ module Analyzer
         name = op['name']
         is_collection = name !~ /#{@orig_name}$/ # @orig_name is the singular version of ResourceName
         n = name.gsub(/(#{@orig_name}|#{@orig_name.pluralize})$/, '').underscore
-        if n == 'describe'
+        if n == 'describe' || n == 'list' || n == 'get'
           n = is_collection ? 'index' : 'show'
         end
         operation = to_operation(op, n)
@@ -120,7 +120,7 @@ module Analyzer
         ::Analyzer::ResourceAction.new(name:     op['name'].underscore,
                                        verb:     op['http']['method'].downcase,
                                        path:     op['http']['requestUri'],
-                                       payload:  op['input']['shape'].underscore,
+                                       payload:  (sh = op['input'] && op['input']['shape']) ? sh.underscore : op['input'],
                                        params:   [],
                                        response: (out = op['output']) && out['shape'].underscore)
       end
