@@ -1,6 +1,7 @@
 module Analyzer
 
   # A service resource action
+  # This data structure is common to all clouds
   class ResourceAction
 
     # [String] Action name (e.g. "CreateStack")
@@ -28,12 +29,12 @@ module Analyzer
 
     # Hash representation
     def to_hash
-      { 'name'          => @name,
-        'verb'          => @verb,
-        'path'          => @path,
-        'payload'       => @payload,
-        'params'        => @params,
-        'response'      => @response }
+      { 'name'     => @name,
+        'verb'     => @verb,
+        'path'     => @path,
+        'payload'  => @payload,
+        'params'   => @params,
+        'response' => @response }
     end
 
     # YAML representation

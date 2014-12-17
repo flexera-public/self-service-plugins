@@ -12,13 +12,16 @@ module Analyzer
       # [String] Resource name (e.g. "Stack")
       attr_reader :name
 
+      # [String] Resource shape name (e.g. "Stack")
+      attr_reader :shape
+
       # [String] Resource primary id field (e.g. "StackId")
       # TBD
-      attr_reader :primary_id
+      attr_accessor :primary_id
 
       # [Array<String>] Resource secondary ids field (e.g. ["StackName"])
       # TBD
-      attr_reader :secondary_ids
+      attr_accessor :secondary_ids
 
       # [Hash<String, ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
       attr_reader :actions
@@ -47,7 +50,7 @@ module Analyzer
       # name is the CamelCase name of the operation, this name ends with either the ResourceName or ResourceNames
       # for operations that apply to the collection. We detect which one it is and then infer the final operation
       # name and type (resource, collection or custom) from that.
-      def add_operation(op)
+      def add_operation(op, shapes)
         name = op['name']
         is_collection = name !~ /#{@orig_name}$/ # @orig_name is the singular version of ResourceName
         n = name.gsub(/(#{@orig_name}|#{@orig_name.pluralize})$/, '').underscore
@@ -58,6 +61,18 @@ module Analyzer
         if is_collection
           if n == 'index'
             @actions['index'] = operation
+            # Some resource only have an index operation - no show operation (index can be filtered by id)
+            # So try to infer shape from index if not set yet
+            if @shape.nil?
+              oshape = (os = op['output']['shape']) && shapes[os]
+              unless oshape.nil?
+                oshape['members'].each do |sn, m|
+                  if name =~ /#{sn}/ # e.g. 'DescribeStackEvents' =~ 'StackEvents'
+                    @shape = shapes[sn]['member']['shape'].underscore rescue nil
+                  end
+                end
+              end
+            end
           else
             @collection_actions[n] = operation
           end
@@ -129,10 +144,12 @@ module Analyzer
 
       # Add operation to resource
       # Create resource if non-existent, checks whether operation is collection or resource operation
-      def add_resource_operation(res_name, op)
+      # Takes shapes define in API json so that it can apply a heuristic to infer the name of the resource shape
+      # for resources that only support an index call (and no show call)
+      def add_resource_operation(res_name, op, shapes)
         canonical = canonical_name(res_name)
         res = @resources[canonical] ||= Resource.new(canonical)
-        res.add_operation(op)
+        res.add_operation(op, shapes)
       end
 
       # Known resource names

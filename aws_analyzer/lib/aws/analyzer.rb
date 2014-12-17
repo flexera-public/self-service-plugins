@@ -37,7 +37,7 @@ module Analyzer
         # 1. Identify resources by using well known operation prefixes
         candidates.each do |c|
           name = c.gsub(/^(#{RESOURCE_ACTIONS.join('|')})/, '')
-          registry.add_resource_operation(name, service['operations'][c])
+          registry.add_resource_operation(name, service['operations'][c], service['shapes'])
         end
 
         # 2. Collect custom actions that apply to identified resources
@@ -48,10 +48,35 @@ module Analyzer
           matched << r
           candidates.sort { |a, b| b.size <=> a.size } # Longer name first
           name = candidates.first
-          registry.add_resource_operation(name, service['operations'][r])
+          registry.add_resource_operation(name, service['operations'][r], service['shapes'])
         end
 
-        # 3. Collect remaining - unidentified operations
+        # 3. Leverage resource.json if present to identify id fields and links
+        res_json = File.join(@json_path, service_name.camel_case + '.resources.json')
+        if File.exist?(json)
+          puts "Extracting ids..."
+          resources = JSON.load(IO.read(res_json))
+          resources['resources'].each do |name, res|
+            existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
+            next if existing.empty?
+            if existing.size > 1
+              puts "Found ambiguous match: multiple resources with shape #{res['shape']}..."
+              next
+            end
+            r = existing.values.first
+            res['identifiers'].each do |i|
+              field = i['name']
+              if r.primary_id.nil?
+                r.primary_id = field
+              else
+                r.secondary_ids ||= []
+                r.secondary_ids << field
+              end
+            end
+          end
+        end
+
+        # 4. Collect remaining - unidentified operations
         not_mapped = remaining - matched
         @errors = ["Failed to identify a resource for the following operations:\n#{not_mapped.join("\n")}"]
 
