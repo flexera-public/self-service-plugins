@@ -24,3 +24,22 @@ RSpec.configure do |config|
     Restifier
   end
 end
+
+def post_json(uri, args)
+  post uri, Yajl::Encoder.encode(args), "CONTENT_TYPE" => "application/json"
+end
+
+def put_response(resp)
+  if resp.status == 201
+    puts "OK, Location: #{resp.location}"
+  elsif resp.status < 300
+    if resp.body.size > 0
+      puts "OK: #{JSON.pretty_generate(JSON.parse(resp.body))}"
+    else
+      puts "OK (empty body)"
+    end
+  else
+    puts "ERROR #{resp.status}: #{resp.body}"
+  end
+end
+

@@ -61,11 +61,24 @@ module Analyzer
         end
 
         # 3. Leverage resource.json if present to identify id fields and links
-        res_json = File.join(@json_path, service_name.camel_case + '.resources.json')
+        res_json1 = File.join(@json_path, service_name.camel_case + '.resources.json')
+        res_json2 = File.join("./apis", service_name.camel_case + '.resources.json')
         shapes = to_underscore(service['shapes'])
         if File.exist?(json)
           puts "Extracting ids..."
-          resources = JSON.load(IO.read(res_json))
+          begin
+            resources = JSON.load(IO.read(res_json1))
+          rescue Errno::ENOENT => e
+            #puts "Exception: #{e.inspect}"
+            begin
+              resources = JSON.load(IO.read(res_json2))
+            rescue Errno::ENOENT => e
+              puts "Cannot find resources definition for #{service_name} in"
+              puts res_json1, res_json2
+              raise "Ooops"
+            end
+          end
+
           resources['resources'].each do |name, res|
             next unless res['shape']
             existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
