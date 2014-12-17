@@ -64,7 +64,7 @@ module Analyzer
         res_json1 = File.join(@json_path, service_name.camel_case + '.resources.json')
         res_json2 = File.join("./apis", service_name.camel_case + '.resources.json')
         shapes = to_underscore(service['shapes'])
-        if File.exist?(json)
+        if File.exist?(res_json)
           puts "Extracting ids..."
           begin
             resources = JSON.load(IO.read(res_json1))

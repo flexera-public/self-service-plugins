@@ -39,3 +39,4 @@ api_docs
 .*.cache
 .DS_Store
 aws_analyzer/tags
+tags
