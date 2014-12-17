@@ -88,7 +88,8 @@ module Analyzer
         end
 
         # 4. Collect remaining - unidentified operations
-        not_mapped = remaining - matched
+        registry.delete_incomplete_resources
+        not_mapped = remaining - registry.resources.values.map(&:orig_name)
         @errors = ["Failed to identify a resource for the following operations:\n#{not_mapped.join("\n")}"]
 
         ::Analyzer::ServiceDefinition.new('name'      => service['metadata']['serviceFullName'],

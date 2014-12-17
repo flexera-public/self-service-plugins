@@ -9,8 +9,11 @@ module Analyzer
     # to either the resourcd or the collection.
     class Resource
 
-      # [String] Resource name (e.g. "Stack")
+      # [String] Resource name (e.g. "stack")
       attr_reader :name
+
+      # [String] Resource original name (e.g. "Stack")
+      attr_reader :orig_name
 
       # [String] Resource shape name (e.g. "Stack")
       attr_reader :shape
@@ -85,9 +88,9 @@ module Analyzer
             end
             cs = shapes[candidate]
             if cs['members'].size == 1 && (v = cs['members'].values.first).is_a?(Hash) && v.keys.first == 'shape'
-              @shape = v['shape']
+              @shape = v['shape'].underscore
             else
-              @shape = candidate
+              @shape = candidate.underscore
             end
           end
           if ['create', 'delete', 'update', 'show'].include?(n)
@@ -166,6 +169,11 @@ module Analyzer
       # Singularize name unless it's in the exception list
       def canonical_name(base_name)
         PLURAL_RESOURCE_NAMES.include?(base_name) ? base_name : base_name.singularize
+      end
+
+      # Remove resources that couldn't be completly identified
+      def delete_incomplete_resources
+        @resources.delete_if { |n, r| r.primary_id.nil? || r.shape.nil? }
       end
 
     end
