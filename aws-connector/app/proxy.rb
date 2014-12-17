@@ -40,12 +40,13 @@
         halt 400, "Request must contain application/json parameters"
       end
       begin
-        body = Yajl::Parser.parse(request.body, :symbolize_keys => true)
+        body = Yajl::Parser.parse(body_str, :symbolize_keys => true)
       rescue StandardError => e
         halt 400, "Error parsing json body: #{e}"
       end
       unless body.is_a?(Hash)
-        halt 400, "Request body must consist of a json hash"
+        #$logger.info "Body is <<#{body_str}>>"
+        halt 400, "Request body must consist of a json hash (and not #{body.class})"
       end
       $logger.info "Request body contains: #{body.keys.sort.join(' ')}"
     end

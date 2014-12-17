@@ -1,3 +1,7 @@
+#
+# This is just boilerplate - it's not being used yet
+#
+
 # See http://unicorn.bogomips.org/Unicorn/Configurator.html for complete
 # documentation.
 

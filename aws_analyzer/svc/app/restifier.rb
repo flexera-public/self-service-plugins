@@ -1,9 +1,11 @@
 class Restifier < App
   $path = "/home/src/aws-sdk-core-ruby/aws-sdk-core/apis"
-  $connector = "http://localhost:8001"
+  $connector = "http://localhost:9001"
 
   $services = {}
   $client = nil
+
+  APP_JSON = { 'content-type' => 'application/json' }
 
   helpers do
 
@@ -51,8 +53,6 @@ class Restifier < App
 
     def process_body(action, req_body)
       body_str = req_body.is_a?(String) ? req_body : req_body.read
-      return body_str
-      # some later day we'll parse the body and valdate it and then re-encode
       body = {}
       if body_str.size > 0
         unless request.content_type && request.content_type.start_with?("application/json")
@@ -71,17 +71,22 @@ class Restifier < App
       body
     end
 
+    def get_id(resource, id)
+      return { resource.primary_id => id }
+    end
+
     def perform_request(svc_name, action, req_body)
       url = URI("%s/%s/%s" % [$connector, svc_name, action.name])
       $logger.info "URL: #{url}"
-      $logger.info "Payload: #{req_body.inspect}"
+      $logger.info "Payload: #{req_body.keys.join(' ')}"
 
       begin
         unless $client
           $client = Net::HTTP.start(url.host, url.port)
         end
-
-        response = $client.request_post(url.path, req_body, 'content-type'=>'application/json')
+        body_str = Yajl::Encoder.encode(req_body)
+        body_str = "" if body_str == '{}'
+        response = $client.request_post(url.path, body_str, APP_JSON)
       rescue Exception => e
         $logger.info "*** Error: #{e} #{e.inspect}"
         $logger.info e.backtrace[0..10].join(' | ')
@@ -89,29 +94,90 @@ class Restifier < App
       end
 
       $logger.info "Got: #{response.code} #{response.body}"
-      return response.code.to_i, { 'content-type' => "application/json" }, response.body
+      return response.code.to_i, APP_JSON, response.body
     end
 
   end
 
-  get '/:service/:resource_type' do
+  # show
+  get '/:service/:resource_type/:id' do
     log_info
-
-    # Get the metadata for the service and make sure the resource type exists
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
-    action = get_action(resource, params['resource_type'], "index")
-    return perform_request(params['service'], action, "")
+    action = get_action(resource, params['resource_type'], "show")
+    return perform_request(params['service'], action, {})
   end
 
+  # index
   get '/:service/:resource_type' do
     log_info
-
-    # Get the metadata for the service and make sure the resource type exists
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
     action = get_action(resource, params['resource_type'], "index")
+    return perform_request(params['service'], action, {})
+  end
+
+  # custom collection actions
+  post '/:service/:resource_type/action/:action' do
+    log_info
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], params['action'])
     body = process_body(action, request.body)
+    return perform_request(params['service'], action, body)
+  end
+
+  # custom resource actions
+  post '/:service/:resource_type/:id/action/:action' do
+    log_info
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], params['action'])
+    body = process_body(action, request.body)
+    body.merge!(get_id(resource, params['id']))
+    return perform_request(params['service'], action, body)
+  end
+
+  # create
+  post '/:service/:resource_type' do
+    log_info
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], "create")
+    body = process_body(action, request.body)
+    return perform_request(params['service'], action, body)
+  end
+
+  # update
+  put '/:service/:resource_type/:id' do
+    log_info
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], "update")
+    body = process_body(action, request.body)
+    body.merge!(get_id(resource, params['id']))
+    return perform_request(params['service'], action, body)
+  end
+
+  # patch
+  patch '/:service/:resource_type/:id' do
+    log_info
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], "patch")
+    body = process_body(action, request.body)
+    body.merge!(get_id(resource, params['id']))
+    return perform_request(params['service'], action, body)
+  end
+
+  # delete
+  delete '/:service/:resource_type/:id' do
+    log_info
+    svc = get_service(params['service'])
+    resource = get_resource(svc, params['service'], params['resource_type'])
+    action = get_action(resource, params['resource_type'], "delete")
+    body = process_body(action, request.body)
+    body.merge!(get_id(resource, params['id']))
     return perform_request(params['service'], action, body)
   end
 
