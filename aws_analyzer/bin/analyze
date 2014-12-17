@@ -30,6 +30,10 @@ OptionParser.new do |opts|
     options[:force] = f
   end
 
+  opts.on('-r', '--resource-only', 'Do not generate YAML for shapes (useful for debugging)') do |r|
+    options[:resource_only] = r
+  end
+
   opts.on_tail('-h', '--help', 'Show this message') do
     puts opts
     exit
@@ -44,13 +48,12 @@ OptionParser.new do |opts|
 end.parse!
 
 service = options.delete(:service)
-force = options.delete(:force)
 if service.nil?
   puts 'Specify service with --service'
   exit 1
 end
 a = Analyzer::Analyzer.new(options)
-puts a.analyze_service(service, force)
+puts a.analyze_service(service, options)
 
 #services = jsons.map { |j| a.analyze(JSON.load(IO.read(j))) }
 #services.each { |s| puts s.to_s }

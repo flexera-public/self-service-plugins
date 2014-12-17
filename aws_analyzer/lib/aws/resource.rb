@@ -67,8 +67,8 @@ module Analyzer
               oshape = (os = op['output']['shape']) && shapes[os]
               unless oshape.nil?
                 oshape['members'].each do |sn, m|
-                  if name =~ /#{sn}/ # e.g. 'DescribeStackEvents' =~ 'StackEvents'
-                    @shape = shapes[sn]['member']['shape'].underscore rescue nil
+                  if name =~ /#{sn.singularize}/ # e.g. 'DescribeStackEvents' =~ 'StackEvents'
+                    @shape = shapes[m['shape']]['member']['shape'].underscore rescue nil
                   end
                 end
               end
@@ -79,9 +79,15 @@ module Analyzer
         else
           if n == 'show'
             # Let's set the shape of the resource with the result of a describe
-            @shape = op['output']['shape'].underscore
-            if @shape.nil?
+            candidate = op['output']['shape']
+            if candidate.nil?
               raise "No shape for describe??? Resource: #{name}, Operation: #{op['name']}"
+            end
+            cs = shapes[candidate]
+            if cs['members'].size == 1 && (v = cs['members'].values.first).is_a?(Hash) && v.keys.first == 'shape'
+              @shape = v['shape']
+            else
+              @shape = candidate
             end
           end
           if ['create', 'delete', 'update', 'show'].include?(n)

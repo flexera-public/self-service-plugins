@@ -65,7 +65,8 @@ module Analyzer
             end
             r = existing.values.first
             res['identifiers'].each do |i|
-              field = i['name']
+              field = i['memberName'] || i['name']
+              field &&= field.underscore
               if r.primary_id.nil?
                 r.primary_id = field
               else

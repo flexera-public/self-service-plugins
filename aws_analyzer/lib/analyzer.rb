@@ -27,7 +27,10 @@ module Analyzer
     end
 
     # Analyze service from definition in hash
-    def analyze_service(service, force=false)
+    # @options :force
+    # @options :resource_only
+    def analyze_service(service, options)
+      force = options[:force]
       begin
         definition = service_definition(service)
         errors = @analyzer.errors
@@ -46,7 +49,14 @@ module Analyzer
         exit 1 if !force
         puts
       end
-      puts definition.to_yaml unless definition.nil? || definition.empty?
+      return if definition.nil? || definition.empty?
+      if options[:resource_only]
+        hash = definition.to_hash
+        hash.delete('shapes')
+        puts YAML.dump(hash)
+      else
+        puts definition.to_yaml
+      end
     end
 
     # YAML representation
@@ -56,7 +66,7 @@ module Analyzer
                   primary_id:         @primary_id,
                   secondary_ids:      @secondary_ids,
                   actions:            @actions.map(&:to_hash),
-                  custom_actions:     @custom_actiohns.map(&:to_hash),
+                  custom_actions:     @custom_actions.map(&:to_hash),
                   collection_actions: @collection_actions.map(&:to_hash),
                   links:              @links })
     end
