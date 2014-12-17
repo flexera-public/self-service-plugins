@@ -62,6 +62,7 @@ module Analyzer
 
         # 3. Leverage resource.json if present to identify id fields and links
         res_json = File.join(@json_path, service_name.camel_case + '.resources.json')
+        shapes = to_underscore(service['shapes'])
         if File.exist?(json)
           puts "Extracting ids..."
           resources = JSON.load(IO.read(res_json))
@@ -74,14 +75,23 @@ module Analyzer
               next
             end
             r = existing.values.first
-            res['identifiers'].each do |i|
-              field = i['memberName'] || i['name']
-              field &&= field.underscore
-              if r.primary_id.nil?
-                r.primary_id = field
-              else
-                r.secondary_ids ||= []
-                r.secondary_ids << field
+            shape = shapes[r.shape]
+            if shape
+              members = shape['members'].keys || []
+              res['identifiers'].each do |i|
+                candidate = i['memberName'] || i['name']
+                next if candidate.nil?
+                candidate = candidate.underscore
+                if !members.include?(candidate)
+                  candidate = "#{r.name}_#{candidate}"
+                  next unless members.include?(candidate)
+                end
+                if r.primary_id.nil?
+                  r.primary_id = candidate
+                else
+                  r.secondary_ids ||= []
+                  r.secondary_ids << candidate
+                end
               end
             end
           end
@@ -96,7 +106,7 @@ module Analyzer
                                           'url'       => "/aws/#{service['metadata']['endpointPrefix']}",
                                           'metadata'  => service['metadata'],
                                           'resources' => registry.resources.inject({}) { |m, (k, v)| m[k.underscore] = v; m },
-                                          'shapes'    => to_underscore(service['shapes']))
+                                          'shapes'    => shapes)
       end
 
       # true if name is an operation on a resource (i.e. has a well-known prefix)
