@@ -1,0 +1,49 @@
+name "Exercise auto-generated plugins"
+rs_ca_ver 20131202
+short_description "Play with SSH key pairs"
+
+# Tier Selection
+parameter "name" do
+  type "string"
+  label "Key name"
+  category "General"
+  description "The name of the SSH key pair to be created"
+end
+
+# Database instance
+resource 'key', type: 'ec2.key_pair' do
+  key_name $name
+end
+
+namespace "ec2" do
+  service do
+    host "http://h.voneicken.com:9002"
+    path "/ec2"
+    headers do {
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+    } end
+  end
+  # SSH Key pairs
+  type "key_pair" do
+    provision "provision_key_pair"
+    delete "delete_key_pair"
+    fields do
+      key_name do
+        type "string"
+        regexp "[a-zA-Z0-9\-\.]+"
+        required true
+      end
+    end
+  end
+end
+
+define provision_key_pair(@raw_key) return @key_pair do
+  $o = to_object(@raw_key)
+  @key_pair = ec2.key_pairs.create($o)
+end
+
+define delete_key_pair(@key) do
+  @key.destroy()
+end
+
