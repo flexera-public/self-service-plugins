@@ -98,9 +98,11 @@ module Analyzer
         end
 
         # 4. Collect remaining - unidentified operations
-        registry.delete_incomplete_resources
-        not_mapped = remaining - registry.resources.values.map(&:orig_name)
-        @errors = ["Failed to identify a resource for the following operations:\n#{not_mapped.join("\n")}"]
+        no_ids = registry.delete_incomplete_resources
+        not_mapped = remaining - matched
+        @errors = []
+        @errors << "** Failed to identify a resource for the following operations:\n  #{not_mapped.join("\n  ")}" unless not_mapped.empty?
+        @errors << "** Failed to find id for resources\n  #{no_ids.join("\n  ")}" unless no_ids.empty?
 
         ::Analyzer::ServiceDefinition.new('name'      => service['metadata']['serviceFullName'],
                                           'url'       => "/aws/#{service['metadata']['endpointPrefix']}",

@@ -87,8 +87,9 @@ module Analyzer
               raise "No shape for describe??? Resource: #{name}, Operation: #{op['name']}"
             end
             cs = shapes[candidate]
-            if cs['members'].size == 1 && (v = cs['members'].values.first).is_a?(Hash) && v.keys.first == 'shape'
-              @shape = v['shape'].underscore
+            shape_member = (smn = cs['members'].keys.detect { |k| op['name'] =~ /#{k}/ }) && cs['members'][smn]
+            if shape_member.is_a?(Hash) && shape_member.keys.first == 'shape'
+              @shape = shape_member['shape'].underscore
             else
               @shape = candidate.underscore
             end
@@ -173,7 +174,14 @@ module Analyzer
 
       # Remove resources that couldn't be completly identified
       def delete_incomplete_resources
-        @resources.delete_if { |n, r| r.primary_id.nil? || r.shape.nil? }
+        deleted = []
+        @resources.values.each do |r|
+          if r.primary_id.nil? || r.shape.nil?
+            deleted << r.name
+          end
+        end
+        @resources.delete_if { |n, r| deleted.include?(n) }
+        deleted
       end
 
     end
