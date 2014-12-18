@@ -33,17 +33,17 @@ parameter "path" do
 end
 
 # User
-resource 'user', type: 'iam.user' do
+resource 'user', type: 'ec2_iam.user' do
   user_name $name
   group_names $group_names
   #path $path
 end
 
 # EC2 namespace
-namespace "iam" do
+namespace "ec2_iam" do
   service do
     host "http://h.voneicken.com:9002"
-    path "/iam"
+    path "/"
     headers do {
       "user-agent" => "self_service",      # special headers as needed
       "Content-Type" => "application/json",
@@ -54,6 +54,7 @@ namespace "iam" do
   type "user" do
     provision "provision_iam_user"
     delete "delete_iam_user"
+    path "/iam/users/"
     fields do
       user_name do
         type "string"
@@ -75,6 +76,7 @@ namespace "iam" do
   type "group" do
     provision "provision_iam_group"
     delete "delete_iam_group"
+    path "/iam/groups"
     fields do
       group_name do
         type "string"
@@ -93,9 +95,9 @@ end
 define provision_iam_user(@raw_user) return @user do
   $user = to_object(@raw_user)
   $user['fields'] = delete_at($user['fields'], 'group_names')
-  @user = iam.users.create($user)
+  @user = ec2_iam.users.create($user)
   foreach $g in @raw_user.group_names do
-    @g = iam.groups.get(href: "/groups/" + $g)
+    @g = ec2_iam.groups.get(href: "/iam/groups/" + $g)
     @g.add_user_to(user_name: @raw_user.user_name)
   end
 end
@@ -106,9 +108,10 @@ end
 
 define provision_iam_group(@raw_group) return @group do
   $o = to_object(@raw_group)
-  @group = iam.groups.create($o)
+  @group = ec2_iam.groups.create($o)
 end
 
 define delete_iam_group(@group) do
   @group.destroy()
 end
+
