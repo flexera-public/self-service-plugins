@@ -27,14 +27,39 @@ module Analyzer
       # Returns a ServiceDefinition object (contains list of resources and custom actions)
       def analyze(service_name)
         # Locate API and resource json files
-        json = ''; res_json = ''
+        json = ''
         unless @json_paths.detect { |path| json = File.join(path, service_name.camel_case + '.api.json'); File.exist?(json) }
           puts "Hmm there doesn't seem to be a #{service_name.camel_case}.api.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
           exit 1
         end
-        unless @json_paths.detect { |path| res_json = File.join(path, service_name.camel_case + '.resources.json'); File.exist?(res_json) }
-          puts "Hmm there doesn't seem to be a #{service_name.camel_case}.resources.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
+
+        # read resource definitions
+        res_json = []
+        @json_paths.each do |path|
+          f = File.join(path, service_name.camel_case + '.resources.json')
+          res_json << f if File.exist?(f)
+        end
+        if res_json == []
+          puts("Hmm there doesn't seem to be a #{service_name.camel_case}.resources.json file " +
+            "at #{@json_paths.join(' ,')}, are you sure you got that right? " +
+            "(use --paths to specify the location of the JSON files)")
           exit 1
+        end
+        # actually load the definitions and merge the top-level values
+        resources = {}
+        res_json.each do |rj|
+          rr = JSON.load(IO.read(rj))
+          rr.each_pair do |k,v|
+            if resources.key?(k)
+              if resources[k].is_a?(Array)
+                resources[k] += v
+              else
+                resources[k].merge!(v)
+              end
+            else
+              resources[k] = v
+            end
+          end
         end
 
         service = JSON.load(IO.read(json))
@@ -70,7 +95,6 @@ module Analyzer
 
         # 3. Leverage resource.json if present to identify id fields and links
         shapes = to_underscore(service['shapes'])
-        resources = JSON.load(IO.read(res_json))
         resources['resources'].each do |name, res|
           next unless res['shape']
           # Let's see if we find an exact match
