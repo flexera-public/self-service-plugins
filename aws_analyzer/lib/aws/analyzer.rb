@@ -50,7 +50,9 @@ module Analyzer
         # 1. Identify resources by using well known operation prefixes
         candidates.each do |c|
           name = c.gsub(/^(#{ALL_ACTIONS.join('|')})/, '')
-          unless name.underscore =~ /_for_/
+          if name.underscore =~ /_for_/
+            remaining << c
+          else
             registry.add_resource_operation(name, service['operations'][c], service['shapes'])
           end
         end
@@ -108,6 +110,7 @@ module Analyzer
         @errors = []
         @errors << "** Failed to find an id for the following resources:\n  #{no_ids.join("\n  ")}" unless no_ids.empty?
 
+        # We're done!
         ::Analyzer::ServiceDefinition.new('name'      => service['metadata']['serviceFullName'],
                                           'url'       => "/aws/#{service['metadata']['endpointPrefix']}",
                                           'metadata'  => service['metadata'],
