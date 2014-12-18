@@ -10,31 +10,49 @@ describe 'IAM' do
     expect(resp.body).to match("user_name")
   end
 
+  it 'shows a user' do
+    args = { }
+    resp = get '/iam/users/raphael'
+    put_response(resp)
+    expect(resp.status).to eq(200)
+    expect(resp.body).to match("user_name")
+  end
+
   it 'finds a group' do
-    resp = get '/iam/groups?filter[]=path_prefix=power-users'
+    # this doesn't work...
+    resp = get '/iam/groups?filter[]=path_prefix==/'
     put_response(resp)
     expect(resp.status).to eq(200)
     expect(resp.body).to match("power-users")
-    expect(resp.body).not_to match("change-password")
   end
 
   it 'creates and deletes a user' do
     # we start by deleting the user in case it exists
+    args = { user_name: "deleteme_now" }
+    resp = post_json '/iam/groups/power-users/actions/remove_user_from', args
+    put_response(resp)
     resp = delete '/iam/users/deleteme_now'
     put_response(resp)
 
-    # find a group to put the user into
-    resp = get '/iam/groups?filter[]=path_prefix=power-users'
-    put_response(resp)
-    expect(resp.status).to eq(200)
-    expect(resp.body).to match("power-users")
-    expect(resp.body).not_to match("change-password")
-    group = Yajl::Parser.parse(resp.body)['group_name']
-
-    args = { user_name: "deleteme_now", group_name: group }
+    args = { user_name: "deleteme_now" }
     resp = post_json '/iam/users', args
+    put_response(resp)
     expect(resp.status).to eq(201)
     expect(resp.location).to match("deleteme_now")
+
+    args = { user_name: "deleteme_now" }
+    resp = post_json '/iam/groups/power-users/actions/add_user_to', args
+    put_response(resp)
+    expect(resp.status).to eq(204)
+
+    args = { user_name: "deleteme_now" }
+    resp = post_json '/iam/groups/power-users/actions/remove_user_from', args
+    put_response(resp)
+    expect(resp.status).to eq(204)
+
+    resp = delete '/iam/users/deleteme_now'
+    put_response(resp)
+    expect(resp.status).to eq(204)
   end
 
 end

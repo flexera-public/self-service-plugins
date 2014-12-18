@@ -1,5 +1,5 @@
 class Restifier < App
-  $path = "/home/src/aws-sdk-core-ruby/aws-sdk-core/apis"
+  $paths = ["/home/src/aws-sdk-core-ruby/aws-sdk-core/apis", "./apis" ]
   $connector = "http://localhost:9001"
 
   $services = {}
@@ -46,7 +46,7 @@ class Restifier < App
       return $services[name] if $services.key?(name)
       svc_name = name.size < 4 ? name.upcase : name.camel_case
       $logger.info "Loading service #{svc_name}"
-      a = Analyzer::Analyzer.new(path: $path, cloud: 'aws')
+      a = Analyzer::Analyzer.new(paths: $paths, cloud: 'aws')
       svc = a.service_definition(svc_name)
       unless svc
         halt 404, "Service #{name} (#{svc_name}) is not supported"
@@ -74,9 +74,10 @@ class Restifier < App
     end
 
     def get_action(resource, res_name, name)
-      action = resource.actions[name]
+      action = resource.actions[name] || resource.custom_actions[name]
       unless action
-        halt 400, "Resource #{res_name} does not have action #{name}"
+        al = (resource.actions.keys + resource.custom_actions.keys).sort.join(' ')
+        halt 400, "Resource #{res_name} does not have action #{name}, available actions: #{al}"
       end
       $logger.info "Action   : #{action.name}"
       action
@@ -122,7 +123,11 @@ class Restifier < App
       end
 
       $logger.info "Got: #{response.code} #{response.body}"
-      return response.code.to_i, APP_JSON, response.body
+      if response.code.to_i == 200 && (response.body.size == 0 || response.body == '{}')
+        return 204, APP_JSON, nil
+      else
+        return response.code.to_i, APP_JSON, response.body
+      end
     end
 
   end
@@ -133,16 +138,22 @@ class Restifier < App
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
     action = check_action(resource, params['resource_type'], "show")
-    action = check_action(resource, params['resource_type'], "index")
-    halt 400, "Resource #{params['resource_type']} has neither show nor index action" unless action
+    if action
+      filter = { resource.primary_id => params[:id] }
+    else
+      action = check_action(resource, params['resource_type'], "index")
+      halt 400, "Resource #{params['resource_type']} has neither show nor index action" unless action
+      filter = { resource.primary_id.pluralize => [ params[:id] ] }
+    end
     halt 500, "Resource #{params['resource_type']} does not have primary_id" unless resource.primary_id
-    filter = { resource.primary_id.pluralize => [ params[:id] ] }
     code, hdrs, body =  perform_request(params['service'], action, filter)
     if code == 200 && hdrs['content-type'] == "application/json"
       res = parse_body(body, hdrs['content-type'], "response")
       if res.key?(params['resource_type']) && res[params['resource_type']].is_a?(Array)
         $logger.info "Got hash with #{params['resource_type']} array"
         res = res[params['resource_type']]
+      elsif res.key?(params['resource_type'].singularize)
+        res = res[params['resource_type'].singularize]
       end
       if res.is_a?(Array)
         if res.size == 1
@@ -173,7 +184,16 @@ class Restifier < App
     resource = get_resource(svc, params['service'], params['resource_type'])
     halt 500, "Resource #{params['resource_type']} has no primary key" unless resource.primary_id
     action = get_action(resource, params['resource_type'], "index")
-    code, hdrs, body =  perform_request(params['service'], action, {})
+    args = {}
+    if params['filter'] && params['filter'].is_a?(Array)
+      $logger.info "Got filter"
+      params['filter'].each do |f|
+        k, v = f.split('==', 2)
+      $logger.info "filter: #{k} == #{v}"
+        args[k] = v
+      end
+    end
+    code, hdrs, body =  perform_request(params['service'], action, args)
     if code == 200 && hdrs['content-type'] == "application/json"
       res = parse_body(body, hdrs['content-type'], "response")
       if res.is_a?(Hash)
@@ -205,8 +225,21 @@ class Restifier < App
     end
   end
 
+  # custom service (top-level) action
+  post '/:service/actions/:action' do
+    log_info
+    svc = get_service(params['service'])
+    action = svc.actions[params['action']]
+    $logger.info "Action is #{action.inspect}" if action
+    $logger.info "Actions are #{svc.actions.inspect}" unless action
+    halt(400, "Service #{params['service']} does not have an action #{params['action']}, " +
+      "available actions: #{svc.actions.keys.join(' ')}") unless action
+    $logger.info "Action   : #{action.name}" if action
+    return perform_request(params['service'], action, @body)
+  end
+
   # custom collection actions
-  post '/:service/:resource_type/action/:action' do
+  post '/:service/:resource_type/actions/:action' do
     log_info
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
@@ -215,7 +248,7 @@ class Restifier < App
   end
 
   # custom resource actions
-  post '/:service/:resource_type/:id/action/:action' do
+  post '/:service/:resource_type/:id/actions/:action' do
     log_info
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
@@ -231,10 +264,14 @@ class Restifier < App
     resource = get_resource(svc, params['service'], params['resource_type'])
     action = get_action(resource, params['resource_type'], "create")
     code, hdrs, body = perform_request(params['service'], action, @body)
-    $logger.info "Got headers: #{hdrs}"
+    #$logger.info "Got headers: #{hdrs}"
     if code == 200 && hdrs['content-type'] == "application/json"
       res = parse_body(body, hdrs['content-type'], "response")
+      if res.is_a?(Hash) && res.key?(params['resource_type'].singularize)
+        res = res[params['resource_type'].singularize]
+      end
       location = "/#{params['service']}/#{params['resource_type']}/#{extract_id(resource, res)}"
+      $logger.info "Returning location: #{location}"
       return 201, { "Location" => location }, nil
     elsif code == 201 && hdrs.key?('Location')
       # probably need to massage location header, does this even occur in reality?
