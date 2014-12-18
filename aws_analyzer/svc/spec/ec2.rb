@@ -68,10 +68,10 @@ describe 'EC2' do
 
     loop do
       resp = get "/ec2/instances/#{instance_id}"
-      put_response(resp)
       expect(resp.status).to eq(200)
       r = Yajl::Parser.parse(resp.body)
-      break if r['state'] == 'booting' || r['state'] == 'running'
+      puts "State: #{r['state']['name']}"
+      break if r['state']['name'] == 'booting' || r['state']['name'] == 'running'
       sleep 5
     end
 

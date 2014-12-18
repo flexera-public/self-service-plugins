@@ -162,6 +162,9 @@ class Restifier < App
       res = res[params['resource_type']]
     elsif res.key?(params['resource_type'].singularize)
       res = res[params['resource_type'].singularize]
+    elsif params['service'] == 'ec2' && params['resource_type'] == "instances"
+      # special-case EC2 instances
+      res = res['reservations'].map{|r| r['instances']}.flatten
     elsif res.keys.size == 1 && res.values.first.is_a?(Array)
       res = res.values.first
     end
@@ -209,6 +212,9 @@ class Restifier < App
       if res.key?(params['resource_type']) && res[params['resource_type']].is_a?(Array)
         res = res[params['resource_type']]
         $logger.info "Got hash with #{params['resource_type']} array"
+      elsif params['service'] == 'ec2' && params['resource_type'] == "instances"
+        # special-case
+        res = res['reservations'].map{|r| r['instances']}.flatten
       else
         arrays = res.values.select{|v| v.is_a?(Array)}
         if arrays.size != 1
