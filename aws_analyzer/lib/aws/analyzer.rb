@@ -17,8 +17,8 @@ module Analyzer
 
       # Initialize analyzer with options containing path to JSON definitions
       def initialize(options)
-        if (@json_path = options[:path]).nil?
-          puts 'Please specify path to JSON files with --path'
+        if (@json_paths = options[:paths]).nil?
+          puts 'Please specify path to JSON files with --paths'
           exit 1
         end
       end
@@ -26,11 +26,17 @@ module Analyzer
       # Analyze 'operations' hash for given service
       # Returns a ServiceDefinition object (contains list of resources and custom actions)
       def analyze(service_name)
-        json = File.join(@json_path, service_name.camel_case + '.api.json')
-        if !File.exist?(json)
-          puts "Hmm there doesn't seem to be any *.api.json file at #{json}, you sure you got that right? (use --path to specify the location of the JSON files)"
+        # Locate API and resource json files
+        json = ''; res_json = ''
+        unless @json_paths.detect { |path| json = File.join(path, service_name.camel_case + '.api.json'); File.exist?(json) }
+          puts "Hmm there doesn't seem to be any *.api.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
           exit 1
         end
+        unless @json_paths.detect { |path| res_json = File.join(path, service_name.camel_case + '.resources.json'); File.exist?(res_json) }
+          puts "Hmm there doesn't seem to be any *.resources.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
+          exit 1
+        end
+
         service = JSON.load(IO.read(json))
         registry = ResourceRegistry.new
         operations = service['operations'].keys
@@ -61,22 +67,8 @@ module Analyzer
         end
 
         # 3. Leverage resource.json if present to identify id fields and links
-        res_json1 = File.join(@json_path, service_name.camel_case + '.resources.json')
-        res_json2 = File.join("./apis", service_name.camel_case + '.resources.json')
         shapes = to_underscore(service['shapes'])
-        begin
-          resources = JSON.load(IO.read(res_json1))
-        rescue Errno::ENOENT => e
-          #puts "Exception: #{e.inspect}"
-          begin
-            resources = JSON.load(IO.read(res_json2))
-          rescue Errno::ENOENT => e
-            puts "Cannot find resources definition for #{service_name} in"
-            puts res_json1, res_json2
-            exit 1
-          end
-        end
-
+        resources = JSON.load(IO.read(res_json))
         resources['resources'].each do |name, res|
           next unless res['shape']
           existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }

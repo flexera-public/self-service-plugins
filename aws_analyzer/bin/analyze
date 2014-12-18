@@ -3,14 +3,14 @@ require 'optparse'
 require_relative '../analyzer'
 
 Version = [0, 2]
-options = { path: Dir.pwd, cloud: 'aws' }
+options = { paths: [Dir.pwd], cloud: 'aws' }
 
 OptionParser.new do |opts|
   opts.banner = "Usage: analyze [options]"
 
   # Optional argument; multi-line description.
-  opts.on('-p', '--path [PATH]', 'Specify path to JSON files (for AWS)') do |p|
-    options[:path] = p
+  opts.on('-p', '--paths [PATH1,PATH2,...]', 'Specify path to JSON files (for AWS). You may specify multiple search paths with a comma separated list') do |p|
+    options[:paths] = p.split(',')
   end
 
   opts.on('-c', '--cloud [CLOUD]', 'Specify cloud to analyze: aws or gce') do |c|
@@ -54,11 +54,4 @@ if service.nil?
 end
 a = Analyzer::Analyzer.new(options)
 puts a.analyze_service(service, options)
-
-#services = jsons.map { |j| a.analyze(JSON.load(IO.read(j))) }
-#services.each { |s| puts s.to_s }
-#total_resources = services.map(&:resources).map(&:keys).flatten.size
-#total_operations = services.map(&:operations).map(&:keys).flatten.size
-#total_actions = services.map(&:resources).flatten.map { |r| r.values.map(&:resource_operations).flatten.size + r.values.map(&:collection_operations).flatten.size }.inject(0) {|t, n| n+t}
-#puts "Total: #{services.size} services, #{total_resources} resources with #{total_actions} actions and #{total_operations} unidentified operations"
 
