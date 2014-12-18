@@ -153,34 +153,35 @@ class Restifier < App
     end
     halt 500, "Resource #{params['resource_type']} does not have primary_id" unless resource.primary_id
     code, hdrs, body =  perform_request(params['service'], action, filter)
-    if code == 200 && hdrs['content-type'] == "application/json"
-      res = parse_body(body, hdrs['content-type'], "response")
-      if res.key?(params['resource_type']) && res[params['resource_type']].is_a?(Array)
-        $logger.info "Got hash with #{params['resource_type']} array"
-        res = res[params['resource_type']]
-      elsif res.key?(params['resource_type'].singularize)
-        res = res[params['resource_type'].singularize]
-      end
-      if res.is_a?(Array)
-        if res.size == 1
-          res = res.first
-        else
-          halt 500, "Got response with #{res.size} elements: #{res.inspect}"
-        end
-      end
-      if res.is_a?(Hash)
-        if res.key?(resource.primary_id)
-          res['links'] ||= []
-          res['links'] << { rel: 'self', href: make_href(params, res[resource.primary_id]) }
-          return 200, { "Content-Type" => "application/json" }, Yajl::Encoder.encode(res)
-        else
-          halt 500, "Response doesn't have primary key #{resource.primary_id}: #{res.inspect}"
-        end
-      end
-      halt 500, "Can't interpret response: #{res.inspect}"
-    else
+    unless code == 200 && hdrs['content-type'] == "application/json"
       return code, hdrs, body # uhh, I'm sure we need to do something smart here
     end
+    res = parse_body(body, hdrs['content-type'], "response")
+    if res.key?(params['resource_type']) && res[params['resource_type']].is_a?(Array)
+      $logger.info "Got hash with #{params['resource_type']} array"
+      res = res[params['resource_type']]
+    elsif res.key?(params['resource_type'].singularize)
+      res = res[params['resource_type'].singularize]
+    elsif res.keys.size == 1 && res.values.first.is_a?(Array)
+      res = res.values.first
+    end
+    if res.is_a?(Array)
+      if res.size == 1
+        res = res.first
+      else
+        halt 500, "Got response with #{res.size} elements: #{res.inspect}"
+      end
+    end
+    if res.is_a?(Hash)
+      if res.key?(resource.primary_id)
+        res['links'] ||= []
+        res['links'] << { rel: 'self', href: make_href(params, res[resource.primary_id]) }
+        return 200, { "Content-Type" => "application/json" }, Yajl::Encoder.encode(res)
+      else
+        halt 500, "Response doesn't have primary key #{resource.primary_id}: #{res.inspect}"
+      end
+    end
+    halt 500, "Can't interpret response: #{res.inspect}"
   end
 
   # index
@@ -200,35 +201,35 @@ class Restifier < App
       end
     end
     code, hdrs, body =  perform_request(params['service'], action, args)
-    if code == 200 && hdrs['content-type'] == "application/json"
-      res = parse_body(body, hdrs['content-type'], "response")
-      if res.is_a?(Hash)
-        if res.key?(params['resource_type']) && res[params['resource_type']].is_a?(Array)
-          res = res[params['resource_type']]
-          $logger.info "Got hash with #{params['resource_type']} array"
-        else
-          arrays = res.values.select{|v| v.is_a?(Array)}
-          if arrays.size != 1
-            halt 500, "Can't interpret response: #{res.inspect}"
-          end
-        end
-      end
-      if res.is_a?(Array)
-        res.map!{ |r|
-          if r.is_a?(Hash) && r.key?(resource.primary_id)
-            r['links'] ||= []
-            r['links'] << { rel: 'self', href: make_href(params, r[resource.primary_id]) }
-          else
-            $logger.info "Oops? Missing #{resource.primary_id}"
-          end # should error out if there's no primary key?
-          r
-        }
-        return 200, { "Content-Type" => "application/json" }, Yajl::Encoder.encode(res)
-      end
-      halt 500, "Can't interpret response: #{res.inspect}"
-    else
+    unless code == 200 && hdrs['content-type'] == "application/json"
       return code, hdrs, body # uhh, I'm sure we need to do something smart here
     end
+    res = parse_body(body, hdrs['content-type'], "response")
+    if res.is_a?(Hash)
+      if res.key?(params['resource_type']) && res[params['resource_type']].is_a?(Array)
+        res = res[params['resource_type']]
+        $logger.info "Got hash with #{params['resource_type']} array"
+      else
+        arrays = res.values.select{|v| v.is_a?(Array)}
+        if arrays.size != 1
+          halt 500, "Can't interpret response, multiple arrays: #{res.inspect}"
+        end
+        res = arrays.first
+      end
+    end
+    if res.is_a?(Array)
+      res.map!{ |r|
+        if r.is_a?(Hash) && r.key?(resource.primary_id)
+          r['links'] ||= []
+          r['links'] << { rel: 'self', href: make_href(params, r[resource.primary_id]) }
+        else
+          $logger.info "Oops? Missing #{resource.primary_id}"
+        end # should error out if there's no primary key?
+        r
+      }
+      return 200, { "Content-Type" => "application/json" }, Yajl::Encoder.encode(res)
+    end
+    halt 500, "Can't interpret response: #{res.inspect}"
   end
 
   # custom service (top-level) action
@@ -249,7 +250,12 @@ class Restifier < App
     log_info
     svc = get_service(params['service'])
     resource = get_resource(svc, params['service'], params['resource_type'])
-    action = get_action(resource, params['resource_type'], params['action'])
+    action = resource.collection_actions[params['action']]
+    halt(400, "Resource #{params['resource_type']} does not have a collection action " +
+      "#{params['action']}, available actions: #{resource.collection_actions.keys.join(' ')}") \
+      unless action
+    $logger.info "Action   : #{action.name}" if action
+    # do the request
     return perform_request(params['service'], action, @body)
   end
 
@@ -276,7 +282,13 @@ class Restifier < App
       if res.is_a?(Hash) && res.key?(params['resource_type'].singularize)
         res = res[params['resource_type'].singularize]
       end
-      location = "/#{params['service']}/#{params['resource_type']}/#{extract_id(resource, res)}"
+      if res.key?(resource.primary_id)
+        location = "/#{params['service']}/#{params['resource_type']}/#{extract_id(resource, res)}"
+      elsif @body.key?(resource.primary_id)
+        location = "/#{params['service']}/#{params['resource_type']}/#{extract_id(resource, @body)}"
+      else
+        halt 500, "Can't figure out location to return from response: #{res.inspect}"
+      end
       $logger.info "Returning location: #{location}"
       return 201, { "Location" => location }, nil
     elsif code == 201 && hdrs.key?('Location')

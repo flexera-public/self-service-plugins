@@ -38,45 +38,47 @@ describe 'EC2' do
 
   it 'allocates and deallocates key pair' do
     args = { key_name: "deleteme_now" }
-    resp = delete '/ec2/key_pair/deleteme_now', Yajl::Encoder.encode(args), "CONTENT_TYPE" => "application/json"
+    resp = delete '/ec2/key_pairs/deleteme_now', Yajl::Encoder.encode(args), "CONTENT_TYPE" => "application/json"
     put_response(resp)
 
     args = { key_name: "deleteme_now" }
-    resp = post_json '/ec2/key_pair', args
+    resp = post_json '/ec2/key_pairs', args
     put_response(resp)
     expect(resp.status).to eq(201)
     expect(resp.location).to match("deleteme_now")
 
-    resp = delete '/ec2/key_pair/deleteme_now'
+    resp = delete '/ec2/key_pairs/deleteme_now'
     put_response(resp)
     expect(resp.status).to eq(204)
   end
 
-=begin
-  it 'allocates and deallocates an EIP' do
-    args = { domain: 'vpc' }
-    resp = post_json '/ec2/address', args
+  it 'launches and terminates an instance' do
+    # we start by deleting the instance in case it exists
+    #resp = delete '/ec2/load_balancers/deleteme-now'
+    #put_response(resp)
+
+    args = { image_id: "ami-018c9568", min_count: 1, max_count: 1 }
+    resp = post_json '/ec2/instances/actions/run', args
     put_response(resp)
     expect(resp.status).to eq(200)
-    expect(resp.body).to match("allocation_id")
+    expect(resp.body).to match("instance_id")
+    r = Yajl::Parser.parse(resp.body)
+    expect(r['instances'].size).to eq(1)
+    instance_id = r['instances'].first["instance_id"]
 
-    #aid = Yajl::Parser.parse(resp.body)['allocation_id']
-    #args = { allocation_id: aid }
-    #resp = post_json '/ec2/release_address', args
-    #put_response(resp)
-    #expect(resp.status).to eq(200)
-  end
-=end
+    loop do
+      resp = get "/ec2/instances/#{instance_id}"
+      put_response(resp)
+      expect(resp.status).to eq(200)
+      r = Yajl::Parser.parse(resp.body)
+      break if r['state'] == 'booting' || r['state'] == 'running'
+      sleep 5
+    end
 
-
-=begin
-  it 'returns argument errors' do
-    args = { stack_name: "teststack" }
-    resp = post_json '/ec2/describe_availability_zones', args
+    args = { instance_ids: [ instance_id ] }
+    resp = post_json '/ec2/instances/actions/terminate', args
     put_response(resp)
-    expect(resp.status).to eq(400)
-    expect(resp.body).to match("stack_name")
+    expect(resp.status).to eq(200)
   end
 
-=end
 end

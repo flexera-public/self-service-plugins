@@ -1,0 +1,8 @@
+{
+  "resources": {
+    "AvailabilityZone": {
+      "identifiers": [ { "name": "ZoneName" } ],
+      "shape": "AvailabilityZone"
+    }
+  }
+}
