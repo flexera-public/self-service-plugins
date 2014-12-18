@@ -1,0 +1,114 @@
+name "Create IAM User in CAT"
+rs_ca_ver 20131202
+short_description "Play with IAM users"
+
+# Name of user to be created
+parameter "name" do
+  type "string"
+  label "User name"
+  category "General"
+  min_length 1
+  max_length 64
+  allowed_pattern "[\\w+=,.@-]*"
+  description "The name of the user"
+end
+
+# Name of groups users should be assigned to
+parameter "group_names" do
+  type "list"
+  label "Group names"
+  category "General"
+  description "The names of the groups the user should be added to"
+end
+
+# User 'path'
+parameter "path" do
+  type "string"
+  label "Group names"
+  category "General"
+  min_length 1
+  max_length 512
+  allowed_pattern "(\\u002F)|(\\u002F[\\u0021-\\u007F]+\\u002F)"
+  description "The path to the user. For more information about paths, see http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html."
+end
+
+# User
+resource 'user', type: 'iam.user' do
+  user_name $name
+  group_names $group_names
+  #path $path
+end
+
+# EC2 namespace
+namespace "iam" do
+  service do
+    host "http://h.voneicken.com:9002"
+    path "/iam"
+    headers do {
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+    } end
+  end
+
+  # IAM User
+  type "user" do
+    provision "provision_iam_user"
+    delete "delete_iam_user"
+    fields do
+      user_name do
+        type "string"
+        regexp "[\\w+=,.@-]*"
+        required true
+      end
+      #path do
+        #type "string"
+        #regexp "(\\u002F)|(\\u002F[\\u0021-\\u007F]+\\u002F)"
+      #end
+      group_names do
+        type "array"
+        item_regexp "[\\w+=,.@-]*"
+      end
+    end
+  end
+
+  # IAM Group
+  type "group" do
+    provision "provision_iam_group"
+    delete "delete_iam_group"
+    fields do
+      group_name do
+        type "string"
+        regexp "[\\w+=,.@-]*"
+        required true
+      end
+      #path do
+        #type "string"
+        #regexp "(\\u002F)|(\\u002F[\\u0021-\\u007F]+\\u002F)"
+      #end
+    end
+  end
+
+end
+
+define provision_iam_user(@raw_user) return @user do
+  $user = to_object(@raw_user)
+  $user['fields'] = delete_at($user['fields'], 'group_names')
+  @user = iam.users.create($user)
+  foreach $g in @raw_user.group_names do
+    @g = iam.groups.get(href: "/groups/" + $g)
+    @g.add_user_to(user_name: @raw_user.user_name)
+  end
+end
+
+define delete_iam_user(@user) do
+  @user.destroy()
+end
+
+define provision_iam_group(@raw_group) return @group do
+  $o = to_object(@raw_group)
+  @group = iam.groups.create($o)
+end
+
+define delete_iam_group(@group) do
+  @group.destroy()
+end
