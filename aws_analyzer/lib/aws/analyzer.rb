@@ -73,12 +73,23 @@ module Analyzer
         resources = JSON.load(IO.read(res_json))
         resources['resources'].each do |name, res|
           next unless res['shape']
-          existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
-          next if existing.empty?
-          if existing.size > 1
-            puts "Found ambiguous match: multiple resources with shape #{res['shape']}..."
-            next
+          # Let's see if we find an exact match
+          existing = registry.resources.select { |n, r| r.orig_name == name }
+          if !existing.empty?
+            # We found an exact match, use that shape
+            if existing.size > 1
+              puts "Found ambiguous match: multiple resources with name #{name}..."
+              next
+            end
+            existing.values.first.shape = res['shape'].underscore
+          else
+            existing = registry.resources.select { |n, r| r.shape == res['shape'].underscore }
+            if existing.size > 1
+              puts "Found ambiguous match: multiple resources with shape #{res['shape']}..."
+              next
+            end
           end
+          next if existing.empty?
           r = existing.values.first
           shape = shapes[r.shape]
           if shape

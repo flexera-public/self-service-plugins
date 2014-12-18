@@ -16,7 +16,7 @@ module Analyzer
       attr_reader :orig_name
 
       # [String] Resource shape name (e.g. "Stack")
-      attr_reader :shape
+      attr_accessor :shape
 
       # [String] Resource primary id field (e.g. "StackId")
       # TBD
