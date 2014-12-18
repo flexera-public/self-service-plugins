@@ -7,50 +7,29 @@ describe 'ELB' do
     resp = get '/elastic_load_balancing/load_balancers'
     put_response(resp)
     expect(resp.status).to eq(200)
-    expect(resp.body).to match("user_name")
+    expect(resp.body).to match("load_balancer_name")
   end
 
-  it 'shows a user' do
+  it 'shows a load balancer' do
     args = { }
-    resp = get '/elastic_load_balancing/users/raphael'
+    resp = get '/elastic_load_balancing/load_balancers/deleteme-now'
     put_response(resp)
     expect(resp.status).to eq(200)
-    expect(resp.body).to match("user_name")
+    expect(resp.body).to match("deleteme-now")
   end
 
-  it 'finds a group' do
-    # this doesn't work...
-    resp = get '/elastic_load_balancing/groups?filter[]=path_prefix==/'
-    put_response(resp)
-    expect(resp.status).to eq(200)
-    expect(resp.body).to match("power-users")
-  end
-
-  it 'creates and deletes a user' do
-    # we start by deleting the user in case it exists
-    args = { user_name: "deleteme_now" }
-    resp = post_json '/elastic_load_balancing/groups/power-users/actions/remove_user_from', args
-    put_response(resp)
-    resp = delete '/elastic_load_balancing/users/deleteme_now'
+  it 'creates and deletes a load balancer' do
+    # we start by deleting the load balancer in case it exists
+    resp = delete '/elastic_load_balancing/load_balancers/deleteme_now'
     put_response(resp)
 
-    args = { user_name: "deleteme_now" }
-    resp = post_json '/elastic_load_balancing/users', args
+    args = { load_balancer_name: "deleteme_now" }
+    resp = post_json '/elastic_load_balancing/load_balancers', args
     put_response(resp)
     expect(resp.status).to eq(201)
     expect(resp.location).to match("deleteme_now")
 
-    args = { user_name: "deleteme_now" }
-    resp = post_json '/elastic_load_balancing/groups/power-users/actions/add_user_to', args
-    put_response(resp)
-    expect(resp.status).to eq(204)
-
-    args = { user_name: "deleteme_now" }
-    resp = post_json '/elastic_load_balancing/groups/power-users/actions/remove_user_from', args
-    put_response(resp)
-    expect(resp.status).to eq(204)
-
-    resp = delete '/elastic_load_balancing/users/deleteme_now'
+    resp = delete '/elastic_load_balancing/load_balancers/deleteme_now'
     put_response(resp)
     expect(resp.status).to eq(204)
   end

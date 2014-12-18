@@ -1,6 +1,6 @@
 {
   "resources": {
-    "LoadBalancers": {
+    "LoadBalancer": {
       "identifiers": [ { "name": "LoadBalancerName" } ],
       "shape": "LoadBalancerDescription"
     }

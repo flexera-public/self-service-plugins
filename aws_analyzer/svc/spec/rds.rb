@@ -40,7 +40,7 @@ describe 'RDS' do
       #put_response(resp)
       break if resp.status == 404
       r = Yajl::Parser.parse(resp.body)
-      puts "Status: #{r["db_instance_status"]}"
+      puts "Status: #{r["db_instance_status"]} (waiting fordeletion to complete)"
       sleep 5
     end
 
@@ -57,7 +57,7 @@ describe 'RDS' do
       resp = get '/rds/db_instances/deleteme-now'
       #put_response(resp)
       r = Yajl::Parser.parse(resp.body)
-      puts "Status: #{r["db_instance_status"]}"
+      puts "Status: #{r["db_instance_status"]} (waiting for 'available')"
       break if resp.status == 200 && resp.body =~ /"available"/
       sleep 5
     end
