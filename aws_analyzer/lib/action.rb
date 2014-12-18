@@ -1,46 +1,45 @@
 module Analyzer
 
-  # A service resource
-  class Resource
+  # A service resource action
+  # This data structure is common to all clouds
+  class Action
 
-    # [String] Resource name (e.g. "Stack")
+    # [String] Action name (e.g. "create_stack")
     attr_reader :name
 
-    # [Shape] Resource shape (structure definition)
-    attr_reader :shape
+    # [Symbol] Action verb (one of :get, :post, :put, :delete, ...)
+    attr_reader :verb
 
-    # [String] Resource primary id field (e.g. "StackId")
-    attr_reader :primary_id
+    # [String] Action path
+    attr_reader :path
 
-    # [Array<String>] Resource secondary ids field (e.g. ["StackName"])
-    attr_reader :secondary_ids
+    # [Shape] Action payload
+    attr_reader :payload
 
-    # [Array<ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
-    attr_reader :actions
+    # [Array<Shape>] Action params
+    attr_reader :params
 
-    # [Array<ResourceAction>] Resource custom actions (e.g. cancel_update)
-    attr_reader :custom_actions
+    # [Shape] Action response
+    attr_reader :response
 
-    # [Array<ResourceAction>] Resource collection custom actions (e.g. list)
-    attr_reader :collection_actions
+    # Initialize with hash
+    def initialize(opts)
+      opts.each { |k, v| instance_variable_set("@#{k}", v) }
+    end
 
-    # [Hash<String, String>] Linked resource names indexed by link field name (e.g. { "stack_id" => "Stack" })
-    attr_reader :links
-
-    # Initialize
-    def initialize
+    # Hash representation
+    def to_hash
+      { 'name'     => @name,
+        'verb'     => @verb,
+        'path'     => @path,
+        'payload'  => @payload,
+        'params'   => @params,
+        'response' => @response }
     end
 
     # YAML representation
     def to_yaml
-      YAML.dump({ name:               @name,
-                  shape:              @shape.to_hash,
-                  primary_id:         @primary_id,
-                  secondary_ids:      @secondary_ids,
-                  actions:            @actions.map(&:to_hash),
-                  custom_actions:     @custom_actiohns.map(&:to_hash),
-                  collection_actions: @collection_actions.map(&:to_hash),
-                  links:              @links })
+      YAML.dump(to_hash)
     end
     alias :to_s :to_yaml
 

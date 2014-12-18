@@ -18,6 +18,9 @@ module Analyzer
     # [Hash<String, Resource>] Hash of resources exposed by service indexed by name
     attr_reader :resources
 
+    # [Hash<String, Action>] Hash of service level actions indexed by name
+    attr_reader :actions
+
     # [Array<Shapes>] Request and response body structure descriptions
     attr_reader :shapes
 
@@ -33,6 +36,7 @@ module Analyzer
         'version'   => @version || '1.0',
         'metadata'  => @metadata,
         'resources' => @resources.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
+        'actions'   => @actions.inject({}) { |m, (k, v)| m[k] = v.to_hash; m },
         'shapes'    => @shapes }
     end
 

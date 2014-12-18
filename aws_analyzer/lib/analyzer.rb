@@ -59,19 +59,6 @@ module Analyzer
       end
     end
 
-    # YAML representation
-    def to_yaml
-      YAML.dump({ name:               @name,
-                  shape:              @shape.to_hash,
-                  primary_id:         @primary_id,
-                  secondary_ids:      @secondary_ids,
-                  actions:            @actions.map(&:to_hash),
-                  custom_actions:     @custom_actions.map(&:to_hash),
-                  collection_actions: @collection_actions.map(&:to_hash),
-                  links:              @links })
-    end
-    alias :to_s :to_yaml
-
   end
 
 end

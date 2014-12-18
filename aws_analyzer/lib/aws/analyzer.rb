@@ -99,17 +99,20 @@ module Analyzer
           end
         end
 
-        # 4. Collect remaining - unidentified operations
-        no_ids = registry.delete_incomplete_resources
+        # 4. Build service level custom actions for unmapped actions
         not_mapped = remaining - matched
+        service_actions = not_mapped.inject({}) { |m, nm| m[nm.underscore] = Operation.to_action(service['operations'][nm]); m }
+
+        # 5. Cleanup resources for which we couldn't find an id field
+        no_ids = registry.delete_incomplete_resources.sort
         @errors = []
-        @errors << "** Failed to identify a resource for the following operations:\n  #{not_mapped.join("\n  ")}" unless not_mapped.empty?
-        @errors << "** Failed to find id for resources\n  #{no_ids.join("\n  ")}" unless no_ids.empty?
+        @errors << "** Failed to find an id for the following resources:\n  #{no_ids.join("\n  ")}" unless no_ids.empty?
 
         ::Analyzer::ServiceDefinition.new('name'      => service['metadata']['serviceFullName'],
                                           'url'       => "/aws/#{service['metadata']['endpointPrefix']}",
                                           'metadata'  => service['metadata'],
                                           'resources' => registry.resources.inject({}) { |m, (k, v)| m[k.underscore] = v; m },
+                                          'actions'   => service_actions,
                                           'shapes'    => shapes)
       end
 

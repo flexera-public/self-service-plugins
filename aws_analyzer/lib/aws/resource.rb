@@ -26,13 +26,13 @@ module Analyzer
       # TBD
       attr_accessor :secondary_ids
 
-      # [Hash<String, ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
+      # [Hash<String, Action>] Resource CRUD actions (index, show, update, create, delete)
       attr_reader :actions
 
-      # [Hash<String, ResourceAction>] Resource custom actions (e.g. cancel_update)
+      # [Hash<String, Action>] Resource custom actions (e.g. cancel_update)
       attr_reader :custom_actions
 
-      # [Hash<String, ResourceAction>] Resource collection custom actions (e.g. list)
+      # [Hash<String, Action>] Resource collection custom actions (e.g. list)
       attr_reader :collection_actions
 
       # [Hash<String, String>] Linked resource names indexed by link field name (e.g. { "stack_id" => "Stack" })
@@ -51,7 +51,7 @@ module Analyzer
       # Register operation
       # OK, here is the trick:
       # name is the CamelCase name of the operation, this name ends with either the ResourceName or ResourceNames
-      # for operations that apply to the collection. We detect which one it is and then infer the final operation
+      # for operations that apply to the collection. We detect which one it is and then infer the final action
       # name and type (resource, collection or custom) from that.
       def add_operation(op, shapes)
         name = op['name']
@@ -60,11 +60,11 @@ module Analyzer
         if n == 'describe' || n == 'list' || n == 'get'
           n = is_collection ? 'index' : 'show'
         end
-        operation = to_operation(op, n)
+        action = Operation.to_action(op)
         if is_collection
           if n == 'index'
-            @actions['index'] = operation
-            # Some resource only have an index operation - no show operation (index can be filtered by id)
+            @actions['index'] = action
+            # Some resource only have an index action - no show action (index can be filtered by id)
             # So try to infer shape from index if not set yet
             if @shape.nil?
               oshape = (os = op['output']['shape']) && shapes[os]
@@ -77,7 +77,7 @@ module Analyzer
               end
             end
           else
-            @collection_actions[n] = operation
+            @collection_actions[n] = action
           end
         else
           if n == 'show'
@@ -95,39 +95,13 @@ module Analyzer
             end
           end
           if ['create', 'delete', 'update', 'show'].include?(n)
-            @actions[n] = operation
+            @actions[n] = action
           else
-            @custom_actions[n] = operation
+            @custom_actions[n] = action
           end
         end
       end
 
-      # Map raw JSON operation to analyzed YAML operation
-      # e.g.
-      #    - name: DescribeStackResource
-      #      http:
-      #        method: POST
-      #        requestUri: "/"
-      #      input:
-      #        shape: DescribeStackResourceInput
-      #      output:
-      #        shape: DescribeStackResourceOutput
-      #        resultWrapper: DescribeStackResourceResult
-      # becomes
-      #    - name: show
-      #      verb: post
-      #      path: "/"
-      #      payload: describe_stack_resource_input
-      #      params:
-      #      response: describe_stack_resource_output
-      def to_operation(op, name)
-        ::Analyzer::ResourceAction.new(name:     op['name'].underscore,
-                                       verb:     op['http']['method'].downcase,
-                                       path:     op['http']['requestUri'],
-                                       payload:  (sh = op['input'] && op['input']['shape']) ? sh.underscore : op['input'],
-                                       params:   [],
-                                       response: (out = op['output']) && out['shape'].underscore)
-      end
 
       # Hashify
       def to_hash
@@ -153,7 +127,7 @@ module Analyzer
       end
 
       # Add operation to resource
-      # Create resource if non-existent, checks whether operation is collection or resource operation
+      # Create resource if non-existent, checks whether operation is collection or resource action
       # Takes shapes define in API json so that it can apply a heuristic to infer the name of the resource shape
       # for resources that only support an index call (and no show call)
       def add_resource_operation(res_name, op, shapes)
@@ -173,6 +147,7 @@ module Analyzer
       end
 
       # Remove resources that couldn't be completly identified
+      # Returns list of deleted resource names
       def delete_incomplete_resources
         deleted = []
         @resources.values.each do |r|
@@ -180,7 +155,7 @@ module Analyzer
             deleted << r.name
           end
         end
-        @resources.delete_if { |n, r| deleted.include?(n) }
+        @resources.delete_if { |n, _| deleted.include?(n) }
         deleted
       end
 

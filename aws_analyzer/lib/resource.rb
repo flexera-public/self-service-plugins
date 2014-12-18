@@ -15,13 +15,13 @@ module Analyzer
     # [Array<String>] Resource secondary ids field (e.g. ["StackName"])
     attr_reader :secondary_ids
 
-    # [Hash<String, ResourceAction>] Resource CRUD actions (index, show, update, create, delete)
+    # [Hash<String, Action>] Resource CRUD actions (index, show, update, create, delete)
     attr_reader :actions
 
-    # [Hash<String, ResourceAction>] Resource custom actions (e.g. cancel_update)
+    # [Hash<String, Action>] Resource custom actions (e.g. cancel_update)
     attr_reader :custom_actions
 
-    # [Hash<String, ResourceAction>] Resource collection custom actions (e.g. list)
+    # [Hash<String, Action>] Resource collection custom actions (e.g. list)
     attr_reader :collection_actions
 
     # [Hash<String, String>] Linked resource names indexed by link field name (e.g. { "stack_id" => "Stack" })
