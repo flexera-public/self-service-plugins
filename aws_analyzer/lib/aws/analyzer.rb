@@ -29,11 +29,11 @@ module Analyzer
         # Locate API and resource json files
         json = ''; res_json = ''
         unless @json_paths.detect { |path| json = File.join(path, service_name.camel_case + '.api.json'); File.exist?(json) }
-          puts "Hmm there doesn't seem to be any *.api.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
+          puts "Hmm there doesn't seem to be a #{service_name.camel_case}.api.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
           exit 1
         end
         unless @json_paths.detect { |path| res_json = File.join(path, service_name.camel_case + '.resources.json'); File.exist?(res_json) }
-          puts "Hmm there doesn't seem to be any *.resources.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
+          puts "Hmm there doesn't seem to be a #{service_name.camel_case}.resources.json file at #{@json_paths.join(' ,')}, you sure you got that right? (use --paths to specify the location of the JSON files)"
           exit 1
         end
 
