@@ -143,7 +143,13 @@ class Restifier < App
     else
       action = check_action(resource, params['resource_type'], "index")
       halt 400, "Resource #{params['resource_type']} has neither show nor index action" unless action
-      filter = { resource.primary_id.pluralize => [ params[:id] ] }
+      shape = svc.shapes[action.payload]
+      $logger.info "Shape: #{shape.inspect}"
+      if shape['type'] == 'structure' && shape['members'].key?(resource.primary_id)
+        filter = { resource.primary_id => params[:id] }
+      else
+        filter = { resource.primary_id.pluralize => [ params[:id] ] }
+      end
     end
     halt 500, "Resource #{params['resource_type']} does not have primary_id" unless resource.primary_id
     code, hdrs, body =  perform_request(params['service'], action, filter)
