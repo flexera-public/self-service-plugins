@@ -15,7 +15,7 @@ module Analyzer
       cloud = options.delete(:cloud) || 'aws'
       klass = ::Analyzer.const_get(cloud.upcase).const_get('Analyzer') rescue nil
       if klass.nil?
-        puts "No analyzer implemented yet for #{cloud.inspect} - exiting..."
+        STDERR.puts "No analyzer implemented yet for #{cloud.inspect} - exiting..."
         exit 1
       end
       @analyzer = klass.new(options)
@@ -42,9 +42,9 @@ module Analyzer
       end
       if errors && !errors.empty?
         if errors.size == 1
-          puts "ERROR: #{errors.first}"
+          STDERR.puts "ERROR: #{errors.first}"
         else
-          puts "ERRORS:\n#{errors.join("\n")}"
+          STDERR.puts "ERRORS:\n#{errors.join("\n")}"
         end
         exit 1 if !force
         puts

@@ -213,7 +213,7 @@ class Restifier < App
         res = res[params['resource_type']]
         $logger.info "Got hash with #{params['resource_type']} array"
       elsif params['service'] == 'ec2' && params['resource_type'] == "instances"
-        # special-case
+        # special-case ec2 instances
         res = res['reservations'].map{|r| r['instances']}.flatten
       else
         arrays = res.values.select{|v| v.is_a?(Array)}
