@@ -1,53 +1,65 @@
 module V1
   module ApiResources
-    extend Contexts::DSL
-    # Mapping of actions and verbs for some basic actions. AWS uses POST
-    # for everything!
-    VERB_MAPPINGS = {
-      'create' => :post,
-      'index'  => :get,
-      'show'   => :get,
-      'update' => :put,
-      'delete' => :delete
-    }
+    class Configuration
+      include Praxis::ResourceDefinition
 
-    reader = DefinitionReader.new
-    reader.for_all_definitions do |defn|
-      # Create a module with the name of the service
-      service = create_service(defn['name'].delete(' '))
-      defn['resources'].each do |res|
-        # Create a resource
-        resource = create_resource(service, res['name'])
+      media_type V1::MediaTypes::Configuration
+      version '1.0'
 
-        resource.media_type V1::MediaTypes.const_get(
-          defn['name'].delete(' ').camel_case).const_get(res['shape'].camel_case)
-
-        resource.version defn['version']
-        resource.routing do
-          prefix "/api#{defn['url']}/#{res['name'].pluralize}"
-        end
-
-        res['actions'] && res['actions'].each do |act|
-          action_name = act['name']
-          resource.action(action_name) do
-            use :versionable
-
-            routing do
-              send(VERB_MAPPINGS[action_name] || :post, act['path'])
-            end
-
-            shape_map = Seahorse::Model::ShapeMap.new(defn['shapes'])
-            if act['payload']
-              shape = shape_map.shape({ 'shape' => act['payload'] })
-              payload do
-                Util.shape_to_attributes(self, shape)
-              end
-            end
-
-            response :ok
-          end
-        end
+      routing do
+        prefix '/api/accounts/:account_id/configuration'
       end
+
+      action :show do
+        use :versionable
+
+        routing do
+          get '/:id'
+        end
+
+        params do
+          attribute :account_id, Integer, required: true
+          attribute :id, String, required: true
+        end
+
+        response :ok
+        response :not_found
+      end
+
+      action :create do
+        routing do
+          post ''
+        end
+
+        params do
+          attribute :account_id, String, required: true
+        end
+
+        payload do
+          attribute :chef_server_url, String, required: true,
+            description: 'The URL of the chef server',
+            example: 'https://api.opscode.com/organizations/rs-st-dev'
+          attribute :node_name, String, required: true,
+            description: 'The name of the node',
+            example: 'mysql_server'
+          attribute :validation_client_name, String, required: true,
+            description: 'The name of the validator',
+            example: 'rs-st-dev-validator'
+          attribute :validation_key, String, required: true,
+            description: 'The validation key'
+          attribute :chef_environment, String, required: true,
+            description: 'The chef environment',
+            example: 'staging'
+          attribute :run_list, Attributor::Collection.of(String), required: true,
+            description: 'The runlist for the chef client'
+          # attribute :attributes, Attributor::Hash.of(key: String, value: Object),
+          #   description: 'Optional attributes for the chef run'
+        end
+
+        response :created
+        response :unprocessable_entity
+      end
+
     end
   end
 end

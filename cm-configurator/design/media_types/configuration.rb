@@ -1,21 +1,25 @@
 module V1
   module MediaTypes
-    extend Contexts::DSL
+    class Configuration < Praxis::MediaType
+      identifier 'application/json'
 
-    reader = DefinitionReader.new
+      attributes do
+        attribute :id, String,
+          description: 'The ID of this configuration'
+        attribute :href, String,
+          description: 'The HREF of this configuration'
+        attribute :bootstrap_script, String,
+          description: 'The bootstrap script that can be used for configuration'
+      end
 
-    reader.for_all_definitions do |defn|
-      service = create_service(defn['name'].delete(' '))
-      shape_map = Seahorse::Model::ShapeMap.new(defn['shapes'])
+      view :default do
+        attribute :id
+        attribute :href
+        attribute :bootstrap_script
+      end
 
-      defn['resources'].each do |res|
-        next unless res['shape']
-        media_type = create_media_type(service, res['shape'])
-        media_type.identifier 'application/json'
-        shape = shape_map.shape({ 'shape' => res['shape'] })
-        media_type.attributes do
-          Util.shape_to_attributes(self, shape)
-        end
+      view :link do
+        attribute :href
       end
     end
   end
