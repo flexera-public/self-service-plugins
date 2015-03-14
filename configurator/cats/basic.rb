@@ -13,7 +13,7 @@ long_description "This CAT uses the configurator plugin to launch a raw image as
 
 namespace "cm" do
   service do
-    host  "54.188.50.135" #"cm.test.rightscale.com"
+    host  "54.184.12.120" #"cm.test.rightscale.com"
     path "/cm/accounts/:account_id"
     headers do {
       "X-Api-Version" => "1.0",
