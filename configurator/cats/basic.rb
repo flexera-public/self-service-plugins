@@ -13,7 +13,7 @@ long_description "This CAT uses the configurator plugin to launch a raw image as
 
 namespace "cm" do
   service do
-    host  "54.184.12.120" #"cm.test.rightscale.com"
+    host  "54.184.12.120:8000" #"cm.test.rightscale.com"
     path "/cm/accounts/:account_id"
     headers do {
       "X-Api-Version" => "1.0",
@@ -21,9 +21,9 @@ namespace "cm" do
     } end
   end
 
-  type "configuration" do
-    provision "provision_configuration"
-    delete "delete_configuration"
+  type "chef_configuration" do
+    provision "provision_chef_configuration"
+    delete "delete_resource"
     fields do
       field "type" do
         type "string"
@@ -39,7 +39,7 @@ namespace "cm" do
 
   type "booter" do
     provision "provision_booter"
-    delete "delete_booter"
+    delete "delete_resource"
     fields do
       field "host" do
         type "string"
@@ -54,14 +54,10 @@ namespace "cm" do
 end
 
 # Define the RCL definitions to create and destroy the resource
-define provision_configuration(@raw_conf) return @conf do
+define provision_chef_configuration(@raw_conf) return @conf do
   $obj = to_object(@raw_conf)
   $fields = $obj["fields"]
-  @conf = cm.configuration.create($fields) # Calls .create on the API resource
-end
-
-define delete_configuration(@conf) do
-  @conf.destroy() # Calls .delete on the API resource
+  @conf = cm.chef_configuration.create($fields) # Calls .create on the API resource
 end
 
 define provision_booter(@raw_booter) return @booter do
@@ -70,8 +66,8 @@ define provision_booter(@raw_booter) return @booter do
   @conf = cm.booter.create($fields) # Calls .create on the API resource
 end
 
-define delete_booter(@booter) do
-  @booter.destroy() # Calls .delete on the API resource
+define delete_resource(@resource) do
+  @resource.destroy() # Calls .delete on the API resource
 end
 
 #########
@@ -113,7 +109,7 @@ end
 #########
 # Resources
 #########
-resource "chef_cm", type: "cm.configuration" do
+resource "chef_cm", type: "cm.chef_configuration" do
   type "chef"
   settings do {
     "chef_server_url" => $chef_server_url,
