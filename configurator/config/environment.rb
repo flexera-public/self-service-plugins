@@ -20,3 +20,7 @@ Praxis::Application.instance.layout do
     map :responses, '**/responses/**/*'
   end
 end
+
+Praxis::Application.configure do |application|
+  application.middleware Rack::ContentLength
+end

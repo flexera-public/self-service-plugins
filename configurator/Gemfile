@@ -4,6 +4,8 @@ gem 'praxis'
 gem 'rack', '~> 1.0'
 gem 'rake'
 gem 'mongoid'
+gem 'rainbows'
+gem 'rest-client'
 
 group :development, :test do
   gem 'pry', require: 'pry'

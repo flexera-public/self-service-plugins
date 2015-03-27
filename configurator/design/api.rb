@@ -11,4 +11,10 @@ Praxis::ApiDefinition.define do
       key "X-Api-Version", String, values: ['1.0'], required: true
     end
   end
+
+  response_template :created do
+    status 201
+    description 'The configuration is created'
+    media_type V1::MediaTypes::Configuration
+  end
 end

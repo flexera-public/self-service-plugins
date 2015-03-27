@@ -7,7 +7,7 @@ module V1
       version '1.0'
 
       routing do
-        prefix '/api/accounts/:account_id/configuration'
+        prefix '/cm/accounts/:account_id/chef_configurations'
       end
 
       action :show do
@@ -52,8 +52,8 @@ module V1
             example: 'staging'
           attribute :run_list, Attributor::Collection.of(String), required: true,
             description: 'The runlist for the chef client'
-          # attribute :attributes, Attributor::Hash.of(key: String, value: Object),
-          #   description: 'Optional attributes for the chef run'
+          attribute :first_attributes, Attributor::Hash.of(key: String, value: Object),
+            description: 'Optional attributes for the chef run'
         end
 
         response :created

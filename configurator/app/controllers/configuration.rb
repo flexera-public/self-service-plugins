@@ -1,3 +1,5 @@
+require 'rest-client'
+
 module V1
   class Configuration
     include Praxis::Controller
@@ -21,8 +23,9 @@ module V1
       script = generate(request.payload.to_h)
       self.response = Praxis::Responses::Created.new()
       id = BSON::ObjectId.new.to_s
-      href = "/api/accounts/#{account_id}/configuration/#{id}"
+      href = "/api/accounts/#{account_id}/chef_configurations/#{id}"
       details = { id: id,
+                  kind: 'cm-configuration#chef',
                   bootstrap_script: script,
                   href: href }
       response.body = details
@@ -32,17 +35,18 @@ module V1
       response
     end
 
+    # Get the database
     def get_db
-      if File.exists?('db.json')
-        JSON.load(File.read('db.json'))
-      else
-        File.open('db.json', 'w') { |f| f.write({}.to_json) }
+      if File.exists?('/var/db') && (content = JSON.load(File.read('/var/db'))) == nil
+        File.open('/var/db', 'w') { |f| f.write({}.to_json) }
         {}
+      else
+        content
       end
     end
 
     def flush_db(db)
-      File.open('db.json', 'w') { |f| f.write(db.to_json) }
+      File.open('/var/db', 'w') { |f| f.write(db.to_json) }
     end
 
     # Generates the cloud-init script for installing and configuring the server using Chef
@@ -58,6 +62,7 @@ module V1
     #
     def generate(input)
       runlist_json = JSON.pretty_generate((input[:attributes] || {}).merge({ run_list: input[:run_list] }))
+      validation_key = get_cred(input[:validation_key])
       script = <<-SCRIPT
 #!/bin/bash
 # Download and install chef
@@ -79,7 +84,7 @@ EOF
 
 # Create the validation key file
 cat <<'EOF' > /etc/chef/validation.pem
-#{input[:validation_key]}
+#{validation_key}
 EOF
 
 # Converge
@@ -87,6 +92,38 @@ chef-client -j /etc/chef/runlist.json
 SCRIPT
       script
     end
+
+    def get_cred(name)
+      response = RestClient::Request.execute(
+        method: :get,
+        headers: {
+          'X-Api-Version' => '1.5',
+          'Authorization' => "Bearer #{ENV["RS_AUTH_TOKEN"]}",
+          'Accept' => 'application/json',
+          'params' => { 'filter[]' => "name==#{name}" }
+        },
+        url: "#{ENV["RS_API_ENDPOINT"]}/api/credentials")
+      return nil unless response.code == 200
+      response = JSON.parse(response)
+      cred = response.detect { |c| c['name'] == name }
+      return nil unless cred
+
+      cred_href = (self_link = cred['links'].detect { |l| l['href'] if l['rel'] == 'self' }) && self_link['href']
+
+      response = RestClient::Request.execute(
+        method: :get,
+        headers: {
+          'X-Api-Version' => '1.5',
+          'Authorization' => "Bearer #{ENV["RS_AUTH_TOKEN"]}",
+          'Accept' => 'application/json',
+          'params' => { 'view' => 'sensitive' }
+        },
+        url: "#{ENV["RS_API_ENDPOINT"]}#{cred_href}")
+      return nil unless response.code == 200
+      response = JSON.parse(response)
+      response && response['value']
+    end
+
 
   end
 end
