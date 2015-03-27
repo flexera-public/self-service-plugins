@@ -15,6 +15,6 @@ Praxis::ApiDefinition.define do
   response_template :created do
     status 201
     description 'The configuration is created'
-    media_type V1::MediaTypes::Configuration
+    media_type V1::MediaTypes::ChefConfiguration
   end
 end

@@ -1,9 +1,9 @@
 module V1
   module ApiResources
-    class Configuration
+    class ChefConfiguration
       include Praxis::ResourceDefinition
 
-      media_type V1::MediaTypes::Configuration
+      media_type V1::MediaTypes::ChefConfiguration
       version '1.0'
 
       routing do

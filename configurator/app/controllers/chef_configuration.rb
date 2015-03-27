@@ -1,10 +1,10 @@
 require 'rest-client'
 
 module V1
-  class Configuration
+  class ChefConfiguration
     include Praxis::Controller
 
-    implements V1::ApiResources::Configuration
+    implements V1::ApiResources::ChefConfiguration
 
     def show(account_id:, id:, **other_params)
       db = get_db

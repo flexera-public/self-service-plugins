@@ -1,6 +1,6 @@
 module V1
   module MediaTypes
-    class Configuration < Praxis::MediaType
+    class ChefConfiguration < Praxis::MediaType
       identifier 'application/json'
 
       attributes do
