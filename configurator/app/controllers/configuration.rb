@@ -23,7 +23,7 @@ module V1
       script = generate(request.payload.to_h)
       self.response = Praxis::Responses::Created.new()
       id = BSON::ObjectId.new.to_s
-      href = "/api/accounts/#{account_id}/chef_configurations/#{id}"
+      href = "/cm/accounts/#{account_id}/chef_configurations/#{id}"
       details = { id: id,
                   kind: 'cm-configuration#chef',
                   bootstrap_script: script,
