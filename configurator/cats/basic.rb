@@ -25,14 +25,32 @@ namespace "cm" do
     provision "provision_chef_configuration"
     delete "delete_resource"
     fields do
-      field "type" do
+      field "chef_server_url" do
         type "string"
-        regexp "^chef$" # Only chef for now
         required true
       end
-      field "settings" do
-        type "composite"
+      field "node_name" do
+        type "string"
         required true
+      end
+      field "validation_client_name" do
+        type "string"
+        required true
+      end
+      field "validation_key" do
+        type "string"
+        required true
+      end
+      field "chef_environment" do
+        type "string"
+        required true
+      end
+      field "run_list" do
+        type "array"
+        required true
+      end
+      field "first_attributes" do
+        type "composite"
       end
     end
   end
@@ -80,11 +98,18 @@ parameter "chef_server_url" do
   default "https://api.opscode.com/organizations/rs-st-dev"
 end
 
+parameter "validation_client_name" do
+  type "string"
+  label "Chef Validator Name"
+  description "The name of the Chef validator"
+  default "rs-st-dev-validator"
+end
+
 parameter "validation_key" do
   type "string"
   label "Chef Validation Key"
   description "Name of RightScale credential holding the Chef server validation key"
-  default "rs-st-dev-validator"
+  default "KM_CHEF_VALIDATION_KEY"
 end
 
 parameter "environment" do
@@ -100,31 +125,30 @@ parameter "run_list" do
   category "Chef"
 end
 
-parameter "first_attributes" do
-  type "string"
-  label "Attributes used to run initial configuration"
-  category "Chef"
-end
+# parameter "first_attributes" do
+#   type "string"
+#   label "Attributes used to run initial configuration"
+#   category "Chef"
+# end
 
 #########
 # Resources
 #########
 resource "chef_cm", type: "cm.chef_configuration" do
-  type "chef"
-  settings do {
-    "chef_server_url" => $chef_server_url,
-    "validation_key_name" => $validation_key,
-    "run_list" => $run_list,
-    "chef_environment" => $environment,
-    "first_attributes" => $first_attributes
-  } end
+  node_name              "test_node"
+  chef_server_url        $chef_server_url
+  validation_client_name $validation_client_name
+  validation_key         $validation_key
+  run_list               $run_list
+  chef_environment       $environment
+  first_attributes       {}
 end
 
 resource "cm_server", type: "server" do
   name "cm_server"
-  cloud_href "/api/clouds/1"
+  cloud_href "/api/clouds/6"
   instance_type "m1.small"
   ssh_key "default"
   user_data "@chef_cm.bootstrap_script" # server must be tagged with 'rs_agent:userdata=mime'
-  server_template find('RL10.0.rc2 Linux Base') # Could be anything
+  server_template find('RightLink 10.0.3 Linux Base') # Could be anything
 end

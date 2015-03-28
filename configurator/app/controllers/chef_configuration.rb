@@ -23,7 +23,7 @@ module V1
       script = generate(request.payload.to_h)
       self.response = Praxis::Responses::Created.new()
       id = BSON::ObjectId.new.to_s
-      href = "/cm/accounts/#{account_id}/chef_configurations/#{id}"
+      href = "/chef_configurations/#{id}"
       details = { id: id,
                   kind: 'cm-configuration#chef',
                   bootstrap_script: script,
@@ -67,12 +67,12 @@ module V1
 #!/bin/bash
 # Download and install chef
 curl -L https://www.chef.io/chef/install.sh | sudo bash
+mkdir -p /etc/chef
+
 # Prepare the runlist file
 cat <<'EOF' >/etc/chef/runlist.json
 #{runlist_json}
 EOF
-
-mkdir -p /etc/chef
 
 # Create the chef client configuration file
 cat <<'EOF' >/etc/chef/client.rb
