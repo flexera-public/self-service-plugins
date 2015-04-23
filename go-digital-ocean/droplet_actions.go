@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"github.com/rightscale/go-digital-ocean/middleware"
 	"github.com/rightscale/godo"
 )
 
@@ -29,7 +30,7 @@ func SetupDropletActionsRoutes(e *echo.Echo) {
 }
 
 func getDropletAction(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func getDropletAction(c *echo.Context) error {
 }
 
 func disableDropletBackups(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -61,14 +62,14 @@ func disableDropletBackups(c *echo.Context) error {
 }
 
 func rebootDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
 	return doResourceAction(c, client.DropletActions.Reboot)
 }
 func powerCycleDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func powerCycleDroplet(c *echo.Context) error {
 }
 
 func shutdownDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func shutdownDroplet(c *echo.Context) error {
 }
 
 func powerOffDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func powerOffDroplet(c *echo.Context) error {
 }
 
 func powerOnDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -100,7 +101,7 @@ func powerOnDroplet(c *echo.Context) error {
 }
 
 func restoreDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -117,7 +118,7 @@ func restoreDroplet(c *echo.Context) error {
 }
 
 func passwordResetDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -125,7 +126,7 @@ func passwordResetDroplet(c *echo.Context) error {
 }
 
 func resizeDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -143,7 +144,7 @@ func resizeDroplet(c *echo.Context) error {
 }
 
 func rebuildDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -160,7 +161,7 @@ func rebuildDroplet(c *echo.Context) error {
 }
 
 func renameDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -177,7 +178,7 @@ func renameDroplet(c *echo.Context) error {
 }
 
 func changeDropletKernel(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -194,7 +195,7 @@ func changeDropletKernel(c *echo.Context) error {
 }
 
 func enableDropletIPv6(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -202,7 +203,7 @@ func enableDropletIPv6(c *echo.Context) error {
 }
 
 func enableDropletPrivateNetworking(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -210,7 +211,7 @@ func enableDropletPrivateNetworking(c *echo.Context) error {
 }
 
 func snapshotDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -227,7 +228,7 @@ func snapshotDroplet(c *echo.Context) error {
 }
 
 func upgradeDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo"
+	"github.com/rightscale/go-digital-ocean/middleware"
 	"github.com/rightscale/godo"
 )
 
@@ -16,7 +17,7 @@ func SetupKeysRoutes(e *echo.Echo) {
 }
 
 func listKeys(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -29,7 +30,7 @@ func listKeys(c *echo.Context) error {
 }
 
 func showKey(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func showKey(c *echo.Context) error {
 }
 
 func createKey(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func createKey(c *echo.Context) error {
 }
 
 func updateKey(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func updateKey(c *echo.Context) error {
 }
 
 func deleteKey(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}

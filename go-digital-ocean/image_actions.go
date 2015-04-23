@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"github.com/rightscale/go-digital-ocean/middleware"
 	"github.com/rightscale/godo"
 )
 
@@ -15,7 +16,7 @@ func SetupImageActionsRoutes(e *echo.Echo) {
 }
 
 func getImageAction(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func getImageAction(c *echo.Context) error {
 }
 
 func transferImage(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func transferImage(c *echo.Context) error {
 }
 
 func convertImage(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}

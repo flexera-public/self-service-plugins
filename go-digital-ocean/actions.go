@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/labstack/echo"
+	"github.com/rightscale/go-digital-ocean/middleware"
 	"github.com/rightscale/godo"
 )
 
@@ -11,7 +12,7 @@ func SetupActionsRoutes(e *echo.Echo) {
 }
 
 func listActions(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -23,7 +24,7 @@ func listActions(c *echo.Context) error {
 }
 
 func showAction(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}

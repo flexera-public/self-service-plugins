@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"github.com/rightscale/go-digital-ocean/middleware"
 	"github.com/rightscale/godo"
 )
 
@@ -27,7 +28,7 @@ func dropletHref(id int) string {
 }
 
 func listDroplets(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func listDroplets(c *echo.Context) error {
 }
 
 func showDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func showDroplet(c *echo.Context) error {
 }
 
 func createDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func createDroplet(c *echo.Context) error {
 }
 
 func deleteDroplet(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -89,7 +90,7 @@ func deleteDroplet(c *echo.Context) error {
 }
 
 func listDropletKernels(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -100,7 +101,7 @@ func listDropletKernels(c *echo.Context) error {
 	list := []godo.Kernel{}
 	opt := &godo.ListOptions{}
 	for {
-		kernels, resp, err := client.Droplets.ListKernels(id, opt)
+		kernels, resp, err := client.Droplets.Kernels(id, opt)
 		if err != nil {
 			return err
 		}
@@ -118,19 +119,19 @@ func listDropletKernels(c *echo.Context) error {
 }
 
 func listDropletSnapshots(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	return listDropletImages(c, client.Droplets.ListSnapshots)
+	return listDropletImages(c, client.Droplets.Snapshots)
 }
 
 func listDropletBackups(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	return listDropletImages(c, client.Droplets.ListBackups)
+	return listDropletImages(c, client.Droplets.Backups)
 }
 
 func listDropletImages(c *echo.Context, lister func(int, *godo.ListOptions) ([]godo.Image, *godo.Response, error)) error {
@@ -148,7 +149,7 @@ func listDropletImages(c *echo.Context, lister func(int, *godo.ListOptions) ([]g
 }
 
 func listDropletActions(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -157,7 +158,7 @@ func listDropletActions(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateActions(func(opt *godo.ListOptions) ([]godo.Action, *godo.Response, error) {
-		return client.Droplets.ListActions(id, opt)
+		return client.Droplets.Actions(id, opt)
 	})
 	if err != nil {
 		return err
@@ -166,7 +167,7 @@ func listDropletActions(c *echo.Context) error {
 }
 
 func listDropletNeighbors(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -174,7 +175,7 @@ func listDropletNeighbors(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	droplets, _, err := client.Droplets.ListNeighbors(id)
+	droplets, _, err := client.Droplets.Neighbors(id)
 	if err != nil {
 		return err
 	}

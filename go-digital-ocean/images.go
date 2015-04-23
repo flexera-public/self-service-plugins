@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo"
+	"github.com/rightscale/go-digital-ocean/middleware"
 	"github.com/rightscale/godo"
 )
 
@@ -18,7 +19,7 @@ func imageHref(id int) string {
 }
 
 func listImages(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -31,7 +32,7 @@ func listImages(c *echo.Context) error {
 }
 
 func showImage(c *echo.Context) error {
-	client, err := GetDOClient(c)
+	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func showImage(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	image, _, err := client.Images.Get(id)
+	image, _, err := client.Images.GetByID(id)
 	if err != nil {
 		return err
 	}
