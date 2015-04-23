@@ -76,7 +76,7 @@ type Image struct {
 	Links        Links    `json:"links"`
 }
 
-// Droplet factory
+// Image factory
 func ImageFromApi(do *godo.Image) *Image {
 	href := imageHref(do.ID)
 	links := Links{
