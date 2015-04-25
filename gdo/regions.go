@@ -2,35 +2,35 @@ package main
 
 import (
 	"github.com/labstack/echo"
-	"github.com/rightscale/go-digital-ocean/middleware"
+	"github.com/rightscale/gdo/middleware"
 	"github.com/rightscale/godo"
 )
 
-func SetupSizesRoutes(e *echo.Echo) {
-	e.Get("", listSizes)
+func SetupRegionsRoutes(e *echo.Echo) {
+	e.Get("", listRegions)
 }
 
-func listSizes(c *echo.Context) error {
+func listRegions(c *echo.Context) error {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateSizes(client.Sizes.List)
+	list, err := paginateRegions(client.Regions.List)
 	if err != nil {
 		return err
 	}
 	return Respond(c, list)
 }
 
-func paginateSizes(lister func(opt *godo.ListOptions) ([]godo.Size, *godo.Response, error)) ([]godo.Size, error) {
-	list := []godo.Size{}
+func paginateRegions(lister func(opt *godo.ListOptions) ([]godo.Region, *godo.Response, error)) ([]godo.Region, error) {
+	list := []godo.Region{}
 	opt := &godo.ListOptions{}
 	for {
-		sizes, resp, err := lister(opt)
+		regions, resp, err := lister(opt)
 		if err != nil {
 			return nil, err
 		}
-		list = append(list, sizes...)
+		list = append(list, regions...)
 		if resp.Links == nil || resp.Links.IsLastPage() {
 			break
 		}

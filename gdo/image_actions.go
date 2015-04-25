@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
-	"github.com/rightscale/go-digital-ocean/middleware"
+	"github.com/rightscale/gdo/middleware"
 	"github.com/rightscale/godo"
 )
 

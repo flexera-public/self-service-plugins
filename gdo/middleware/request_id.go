@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// Header used to set request id
+// Header used to get/set request id
 const HeaderKey = "X-Request-Id"
 
 // RequestID middleware
@@ -17,10 +17,11 @@ func RequestID(h echo.HandlerFunc) echo.HandlerFunc {
 		}
 		c.Set("RequestID", id)
 		err := h(c)
-		if err != nil {
-			return err
-		}
+
+		// Set header before handling error so that the 500 response contains it
+		// (be kind to prod support...)
 		c.Response.Header().Set(HeaderKey, id)
-		return nil
+
+		return err
 	}
 }

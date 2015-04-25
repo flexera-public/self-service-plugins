@@ -6,7 +6,8 @@ import (
 	"os"
 
 	"github.com/labstack/echo"
-	"github.com/rightscale/go-digital-ocean/middleware"
+	em "github.com/labstack/echo/middleware"
+	"github.com/rightscale/gdo/middleware"
 	"gopkg.in/alecthomas/kingpin.v1"
 )
 
@@ -23,16 +24,30 @@ var (
 )
 
 func main() {
-	initLogger()
-
 	// Parse command line
 	app.Version(version)
 	app.Parse(os.Args[1:])
 
+	// Serve
+	s := HttpServer()
+	s.Run(*listenFlag)
+}
+
+// Factory method for application
+// Makes it possible to do integration testing.
+func HttpServer() *echo.Echo {
+
+	// Initialize global syslog logger
+	if l, err := syslog.NewLogger(syslog.LOG_NOTICE|syslog.LOG_LOCAL0, 0); err != nil {
+		panic("gdo: failed to initialize syslog logger: " + err.Error())
+	} else {
+		logger = l
+	}
+
 	// Setup middleware
 	e := echo.New()
 	e.Use(middleware.RequestID)                      // Put that first so loggers can log request id
-	e.Use(echo.Logger)                               // Log to console
+	e.Use(em.Logger)                                 // Log to console
 	e.Use(middleware.HttpLogger(logger))             // Log to syslog
 	e.Use(middleware.DOClientInitializer(*dumpFlag)) // Initialize DigitalOcean API client
 
@@ -49,17 +64,8 @@ func main() {
 	SetupRegionsRoutes(e.Group("/regions"))
 	SetupSizesRoutes(e.Group("/sizes"))
 
-	// Serve
-	e.Run(*listenFlag)
-}
-
-// Initialize syslog logger, blow up horribly in case of failure
-func initLogger() {
-	var err error
-	logger, err = syslog.NewLogger(syslog.LOG_NOTICE|syslog.LOG_LOCAL0, 0)
-	if err != nil {
-		panic("gdo: failed to initialize syslog logger: " + err.Error())
-	}
+	// We're done
+	return e
 }
 
 // Handle middleware or controller error

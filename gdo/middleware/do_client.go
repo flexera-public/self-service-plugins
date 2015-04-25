@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
 
 	"code.google.com/p/goauth2/oauth"
@@ -17,6 +18,9 @@ import (
 
 // Name of cookie created by SS that contains the credentials needed to send API requests to DO
 const CredCookieName = "ServiceCred"
+
+// Digital Ocean API endpoint, exposed so tests can change it
+var DOBaseURL *url.URL
 
 // Middleware that creates DO client using credentials in cookie
 func DOClientInitializer(dump bool) echo.Middleware {
@@ -28,6 +32,9 @@ func DOClientInitializer(dump bool) echo.Middleware {
 			}
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: token.Value}}
 			client := godo.NewClient(t.Client())
+			if DOBaseURL != nil {
+				client.BaseURL = DOBaseURL
+			}
 			if dump {
 				client.OnRequestCompleted(dumpRequestResponse)
 			}
