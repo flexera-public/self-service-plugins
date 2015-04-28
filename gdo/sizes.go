@@ -16,10 +16,7 @@ func listSizes(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateSizes(client.Sizes.List)
-	if err != nil {
-		return err
-	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 func paginateSizes(lister func(opt *godo.ListOptions) ([]godo.Size, *godo.Response, error)) ([]godo.Size, error) {

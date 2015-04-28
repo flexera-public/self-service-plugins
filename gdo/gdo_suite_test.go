@@ -37,6 +37,7 @@ type GDOClient struct {
 // Read HTTP response
 type Response struct {
 	Body    string
+	Status  int
 	Headers http.Header
 }
 
@@ -79,6 +80,7 @@ func (c *GDOClient) do(verb, url, body string) (*Response, error) {
 	}
 	return &Response{
 		Body:    string(respBody),
+		Status:  resp.StatusCode,
 		Headers: resp.Header,
 	}, nil
 }

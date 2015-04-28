@@ -16,10 +16,7 @@ func listRegions(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateRegions(client.Regions.List)
-	if err != nil {
-		return err
-	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 func paginateRegions(lister func(opt *godo.ListOptions) ([]godo.Region, *godo.Response, error)) ([]godo.Region, error) {

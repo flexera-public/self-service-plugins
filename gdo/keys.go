@@ -22,11 +22,7 @@ func listKeys(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateKeys(client.Keys.List)
-	if err != nil {
-		return err
-	}
-	Respond(c, list)
-	return nil
+	return Respond(c, list, err)
 }
 
 func showKey(c *echo.Context) error {
@@ -42,8 +38,7 @@ func showKey(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	Respond(c, key)
-	return nil
+	return Respond(c, key, err)
 }
 
 func createKey(c *echo.Context) error {
@@ -56,11 +51,10 @@ func createKey(c *echo.Context) error {
 		return err
 	}
 	key, _, err := client.Keys.Create(&req)
-	if err != nil {
-		return err
+	if err == nil {
+		c.Response.Header().Set("Location", keyHref(key.ID))
 	}
-	c.Response.Header().Set("Location", keyHref(key.ID))
-	return RespondNoContent(c)
+	return RespondNoContent(c, err)
 }
 
 func updateKey(c *echo.Context) error {
@@ -77,10 +71,7 @@ func updateKey(c *echo.Context) error {
 		return err
 	}
 	_, _, err = client.Keys.UpdateByID(id, &req)
-	if err != nil {
-		return err
-	}
-	return RespondNoContent(c)
+	return RespondNoContent(c, err)
 }
 
 func deleteKey(c *echo.Context) error {
@@ -93,10 +84,7 @@ func deleteKey(c *echo.Context) error {
 		return err
 	}
 	_, err = client.Keys.DeleteByID(id)
-	if err != nil {
-		return err
-	}
-	return RespondNoContent(c)
+	return RespondNoContent(c, err)
 }
 
 func keyHref(keyID int) string {

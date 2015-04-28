@@ -24,11 +24,7 @@ func listImages(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateImages(client.Images.List)
-	if err != nil {
-		return err
-	}
-	Respond(c, list)
-	return nil
+	return Respond(c, list, err)
 }
 
 func showImage(c *echo.Context) error {
@@ -41,11 +37,7 @@ func showImage(c *echo.Context) error {
 		return err
 	}
 	image, _, err := client.Images.GetByID(id)
-	if err != nil {
-		return err
-	}
-	Respond(c, image)
-	return nil
+	return Respond(c, image, err)
 }
 
 func paginateImages(lister func(opt *godo.ListOptions) ([]godo.Image, *godo.Response, error)) ([]godo.Image, error) {

@@ -47,10 +47,7 @@ func getDropletAction(c *echo.Context) error {
 		return fmt.Errorf("invalid action id '%s' - must be a number", said)
 	}
 	action, _, err := client.DropletActions.Get(id, aid)
-	if err != nil {
-		return err
-	}
-	return Respond(c, action)
+	return Respond(c, action, err)
 }
 
 func disableDropletBackups(c *echo.Context) error {
@@ -242,8 +239,5 @@ func doResourceAction(c *echo.Context, actionFunc func(int) (*godo.Action, *godo
 		return err
 	}
 	action, _, err := actionFunc(id)
-	if err != nil {
-		return err
-	}
-	return Respond(c, action)
+	return Respond(c, action, err)
 }

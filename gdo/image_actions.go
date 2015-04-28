@@ -33,10 +33,7 @@ func getImageAction(c *echo.Context) error {
 		return fmt.Errorf("invalid action id '%s' - must be a number", said)
 	}
 	action, _, err := client.ImageActions.Get(id, aid)
-	if err != nil {
-		return err
-	}
-	return Respond(c, action)
+	return Respond(c, action, err)
 }
 
 func transferImage(c *echo.Context) error {
@@ -56,10 +53,7 @@ func transferImage(c *echo.Context) error {
 	}
 	transferReq := godo.ActionRequest{"type": "transfer", "region": req.Region}
 	action, _, err := client.ImageActions.Transfer(id, &transferReq)
-	if err != nil {
-		return err
-	}
-	return Respond(c, action)
+	return Respond(c, action, err)
 }
 
 func convertImage(c *echo.Context) error {
@@ -73,8 +67,5 @@ func convertImage(c *echo.Context) error {
 	}
 	transferReq := godo.ActionRequest{"type": "convert"}
 	action, _, err := client.ImageActions.Transfer(id, &transferReq)
-	if err != nil {
-		return err
-	}
-	return Respond(c, action)
+	return Respond(c, action, err)
 }

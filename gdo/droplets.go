@@ -33,10 +33,7 @@ func listDroplets(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateDroplets(client.Droplets.List)
-	if err != nil {
-		return err
-	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 func showDroplet(c *echo.Context) error {
@@ -49,11 +46,11 @@ func showDroplet(c *echo.Context) error {
 		return err
 	}
 	root, _, err := client.Droplets.Get(id)
-	if err != nil {
-		return err
+	var droplet *Droplet
+	if err == nil {
+		droplet = DropletFromApi(root.Droplet)
 	}
-	droplet := DropletFromApi(root.Droplet)
-	return Respond(c, droplet)
+	return Respond(c, droplet, err)
 }
 
 func createDroplet(c *echo.Context) error {
@@ -66,11 +63,10 @@ func createDroplet(c *echo.Context) error {
 		return err
 	}
 	root, _, err := client.Droplets.Create(&req)
-	if err != nil {
-		return err
+	if err == nil {
+		c.Response.Header().Set("Location", dropletHref(root.Droplet.ID))
 	}
-	c.Response.Header().Set("Location", dropletHref(root.Droplet.ID))
-	return RespondNoContent(c)
+	return RespondNoContent(c, err)
 }
 
 func deleteDroplet(c *echo.Context) error {
@@ -83,10 +79,7 @@ func deleteDroplet(c *echo.Context) error {
 		return err
 	}
 	_, err = client.Droplets.Delete(id)
-	if err != nil {
-		return err
-	}
-	return RespondNoContent(c)
+	return RespondNoContent(c, err)
 }
 
 func listDropletKernels(c *echo.Context) error {
@@ -115,7 +108,7 @@ func listDropletKernels(c *echo.Context) error {
 		}
 		opt.Page = page + 1
 	}
-	return Respond(c, list)
+	return Respond(c, list, nil)
 }
 
 func listDropletSnapshots(c *echo.Context) error {
@@ -142,10 +135,7 @@ func listDropletImages(c *echo.Context, lister func(int, *godo.ListOptions) ([]g
 	list, err := paginateImages(func(opt *godo.ListOptions) ([]godo.Image, *godo.Response, error) {
 		return lister(id, opt)
 	})
-	if err != nil {
-		return err
-	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 func listDropletActions(c *echo.Context) error {
@@ -160,10 +150,7 @@ func listDropletActions(c *echo.Context) error {
 	list, err := paginateActions(func(opt *godo.ListOptions) ([]godo.Action, *godo.Response, error) {
 		return client.Droplets.Actions(id, opt)
 	})
-	if err != nil {
-		return err
-	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 func listDropletNeighbors(c *echo.Context) error {
@@ -176,14 +163,13 @@ func listDropletNeighbors(c *echo.Context) error {
 		return err
 	}
 	droplets, _, err := client.Droplets.Neighbors(id)
-	if err != nil {
-		return err
-	}
 	var list []*Droplet
-	for _, d := range droplets {
-		list = append(list, DropletFromApi(&d))
+	if err == nil {
+		for _, d := range droplets {
+			list = append(list, DropletFromApi(&d))
+		}
 	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 // Helper function that retrieves the droplet id (number) from the request parameters

@@ -17,10 +17,7 @@ func listActions(c *echo.Context) error {
 		return err
 	}
 	list, err := paginateActions(client.Actions.List)
-	if err != nil {
-		return err
-	}
-	return Respond(c, list)
+	return Respond(c, list, err)
 }
 
 func showAction(c *echo.Context) error {
@@ -33,10 +30,7 @@ func showAction(c *echo.Context) error {
 		return err
 	}
 	action, _, err := client.Actions.Get(id)
-	if err != nil {
-		return err
-	}
-	return Respond(c, action)
+	return Respond(c, action, err)
 }
 
 func paginateActions(lister func(opt *godo.ListOptions) ([]godo.Action, *godo.Response, error)) ([]godo.Action, error) {

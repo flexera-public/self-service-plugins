@@ -12,8 +12,12 @@ import (
 	"github.com/rightscale/gdo/middleware"
 )
 
-const doActionsListing = `{"actions":[{"id":48912908,"status":"completed","type":"create","started_at":"2015-04-24T22:55:43Z","completed_at":"2015-04-24T22:56:39Z","resource_id":5004436,"resource_type":"droplet","region":{"name":"New York 3","slug":"nyc3","sizes":["512mb","1gb","2gb","4gb","8gb","16gb","32gb","48gb","64gb"],"features":["virtio","private_networking","backups","ipv6","metadata"],"available":true},"region_slug":"nyc3"}],"links":{},"meta":{"total":1}}`
-const doSingleAction = `{"action":{"id":48913731,"status":"completed","type":"power_off","started_at":"2015-04-24T23:11:41Z","completed_at":"2015-04-24T23:12:01Z","resource_id":5004436,"resource_type":"droplet","region":{"name":"New York 3","slug":"nyc3","sizes":["512mb","1gb","2gb","4gb","8gb","16gb","32gb","48gb","64gb"],"features":["virtio","private_networking","backups","ipv6","metadata"],"available":true},"region_slug":"nyc3"}}`
+const (
+	doGetActions = `{"actions":[{"id":48912908,"status":"completed","type":"create","started_at":"2015-04-24T22:55:43Z","completed_at":"2015-04-24T22:56:39Z","resource_id":5004436,"resource_type":"droplet","region":{"name":"New York 3","slug":"nyc3","sizes":["512mb","1gb","2gb","4gb","8gb","16gb","32gb","48gb","64gb"],"features":["virtio","private_networking","backups","ipv6","metadata"],"available":true},"region_slug":"nyc3"}],"links":{},"meta":{"total":1}}`
+	doGetAction  = `{"action":{"id":48913731,"status":"completed","type":"power_off","started_at":"2015-04-24T23:11:41Z","completed_at":"2015-04-24T23:12:01Z","resource_id":5004436,"resource_type":"droplet","region":{"name":"New York 3","slug":"nyc3","sizes":["512mb","1gb","2gb","4gb","8gb","16gb","32gb","48gb","64gb"],"features":["virtio","private_networking","backups","ipv6","metadata"],"available":true},"region_slug":"nyc3"}}`
+	doGetEmpty   = `{"actions":[],"links":{},"meta":{"total":0}}`
+	doNotFound   = `{"id":"not_found","message":"The resource you were accessing could not be found."}`
+)
 
 var _ = Describe("actions", func() {
 
@@ -37,21 +41,40 @@ var _ = Describe("actions", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/v2/actions"),
-					ghttp.RespondWith(http.StatusOK, doActionsListing),
+					ghttp.RespondWith(http.StatusOK, doGetActions),
 				),
 			)
 		})
 
-		It("lists actions", func() {
+		It("lists all actions", func() {
 			resp, err := client.Get("/actions")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
 			var actions map[string]interface{}
-			err = json.Unmarshal([]byte(doActionsListing), &actions)
+			err = json.Unmarshal([]byte(doGetActions), &actions)
 			Expect(err).NotTo(HaveOccurred())
 			expected, err := json.Marshal(actions["actions"])
 			Expect(err).NotTo(HaveOccurred())
 			Ω(resp.Body).Should(MatchJSON(expected))
+		})
+	})
+
+	Describe("listing empty", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/v2/actions"),
+					ghttp.RespondWith(http.StatusOK, doGetEmpty),
+				),
+			)
+		})
+
+		It("returns empty array", func() {
+			resp, err := client.Get("/actions")
+			Expect(err).NotTo(HaveOccurred())
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(resp.Status).Should(Equal(200))
+			Ω(resp.Body).Should(Equal("[]\n"))
 		})
 	})
 
@@ -60,17 +83,18 @@ var _ = Describe("actions", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/v2/actions/36804636"),
-					ghttp.RespondWith(http.StatusOK, doSingleAction),
+					ghttp.RespondWith(http.StatusOK, doGetAction),
 				),
 			)
 		})
 
-		It("retrieves actions", func() {
+		It("retrieves an existing action", func() {
 			resp, err := client.Get("/actions/36804636")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(resp.Status).Should(Equal(200))
 			var action map[string]interface{}
-			err = json.Unmarshal([]byte(doSingleAction), &action)
+			err = json.Unmarshal([]byte(doGetAction), &action)
 			Expect(err).NotTo(HaveOccurred())
 			expected, err := json.Marshal(action["action"])
 			Expect(err).NotTo(HaveOccurred())
@@ -78,4 +102,22 @@ var _ = Describe("actions", func() {
 		})
 	})
 
+	Describe("retrieving a non-existant resource", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/v2/actions/1"),
+					ghttp.RespondWith(http.StatusNotFound, doNotFound),
+				),
+			)
+		})
+
+		It("returns 404", func() {
+			resp, err := client.Get("/actions/1")
+			Expect(err).NotTo(HaveOccurred())
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(resp.Status).Should(Equal(404))
+			Ω(resp.Body).Should(Equal(http.StatusText(http.StatusNotFound)))
+		})
+	})
 })
