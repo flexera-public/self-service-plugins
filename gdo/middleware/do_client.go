@@ -30,6 +30,7 @@ func DOClientInitializer(dump bool) echo.Middleware {
 			if err != nil {
 				return &echo.HTTPError{
 					Error: fmt.Errorf("cookie '%s' is missing", CredCookieName),
+					Code:  400,
 				}
 			}
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: token.Value}}

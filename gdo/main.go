@@ -31,13 +31,13 @@ func main() {
 
 	// Serve
 	s := HttpServer()
+	log.Printf("gdo - listening on %s\n", *listenFlag)
 	s.Run(*listenFlag)
 }
 
 // Factory method for application
 // Makes it possible to do integration testing.
 func HttpServer() *echo.Echo {
-
 	// Initialize global syslog logger
 	if l, err := syslog.NewLogger(syslog.LOG_NOTICE|syslog.LOG_LOCAL0, 0); err != nil {
 		panic("gdo: failed to initialize syslog logger: " + err.Error())
@@ -52,9 +52,6 @@ func HttpServer() *echo.Echo {
 	e.Use(middleware.HttpLogger(logger))      // Log to syslog
 	e.Use(gdm.DOClientInitializer(*dumpFlag)) // Initialize DigitalOcean API client
 
-	// Setup error handler
-	e.HTTPErrorHandler(handleError)
-
 	// Setup routes
 	SetupDropletsRoutes(e.Group("/droplets"))
 	SetupDropletActionsRoutes(e.Group("/droplets/:id/actions"))
@@ -67,14 +64,6 @@ func HttpServer() *echo.Echo {
 
 	// We're done
 	return e
-}
-
-// Handle middleware or controller error
-func handleError(resp *echo.HTTPError, c *echo.Context) {
-	if logger != nil {
-		logger.Printf("ERROR - %s", resp.Error)
-	}
-	c.String(500, resp.Error.Error())
 }
 
 // Simple wrapper that returns a echo error from a go error
