@@ -15,7 +15,7 @@ func SetupImageActionsRoutes(e *echo.Echo) {
 	e.Post("/convert", convertImage)
 }
 
-func getImageAction(c *echo.Context) error {
+func getImageAction(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -26,17 +26,17 @@ func getImageAction(c *echo.Context) error {
 	}
 	said := c.Param("actionId")
 	if said == "" {
-		return fmt.Errorf("missing action id")
+		return Error(fmt.Errorf("missing action id"))
 	}
-	aid, err := strconv.Atoi(said)
-	if err != nil {
-		return fmt.Errorf("invalid action id '%s' - must be a number", said)
+	aid, er := strconv.Atoi(said)
+	if er != nil {
+		return Error(fmt.Errorf("invalid action id '%s' - must be a number", said))
 	}
-	action, _, err := client.ImageActions.Get(id, aid)
-	return Respond(c, action, err)
+	action, _, er := client.ImageActions.Get(id, aid)
+	return Respond(c, action, er)
 }
 
-func transferImage(c *echo.Context) error {
+func transferImage(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func transferImage(c *echo.Context) error {
 	req := struct {
 		Region string `json:"region"`
 	}{}
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		return err
 	}
 	id, err := getIDParam(c)
@@ -52,11 +52,11 @@ func transferImage(c *echo.Context) error {
 		return err
 	}
 	transferReq := godo.ActionRequest{"type": "transfer", "region": req.Region}
-	action, _, err := client.ImageActions.Transfer(id, &transferReq)
-	return Respond(c, action, err)
+	action, _, er := client.ImageActions.Transfer(id, &transferReq)
+	return Respond(c, action, er)
 }
 
-func convertImage(c *echo.Context) error {
+func convertImage(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -66,6 +66,6 @@ func convertImage(c *echo.Context) error {
 		return err
 	}
 	transferReq := godo.ActionRequest{"type": "convert"}
-	action, _, err := client.ImageActions.Transfer(id, &transferReq)
-	return Respond(c, action, err)
+	action, _, er := client.ImageActions.Transfer(id, &transferReq)
+	return Respond(c, action, er)
 }

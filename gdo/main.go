@@ -7,7 +7,8 @@ import (
 
 	"github.com/labstack/echo"
 	em "github.com/labstack/echo/middleware"
-	"github.com/rightscale/gdo/middleware"
+	gdm "github.com/rightscale/gdo/middleware"
+	"github.com/rightscale/go_middleware"
 	"gopkg.in/alecthomas/kingpin.v1"
 )
 
@@ -46,10 +47,10 @@ func HttpServer() *echo.Echo {
 
 	// Setup middleware
 	e := echo.New()
-	e.Use(middleware.RequestID)                      // Put that first so loggers can log request id
-	e.Use(em.Logger)                                 // Log to console
-	e.Use(middleware.HttpLogger(logger))             // Log to syslog
-	e.Use(middleware.DOClientInitializer(*dumpFlag)) // Initialize DigitalOcean API client
+	e.Use(middleware.RequestID)               // Put that first so loggers can log request id
+	e.Use(em.Logger)                          // Log to console
+	e.Use(middleware.HttpLogger(logger))      // Log to syslog
+	e.Use(gdm.DOClientInitializer(*dumpFlag)) // Initialize DigitalOcean API client
 
 	// Setup error handler
 	e.HTTPErrorHandler(handleError)
@@ -69,9 +70,14 @@ func HttpServer() *echo.Echo {
 }
 
 // Handle middleware or controller error
-func handleError(resp error, c *echo.Context) {
+func handleError(resp *echo.HTTPError, c *echo.Context) {
 	if logger != nil {
-		logger.Printf("ERROR - %s", resp)
+		logger.Printf("ERROR - %s", resp.Error)
 	}
-	c.String(500, resp.Error())
+	c.String(500, resp.Error.Error())
+}
+
+// Simple wrapper that returns a echo error from a go error
+func Error(err error) *echo.HTTPError {
+	return &echo.HTTPError{Error: err}
 }

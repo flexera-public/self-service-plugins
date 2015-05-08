@@ -18,16 +18,16 @@ func imageHref(id int) string {
 	return fmt.Sprintf("/images/%d", id)
 }
 
-func listImages(c *echo.Context) error {
+func listImages(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateImages(client.Images.List)
-	return Respond(c, list, err)
+	list, er := paginateImages(client.Images.List)
+	return Respond(c, list, er)
 }
 
-func showImage(c *echo.Context) error {
+func showImage(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -36,8 +36,8 @@ func showImage(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	image, _, err := client.Images.GetByID(id)
-	return Respond(c, image, err)
+	image, _, er := client.Images.GetByID(id)
+	return Respond(c, image, er)
 }
 
 func paginateImages(lister func(opt *godo.ListOptions) ([]godo.Image, *godo.Response, error)) ([]godo.Image, error) {

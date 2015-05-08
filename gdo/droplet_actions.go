@@ -29,7 +29,7 @@ func SetupDropletActionsRoutes(e *echo.Echo) {
 	e.Post("/upgrade", upgradeDroplet)
 }
 
-func getDropletAction(c *echo.Context) error {
+func getDropletAction(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -40,17 +40,17 @@ func getDropletAction(c *echo.Context) error {
 	}
 	said := c.Param("actionId")
 	if said == "" {
-		return fmt.Errorf("missing action id")
+		return Error(fmt.Errorf("missing action id"))
 	}
-	aid, err := strconv.Atoi(said)
-	if err != nil {
-		return fmt.Errorf("invalid action id '%s' - must be a number", said)
+	aid, er := strconv.Atoi(said)
+	if er != nil {
+		return Error(fmt.Errorf("invalid action id '%s' - must be a number", said))
 	}
-	action, _, err := client.DropletActions.Get(id, aid)
-	return Respond(c, action, err)
+	action, _, er := client.DropletActions.Get(id, aid)
+	return Respond(c, action, er)
 }
 
-func disableDropletBackups(c *echo.Context) error {
+func disableDropletBackups(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -58,14 +58,14 @@ func disableDropletBackups(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.DisableBackups)
 }
 
-func rebootDroplet(c *echo.Context) error {
+func rebootDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
 	return doResourceAction(c, client.DropletActions.Reboot)
 }
-func powerCycleDroplet(c *echo.Context) error {
+func powerCycleDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func powerCycleDroplet(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.PowerCycle)
 }
 
-func shutdownDroplet(c *echo.Context) error {
+func shutdownDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func shutdownDroplet(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.Shutdown)
 }
 
-func powerOffDroplet(c *echo.Context) error {
+func powerOffDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func powerOffDroplet(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.PowerOff)
 }
 
-func powerOnDroplet(c *echo.Context) error {
+func powerOnDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func powerOnDroplet(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.PowerOn)
 }
 
-func restoreDroplet(c *echo.Context) error {
+func restoreDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func restoreDroplet(c *echo.Context) error {
 	})
 }
 
-func passwordResetDroplet(c *echo.Context) error {
+func passwordResetDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func passwordResetDroplet(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.PasswordReset)
 }
 
-func resizeDroplet(c *echo.Context) error {
+func resizeDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func resizeDroplet(c *echo.Context) error {
 	})
 }
 
-func rebuildDroplet(c *echo.Context) error {
+func rebuildDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -157,7 +157,7 @@ func rebuildDroplet(c *echo.Context) error {
 	})
 }
 
-func renameDroplet(c *echo.Context) error {
+func renameDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func renameDroplet(c *echo.Context) error {
 	})
 }
 
-func changeDropletKernel(c *echo.Context) error {
+func changeDropletKernel(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -191,7 +191,7 @@ func changeDropletKernel(c *echo.Context) error {
 	})
 }
 
-func enableDropletIPv6(c *echo.Context) error {
+func enableDropletIPv6(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -199,7 +199,7 @@ func enableDropletIPv6(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.EnableIPv6)
 }
 
-func enableDropletPrivateNetworking(c *echo.Context) error {
+func enableDropletPrivateNetworking(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -207,7 +207,7 @@ func enableDropletPrivateNetworking(c *echo.Context) error {
 	return doResourceAction(c, client.DropletActions.EnablePrivateNetworking)
 }
 
-func snapshotDroplet(c *echo.Context) error {
+func snapshotDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -224,7 +224,7 @@ func snapshotDroplet(c *echo.Context) error {
 	})
 }
 
-func upgradeDroplet(c *echo.Context) error {
+func upgradeDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -233,11 +233,11 @@ func upgradeDroplet(c *echo.Context) error {
 }
 
 // Helper function that calls given client function and builds response accordingly
-func doResourceAction(c *echo.Context, actionFunc func(int) (*godo.Action, *godo.Response, error)) error {
+func doResourceAction(c *echo.Context, actionFunc func(int) (*godo.Action, *godo.Response, error)) *echo.HTTPError {
 	id, err := getIDParam(c)
 	if err != nil {
 		return err
 	}
-	action, _, err := actionFunc(id)
-	return Respond(c, action, err)
+	action, _, er := actionFunc(id)
+	return Respond(c, action, er)
 }

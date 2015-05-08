@@ -10,13 +10,13 @@ func SetupRegionsRoutes(e *echo.Echo) {
 	e.Get("", listRegions)
 }
 
-func listRegions(c *echo.Context) error {
+func listRegions(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateRegions(client.Regions.List)
-	return Respond(c, list, err)
+	list, er := paginateRegions(client.Regions.List)
+	return Respond(c, list, er)
 }
 
 func paginateRegions(lister func(opt *godo.ListOptions) ([]godo.Region, *godo.Response, error)) ([]godo.Region, error) {

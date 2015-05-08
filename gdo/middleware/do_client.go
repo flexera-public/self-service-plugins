@@ -25,10 +25,12 @@ var DOBaseURL *url.URL
 // Middleware that creates DO client using credentials in cookie
 func DOClientInitializer(dump bool) echo.Middleware {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
+		return func(c *echo.Context) *echo.HTTPError {
 			token, err := c.Request.Cookie(CredCookieName)
 			if err != nil {
-				return fmt.Errorf("cookie '%s' is missing", CredCookieName)
+				return &echo.HTTPError{
+					Error: fmt.Errorf("cookie '%s' is missing", CredCookieName),
+				}
 			}
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: token.Value}}
 			client := godo.NewClient(t.Client())
@@ -46,10 +48,10 @@ func DOClientInitializer(dump bool) echo.Middleware {
 
 // Retrieve client initialized by middleware, send error response if not found
 // This function should be used by controller actions that need to use the client
-func GetDOClient(c *echo.Context) (*godo.Client, error) {
+func GetDOClient(c *echo.Context) (*godo.Client, *echo.HTTPError) {
 	client, _ := c.Get("doC").(*godo.Client)
 	if client == nil {
-		return nil, fmt.Errorf("failed to retrieve Digital Ocean client, check middleware")
+		return nil, &echo.HTTPError{Error: fmt.Errorf("failed to retrieve Digital Ocean client, check middleware")}
 	}
 	return client, nil
 }

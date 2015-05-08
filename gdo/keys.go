@@ -16,16 +16,16 @@ func SetupKeysRoutes(e *echo.Echo) {
 	e.Delete("/:id", deleteKey)
 }
 
-func listKeys(c *echo.Context) error {
+func listKeys(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateKeys(client.Keys.List)
-	return Respond(c, list, err)
+	list, er := paginateKeys(client.Keys.List)
+	return Respond(c, list, er)
 }
 
-func showKey(c *echo.Context) error {
+func showKey(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -34,47 +34,47 @@ func showKey(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	key, _, err := client.Keys.GetByID(id)
-	if err != nil {
-		return err
+	key, _, er := client.Keys.GetByID(id)
+	if er != nil {
+		return Error(er)
 	}
-	return Respond(c, key, err)
+	return Respond(c, key, er)
 }
 
-func createKey(c *echo.Context) error {
+func createKey(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
 	req := godo.KeyCreateRequest{}
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		return err
 	}
-	key, _, err := client.Keys.Create(&req)
-	if err == nil {
+	key, _, er := client.Keys.Create(&req)
+	if er == nil {
 		c.Response.Header().Set("Location", keyHref(key.ID))
 	}
-	return RespondNoContent(c, err)
+	return RespondNoContent(c, er)
 }
 
-func updateKey(c *echo.Context) error {
+func updateKey(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
 	req := godo.KeyUpdateRequest{}
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		return err
 	}
 	id, err := getIDParam(c)
 	if err != nil {
 		return err
 	}
-	_, _, err = client.Keys.UpdateByID(id, &req)
-	return RespondNoContent(c, err)
+	_, _, er := client.Keys.UpdateByID(id, &req)
+	return RespondNoContent(c, er)
 }
 
-func deleteKey(c *echo.Context) error {
+func deleteKey(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -83,8 +83,8 @@ func deleteKey(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.Keys.DeleteByID(id)
-	return RespondNoContent(c, err)
+	_, er := client.Keys.DeleteByID(id)
+	return RespondNoContent(c, er)
 }
 
 func keyHref(keyID int) string {

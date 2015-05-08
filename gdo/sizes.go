@@ -10,13 +10,13 @@ func SetupSizesRoutes(e *echo.Echo) {
 	e.Get("", listSizes)
 }
 
-func listSizes(c *echo.Context) error {
+func listSizes(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateSizes(client.Sizes.List)
-	return Respond(c, list, err)
+	list, er := paginateSizes(client.Sizes.List)
+	return Respond(c, list, er)
 }
 
 func paginateSizes(lister func(opt *godo.ListOptions) ([]godo.Size, *godo.Response, error)) ([]godo.Size, error) {

@@ -27,16 +27,16 @@ func dropletHref(id int) string {
 	return fmt.Sprintf("/droplets/%d", id)
 }
 
-func listDroplets(c *echo.Context) error {
+func listDroplets(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateDroplets(client.Droplets.List)
-	return Respond(c, list, err)
+	list, er := paginateDroplets(client.Droplets.List)
+	return Respond(c, list, er)
 }
 
-func showDroplet(c *echo.Context) error {
+func showDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -45,31 +45,31 @@ func showDroplet(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	root, _, err := client.Droplets.Get(id)
+	root, _, er := client.Droplets.Get(id)
 	var droplet *Droplet
 	if err == nil {
 		droplet = DropletFromApi(root.Droplet)
 	}
-	return Respond(c, droplet, err)
+	return Respond(c, droplet, er)
 }
 
-func createDroplet(c *echo.Context) error {
+func createDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
 	req := godo.DropletCreateRequest{}
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		return err
 	}
-	root, _, err := client.Droplets.Create(&req)
-	if err == nil {
+	root, _, er := client.Droplets.Create(&req)
+	if er == nil {
 		c.Response.Header().Set("Location", dropletHref(root.Droplet.ID))
 	}
-	return RespondNoContent(c, err)
+	return RespondNoContent(c, er)
 }
 
-func deleteDroplet(c *echo.Context) error {
+func deleteDroplet(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -78,11 +78,11 @@ func deleteDroplet(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.Droplets.Delete(id)
-	return RespondNoContent(c, err)
+	_, er := client.Droplets.Delete(id)
+	return RespondNoContent(c, er)
 }
 
-func listDropletKernels(c *echo.Context) error {
+func listDropletKernels(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func listDropletKernels(c *echo.Context) error {
 	for {
 		kernels, resp, err := client.Droplets.Kernels(id, opt)
 		if err != nil {
-			return err
+			return Error(err)
 		}
 		list = append(list, kernels...)
 		if resp.Links == nil || resp.Links.IsLastPage() {
@@ -104,14 +104,14 @@ func listDropletKernels(c *echo.Context) error {
 		}
 		page, err := resp.Links.CurrentPage()
 		if err != nil {
-			return err
+			return Error(err)
 		}
 		opt.Page = page + 1
 	}
 	return Respond(c, list, nil)
 }
 
-func listDropletSnapshots(c *echo.Context) error {
+func listDropletSnapshots(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func listDropletSnapshots(c *echo.Context) error {
 	return listDropletImages(c, client.Droplets.Snapshots)
 }
 
-func listDropletBackups(c *echo.Context) error {
+func listDropletBackups(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -127,18 +127,18 @@ func listDropletBackups(c *echo.Context) error {
 	return listDropletImages(c, client.Droplets.Backups)
 }
 
-func listDropletImages(c *echo.Context, lister func(int, *godo.ListOptions) ([]godo.Image, *godo.Response, error)) error {
+func listDropletImages(c *echo.Context, lister func(int, *godo.ListOptions) ([]godo.Image, *godo.Response, error)) *echo.HTTPError {
 	id, err := getIDParam(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateImages(func(opt *godo.ListOptions) ([]godo.Image, *godo.Response, error) {
+	list, er := paginateImages(func(opt *godo.ListOptions) ([]godo.Image, *godo.Response, error) {
 		return lister(id, opt)
 	})
-	return Respond(c, list, err)
+	return Respond(c, list, er)
 }
 
-func listDropletActions(c *echo.Context) error {
+func listDropletActions(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -147,13 +147,13 @@ func listDropletActions(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	list, err := paginateActions(func(opt *godo.ListOptions) ([]godo.Action, *godo.Response, error) {
+	list, er := paginateActions(func(opt *godo.ListOptions) ([]godo.Action, *godo.Response, error) {
 		return client.Droplets.Actions(id, opt)
 	})
-	return Respond(c, list, err)
+	return Respond(c, list, er)
 }
 
-func listDropletNeighbors(c *echo.Context) error {
+func listDropletNeighbors(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -162,25 +162,25 @@ func listDropletNeighbors(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	droplets, _, err := client.Droplets.Neighbors(id)
+	droplets, _, er := client.Droplets.Neighbors(id)
 	var list []*Droplet
-	if err == nil {
+	if er == nil {
 		for _, d := range droplets {
 			list = append(list, DropletFromApi(&d))
 		}
 	}
-	return Respond(c, list, err)
+	return Respond(c, list, er)
 }
 
 // Helper function that retrieves the droplet id (number) from the request parameters
-func getIDParam(c *echo.Context) (int, error) {
+func getIDParam(c *echo.Context) (int, *echo.HTTPError) {
 	sid := c.Param("id")
 	if sid == "" {
-		return 0, fmt.Errorf("missing droplet id")
+		return 0, Error(fmt.Errorf("missing droplet id"))
 	}
 	id, err := strconv.Atoi(sid)
 	if err != nil {
-		return 0, fmt.Errorf("invalid droplet id '%s' - must be a number", sid)
+		return 0, Error(fmt.Errorf("invalid droplet id '%s' - must be a number", sid))
 	}
 	return id, nil
 }

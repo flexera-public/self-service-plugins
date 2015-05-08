@@ -11,16 +11,16 @@ func SetupActionsRoutes(e *echo.Echo) {
 	e.Get("/:id", showAction)
 }
 
-func listActions(c *echo.Context) error {
+func listActions(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
 	}
-	list, err := paginateActions(client.Actions.List)
-	return Respond(c, list, err)
+	list, er := paginateActions(client.Actions.List)
+	return Respond(c, list, er)
 }
 
-func showAction(c *echo.Context) error {
+func showAction(c *echo.Context) *echo.HTTPError {
 	client, err := middleware.GetDOClient(c)
 	if err != nil {
 		return err
@@ -29,8 +29,8 @@ func showAction(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	action, _, err := client.Actions.Get(id)
-	return Respond(c, action, err)
+	action, _, er := client.Actions.Get(id)
+	return Respond(c, action, er)
 }
 
 func paginateActions(lister func(opt *godo.ListOptions) ([]godo.Action, *godo.Response, error)) ([]godo.Action, error) {
