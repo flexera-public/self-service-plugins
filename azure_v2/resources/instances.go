@@ -30,7 +30,7 @@ func listInstances(c *echo.Context) *echo.HTTPError {
 		code, resp := getResources(c, "")
 		var instances []string
 		byt := []byte(resp)
-		var dat map[string][]ResourceGroup
+		var dat map[string][]*ResourceGroup
 		if err := json.Unmarshal(byt, &dat); err != nil {
 	        log.Fatal("Unmarshaling failed:", err)
 	    }
@@ -47,8 +47,7 @@ func listInstances(c *echo.Context) *echo.HTTPError {
 
 func getInstances(c *echo.Context, group_name string) (int, string) {
 	client, _ := middleware.GetAzureClient(c)
-	subscription, _ := middleware.GetCookie(c, middleware.SubscriptionCookieName)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, subscription.Value, group_name, virtualMachinesPath, config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, config.ApiVersion)
 	log.Printf("Get Instances request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {

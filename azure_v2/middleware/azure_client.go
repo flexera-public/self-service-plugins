@@ -1,31 +1,65 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	
+	"net/url"
+
 	"code.google.com/p/goauth2/oauth"
 	"github.com/labstack/echo"
+	"github.com/rightscale/self-service-plugins/azure_v2/config"
 )
 
-// Name of cookie created by SS that contains the credentials needed to send API requests to Azure
 const (
-	credCookieName = "AccessToken"
-	SubscriptionCookieName = "SubscriptionId"
+	authHost       = "https://login.windows.net"
+	tokenEndpoint  = "/oauth2/token"
+	CredCookieName = "AccessToken"
+)
+
+var (
+	accessToken  string
+	authResponse struct {
+		Type         string `json:"token_type"`
+		ExpiresIn    int64  `json:"expires_in"` // seconds
+		ExpiresOn    int64  `json:"expires_on"` // seconds
+		NotBefore    int64  `json:"not_before"` // seconds
+		Resource     string `json:resource`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Scope        string `json:scope`
+		Pwd          int64  `json:pwd_exp`
+		PwdUrl       string `json:pwd_url`
+	}
 )
 
 // Middleware that creates Azure client using credentials in cookie
 func AzureClientInitializer() echo.Middleware {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) *echo.HTTPError {
-			token, _ := GetCookie(c, credCookieName)
-			
-			err := c.Request.ParseForm()
+			token, err := c.Request.Cookie(CredCookieName)
 			if err != nil {
-				fmt.Errorf("parseForm(): %v", err)
+				resp, err := refreshAccessToken()
+				if err != nil {
+					fmt.Errorf("failed to build code redeem request: %s", err)
+				}
+
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					fmt.Errorf("failed to load response body: %s", err)
+				}
+				fmt.Printf("Access Token in Body: %s\n", string(body))
+
+				if err = json.Unmarshal(body, &authResponse); err != nil {
+					fmt.Errorf("got bad response from server: %q", body)
+				}
+				accessToken = authResponse.AccessToken
+			} else {
+				accessToken = token.Value
 			}
 
-			t := &oauth.Transport{Token: &oauth.Token{AccessToken: token.Value}}
+			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
 			client := t.Client()
 			c.Set("azure", client)
 			return h(c)
@@ -52,4 +86,19 @@ func GetCookie(c *echo.Context, name string) (*http.Cookie, *echo.HTTPError) {
 		}
 	}
 	return cookie, nil
+}
+
+// Build request to redeem authorization code and get access token
+func refreshAccessToken() (*http.Response, error) {
+	data := url.Values{}
+	data.Set("client_id", *config.ClientIdCred)
+	data.Set("client_secret", *config.ClientSecretCred)
+	data.Set("refresh_token", *config.RefreshTokenCred)
+	data.Set("grant_type", "refresh_token")
+	fmt.Printf("Refreshing access token ...\n")
+	resp, err := http.PostForm(authHost+"/common"+tokenEndpoint, data)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

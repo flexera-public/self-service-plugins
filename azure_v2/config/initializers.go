@@ -1,26 +1,31 @@
 package config
 
 import (
-	"os"
+	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
 	"log/syslog"
-	"gopkg.in/alecthomas/kingpin.v1"
+	"os"
 )
 
 const (
-	version = "0.0.1"
+	version    = "0.0.1"
 	ApiVersion = "2014-12-01-Preview"
-	BaseUrl = "https://management.azure.com"
+	BaseUrl    = "https://management.azure.com"
 )
 
 var (
-	app        = kingpin.New("azure", "Azure V2 RightScale Self-Service plugin.")
-	ListenFlag = app.Flag("listen", "Hostname and port to listen on, e.g. 'localhost:8080' - hostname is optional").Default(":8080").String()
+	app                = kingpin.New("azure", "Azure V2 RightScale Self-Service plugin.")
+	ListenFlag         = app.Flag("listen", "Hostname and port to listen on, e.g. 'localhost:8080' - hostname is optional").Default(":8080").String()
+	ClientIdCred       = app.Arg("client", "The client id of the application that is registered in Azure Active Directory.").Required().String()
+	ClientSecretCred   = app.Arg("secret", "The client key of the application that is registered in Azure Active Directory.").Required().String()
+	ResourceCred       = app.Arg("resource", "The App ID URI of the web API (secured resource).").Required().String()
+	SubscriptionIdCred = app.Arg("subscription", "The client subscription id.").Required().String()
+	RefreshTokenCred   = app.Arg("refresh_token", "The token used for refreshing access token.").Required().String()
 
 	Logger *log.Logger // Global syslog logger
 )
 
-func init(){
+func init() {
 	// Parse command line
 	app.Version(version)
 	app.Parse(os.Args[1:])

@@ -35,8 +35,7 @@ func listSubscriptions(c *echo.Context) *echo.HTTPError {
 
 func GetSubscription(c *echo.Context) *echo.HTTPError {
 	client, _ := middleware.GetAzureClient(c)
-	subscription, _ := middleware.GetCookie(c, middleware.SubscriptionCookieName)
-	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, subscription.Value, "2015-01-01")
+	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, *config.SubscriptionIdCred, "2015-01-01")
 	log.Printf("Get Subscription request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {

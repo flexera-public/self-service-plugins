@@ -27,8 +27,7 @@ func listResourceGroups(c *echo.Context) *echo.HTTPError {
 
 func getResources(c *echo.Context, resource_group_id string) (int, string){
 	client, _ := middleware.GetAzureClient(c)
-	subscription, _ := middleware.GetCookie(c, middleware.SubscriptionCookieName)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups%s?api-version=%s", config.BaseUrl, subscription.Value, resource_group_id, "2015-01-01")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, resource_group_id, "2015-01-01")
 	log.Printf("Get Resource Groups request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
