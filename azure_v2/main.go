@@ -16,7 +16,7 @@ import (
 func main() {
 	// Serve
 	s := HttpServer()
-	log.Printf("azure - listening on %s\n", *config.ListenFlag)
+	log.Printf("Azure plugin - listening on %s\n", *config.ListenFlag)
 	s.Run(*config.ListenFlag)
 }
 

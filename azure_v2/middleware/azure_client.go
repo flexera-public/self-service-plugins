@@ -39,6 +39,13 @@ func AzureClientInitializer() echo.Middleware {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) *echo.HTTPError {
 			token, err := c.Request.Cookie(CredCookieName)
+			// prepare request params to use
+			if err := c.Request.ParseForm(); err != nil {
+				return &echo.HTTPError{
+					Error: fmt.Errorf("parseForm(): %v", err),
+					Code:  400,
+				}
+			}
 			if err != nil {
 				resp, err := refreshAccessToken()
 				if err != nil {
