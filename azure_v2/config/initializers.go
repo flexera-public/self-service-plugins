@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	app                = kingpin.New("azure", "Azure V2 RightScale Self-Service plugin.")
+	app                = kingpin.New("azure_plugin", "Azure V2 RightScale Self-Service plugin.")
 	ListenFlag         = app.Flag("listen", "Hostname and port to listen on, e.g. 'localhost:8080' - hostname is optional").Default(":8080").String()
 	ClientIdCred       = app.Arg("client", "The client id of the application that is registered in Azure Active Directory.").Required().String()
 	ClientSecretCred   = app.Arg("secret", "The client key of the application that is registered in Azure Active Directory.").Required().String()
