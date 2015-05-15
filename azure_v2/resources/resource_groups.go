@@ -1,9 +1,9 @@
 package resources
 
 import (
-	"log"
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -11,21 +11,21 @@ import (
 )
 
 type ResourceGroup struct {
-	Id string
-	Name string
-    Location string
-    Properties interface {}
+	Id         string
+	Name       string
+	Location   string
+	Properties interface{}
 }
 
 func listResourceGroups(c *echo.Context) *echo.HTTPError {
 	//requestParams := c.Request.Form
-	
-	code, body := getResources(c, "")  
+
+	code, body := getResources(c, "")
 	//c.String(resp.StatusCode, string(body))
 	return c.JSON(code, body)
 }
 
-func getResources(c *echo.Context, resource_group_id string) (int, string){
+func getResources(c *echo.Context, resource_group_id string) (int, string) {
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, resource_group_id, "2015-01-01")
 	log.Printf("Get Resource Groups request: %s\n", path)

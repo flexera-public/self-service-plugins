@@ -39,31 +39,41 @@ func AzureClientInitializer() echo.Middleware {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) *echo.HTTPError {
 			token, err := c.Request.Cookie(CredCookieName)
-			// prepare request params to use
-			if err := c.Request.ParseForm(); err != nil {
-				return &echo.HTTPError{
-					Error: fmt.Errorf("parseForm(): %v", err),
-					Code:  400,
-				}
-			}
 			if err != nil {
 				resp, err := refreshAccessToken()
 				if err != nil {
-					fmt.Errorf("failed to build code redeem request: %s", err)
+					return &echo.HTTPError{
+						Error: fmt.Errorf("failed to build code redeem request: %v", err),
+						Code:  400,
+					}
 				}
 
 				body, err := ioutil.ReadAll(resp.Body)
 				if err != nil {
 					fmt.Errorf("failed to load response body: %s", err)
 				}
-				fmt.Printf("Access Token in Body: %s\n", string(body))
+				if resp.StatusCode >= 400 {
+					return &echo.HTTPError{
+						Error: fmt.Errorf("Access token refreshing failed: %s", string(body)),
+						Code:  resp.StatusCode,
+					}
+				}
 
 				if err = json.Unmarshal(body, &authResponse); err != nil {
 					fmt.Errorf("got bad response from server: %q", body)
 				}
 				accessToken = authResponse.AccessToken
 			} else {
+				// get access token from cookies
 				accessToken = token.Value
+			}
+
+			// prepare request params to use
+			if err := c.Request.ParseForm(); err != nil {
+				return &echo.HTTPError{
+					Error: fmt.Errorf("parseForm(): %v", err),
+					Code:  400,
+				}
 			}
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}

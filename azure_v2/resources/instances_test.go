@@ -3,15 +3,12 @@ package resources
 import (
 	"encoding/json"
 	"net/http"
-	//"net/url"
-	//"fmt"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/onsi/gomega/ghttp"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	//"github.com/rightscale/gdo/middleware"
 )
 
 const (
@@ -38,7 +35,7 @@ var _ = Describe("instances", func() {
 			subscriptionIdW := "test"
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/" + subscriptionIdW + "/resourceGroups/Group-1/" + virtualMachinesPath),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath),
 					ghttp.RespondWith(http.StatusOK, listInstancesResponse),
 				),
 			)
@@ -48,10 +45,10 @@ var _ = Describe("instances", func() {
 			resp, err := client.Get("/instances?group_name=Group-1")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
-			var actions map[string]interface{}
-			err = json.Unmarshal([]byte(listInstancesResponse), &actions)
+			var instances map[string]interface{}
+			err = json.Unmarshal([]byte(listInstancesResponse), &instances)
 			Expect(err).NotTo(HaveOccurred())
-			expected, err := json.Marshal(actions)
+			expected, err := json.Marshal(instances)
 			Expect(err).NotTo(HaveOccurred())
 			Ω(resp.Body).Should(MatchJSON(expected))
 		})

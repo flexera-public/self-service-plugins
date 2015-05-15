@@ -2,8 +2,8 @@ package resources
 
 import (
 	"fmt"
-	"log"
 	"io/ioutil"
+	"log"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"

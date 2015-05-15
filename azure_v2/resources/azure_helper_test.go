@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/labstack/echo"
 	em "github.com/labstack/echo/middleware"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	gm "github.com/rightscale/go_middleware"
-	am "github.com/rightscale/self-service-plugins/azure_v2/middleware"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
+	am "github.com/rightscale/self-service-plugins/azure_v2/middleware"
 
 	"testing"
 )
@@ -22,8 +22,8 @@ func TestAzureResources(t *testing.T) {
 	RunSpecs(t, "Azure Resources Suite")
 }
 
-// Port gdo listens on for testing
-const PluginPort = "8080"
+// Port plugin listens on for testing...differs from default port in dev
+const PluginPort = "8081"
 
 // Run gdo once for all tests
 // Can't shutdown http servers just yet https://github.com/golang/go/issues/4674
