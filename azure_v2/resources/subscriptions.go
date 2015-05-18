@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,8 +15,17 @@ const (
 	subscriptionsPath = "subscriptions"
 )
 
+type Subscription struct {
+	Id             string      `json:"id"`
+	Name           string      `json:"displayName"`
+	State          string      `json:"state"`
+	SubscriptionId string      `json:"subscriptionId"`
+	Policies       interface{} `json:"subscriptionPolicies"`
+}
+
 func SetupSubscriptionRoutes(e *echo.Echo) {
 	e.Get("/subscriptions", listSubscriptions)
+	// get a current subscription
 	e.Get("/subscription", GetSubscription)
 }
 
@@ -29,8 +39,12 @@ func listSubscriptions(c *echo.Context) *echo.HTTPError {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
+	var dat map[string][]*Subscription
+	if err := json.Unmarshal(body, &dat); err != nil {
+		log.Fatal("Unmarshaling failed:", err)
+	}
 
-	return c.JSON(resp.StatusCode, string(body))
+	return c.JSON(resp.StatusCode, dat["value"])
 }
 
 func GetSubscription(c *echo.Context) *echo.HTTPError {
@@ -43,6 +57,10 @@ func GetSubscription(c *echo.Context) *echo.HTTPError {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
+	var dat *Subscription
+	if err := json.Unmarshal(body, &dat); err != nil {
+		log.Fatal("Unmarshaling failed:", err)
+	}
 
-	return c.JSON(resp.StatusCode, string(body))
+	return c.JSON(resp.StatusCode, dat)
 }

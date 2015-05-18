@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,15 +18,16 @@ type ResourceGroup struct {
 	Properties interface{}
 }
 
-func listResourceGroups(c *echo.Context) *echo.HTTPError {
-	//requestParams := c.Request.Form
+func SetupGroupsRoutes(e *echo.Echo) {
+	e.Get("/resource_groups", listResourceGroups)
+}
 
+func listResourceGroups(c *echo.Context) *echo.HTTPError {
 	code, body := getResources(c, "")
-	//c.String(resp.StatusCode, string(body))
 	return c.JSON(code, body)
 }
 
-func getResources(c *echo.Context, resource_group_id string) (int, string) {
+func getResources(c *echo.Context, resource_group_id string) (int, []*ResourceGroup) {
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, resource_group_id, "2015-01-01")
 	log.Printf("Get Resource Groups request: %s\n", path)
@@ -35,5 +37,9 @@ func getResources(c *echo.Context, resource_group_id string) (int, string) {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	return resp.StatusCode, string(body)
+	var dat map[string][]*ResourceGroup
+	if err := json.Unmarshal(body, &dat); err != nil {
+		log.Fatal("Unmarshaling failed:", err)
+	}
+	return resp.StatusCode, dat["value"]
 }

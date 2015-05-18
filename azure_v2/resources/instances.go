@@ -1,10 +1,10 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"encoding/json"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -14,6 +14,18 @@ import (
 const (
 	virtualMachinesPath = "providers/Microsoft.Compute/virtualMachines"
 )
+
+type Instance struct {
+	provisioningState interface{}
+	instanceView      interface{}
+	hardwareProfile   interface{}
+	networkProfile    interface{}
+	storageProfile    interface{}
+	id                string `json:"id"`
+	name              string `json:"name"`
+	Type              string `json:"type"`
+	location          string `json:"location"`
+}
 
 func SetupInstanceRoutes(e *echo.Echo) {
 	e.Get("/instances", listInstances)
@@ -26,24 +38,18 @@ func listInstances(c *echo.Context) *echo.HTTPError {
 		return c.JSON(code, resp)
 	} else {
 		code, resp := getResources(c, "")
-		var instances []interface{}
-		byt := []byte(resp)
-		var dat map[string][]*ResourceGroup
-		if err := json.Unmarshal(byt, &dat); err != nil {
-			log.Fatal("Unmarshaling failed:", err)
-		}
-		log.Printf("Groups: %s\n", len(dat["value"]))
-		for _, resource_group := range dat["value"] {
+		var instances []*Instance
+		for _, resource_group := range resp {
 			_, resp := getInstances(c, resource_group.Name)
-			instances = append(instances, resp)
+			instances = append(instances, resp...)
 		}
-		//TODO: concat all responses in one
+		// [].to_json => null ... why?
 		return c.JSON(code, instances)
 	}
 
 }
 
-func getInstances(c *echo.Context, group_name string) (int, interface{}) {
+func getInstances(c *echo.Context, group_name string) (int, []*Instance) {
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, config.ApiVersion)
 	log.Printf("Get Instances request: %s\n", path)
@@ -53,9 +59,9 @@ func getInstances(c *echo.Context, group_name string) (int, interface{}) {
 		log.Fatal("Get:", err)
 	}
 	defer resp.Body.Close()
-	var m interface{}
+	var m map[string][]*Instance
 	b, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(b, &m)
 
-	return resp.StatusCode, m
+	return resp.StatusCode, m["value"]
 }
