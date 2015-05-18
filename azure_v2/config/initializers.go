@@ -10,6 +10,8 @@ import (
 const (
 	version    = "0.0.1"
 	ApiVersion = "2014-12-01-Preview"
+	MediaType  = "application/json"
+	UserAgent  = "RightScale Self-Service Plugin"
 )
 
 var (
