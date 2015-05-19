@@ -76,6 +76,7 @@ func getInstances(c *echo.Context, group_name string) (int, []*Instance) {
 func createInstance(c *echo.Context) *echo.HTTPError {
 	postParams := c.Request.Form
 	client, _ := middleware.GetAzureClient(c)
+	var networkInterfaces []map[string]interface{}
 	instanceParams := Instance{
 		Name:     postParams.Get("name"),
 		Location: postParams.Get("location"),
@@ -84,15 +85,18 @@ func createInstance(c *echo.Context) *echo.HTTPError {
 			"storageProfile": map[string]interface{}{
 				"osDisk": map[string]interface{}{
 					"vhd": map[string]interface{}{
-						"uri": "https://khrvi3my1hmm8.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"},
+						"uri": "https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"},
 					"name":   "os-" + postParams.Get("name") + "-rs",
 					"osType": "Linux"},
-				//"destinationVhdsContainer": "http://khrvi.blob.core.windows.net/vhds"}, // hard coded for now...should be used Placement group
+				// "sourceImage": map[string]interface{}{
+				// 	"id": "/2d2b2267-ff0a-46d3-9912-8577acb18a0a/services/images/7bb63e06fb004b2597e854325d2fe7b9__Test-Windows-Server-2012-Datacenter-201401.01-en.us-127GB.vhd",
+				// },
+				// "destinationVhdsContainer": "http://khrvitestgo.blob.core.windows.net/vhds", // hard coded for now...should be used Placement group
 			},
 			"networkProfile": map[string]interface{}{
-				"networkInterfaces": map[string]interface{}{
-					"id": "/subscriptions/subscriptionId/resourceGroups/resourceGroupName/providers/Microsoft.Network/NetworkAdapters/Nic1",
-				},
+				"networkInterfaces": append(networkInterfaces, map[string]interface{}{
+					"id": "/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/NetworkAdapters/Nic1",
+				}),
 			},
 		},
 	}
