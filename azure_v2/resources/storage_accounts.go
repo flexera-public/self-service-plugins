@@ -30,7 +30,7 @@ func SetupStorageAccountsRoutes(e *echo.Echo) {
 	e.Post("/storage_accounts", createStorageAccount)
 }
 
-func listStorageAccounts(c *echo.Context) *echo.HTTPError {
+func listStorageAccounts(c *echo.Context) error {
 	requestParams := c.Request.Form
 	if requestParams.Get("group_name") != "" {
 		code, resp := getAccounts(c, requestParams.Get("group_name"))
@@ -48,7 +48,7 @@ func listStorageAccounts(c *echo.Context) *echo.HTTPError {
 
 }
 
-func createStorageAccount(c *echo.Context) *echo.HTTPError {
+func createStorageAccount(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), storageAccountPath, postParams.Get("name"), config.ApiVersion)

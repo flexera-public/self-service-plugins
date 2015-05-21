@@ -22,7 +22,7 @@ func SetupGroupsRoutes(e *echo.Echo) {
 	e.Get("/resource_groups", listResourceGroups)
 }
 
-func listResourceGroups(c *echo.Context) *echo.HTTPError {
+func listResourceGroups(c *echo.Context) error {
 	code, body := getResources(c, "")
 	return c.JSON(code, body)
 }

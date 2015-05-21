@@ -10,6 +10,7 @@ import (
 	"code.google.com/p/goauth2/oauth"
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
+	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 const (
@@ -22,14 +23,14 @@ var (
 	accessToken  string
 	authResponse struct {
 		Type         string `json:"token_type"`
-		ExpiresIn    int64  `json:"expires_in"` // seconds
-		ExpiresOn    int64  `json:"expires_on"` // seconds
-		NotBefore    int64  `json:"not_before"` // seconds
+		ExpiresIn    string `json:"expires_in"` // seconds
+		ExpiresOn    string `json:"expires_on"` // seconds
+		NotBefore    string `json:"not_before"` // seconds
 		Resource     string `json:resource`
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 		Scope        string `json:scope`
-		Pwd          int64  `json:pwd_exp`
+		Pwd          string `json:pwd_exp`
 		PwdUrl       string `json:pwd_url`
 	}
 )
@@ -37,30 +38,24 @@ var (
 // Middleware that creates Azure client using credentials in cookie
 func AzureClientInitializer() echo.Middleware {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) *echo.HTTPError {
+		return func(c *echo.Context) error {
 			token, err := c.Request.Cookie(CredCookieName)
 			if err != nil {
 				resp, err := refreshAccessToken()
 				if err != nil {
-					return &echo.HTTPError{
-						Error: fmt.Errorf("failed to build code redeem request: %v", err),
-						Code:  400,
-					}
+					return lib.GenericException(fmt.Sprintf("failed to build code redeem request: %v", err))
 				}
 
 				body, err := ioutil.ReadAll(resp.Body)
 				if err != nil {
-					fmt.Errorf("failed to load response body: %s", err)
+					return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 				}
 				if resp.StatusCode >= 400 {
-					return &echo.HTTPError{
-						Error: fmt.Errorf("Access token refreshing failed: %s", string(body)),
-						Code:  resp.StatusCode,
-					}
+					return lib.GenericException(fmt.Sprintf("Access token refreshing failed: %s", string(body)))
 				}
 
 				if err = json.Unmarshal(body, &authResponse); err != nil {
-					fmt.Errorf("got bad response from server: %q", body)
+					return lib.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 				}
 				accessToken = authResponse.AccessToken
 			} else {
@@ -70,10 +65,7 @@ func AzureClientInitializer() echo.Middleware {
 
 			// prepare request params to use
 			if err := c.Request.ParseForm(); err != nil {
-				return &echo.HTTPError{
-					Error: fmt.Errorf("parseForm(): %v", err),
-					Code:  400,
-				}
+				return lib.GenericException(fmt.Sprintf("parseForm(): %v", err))
 			}
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
@@ -86,21 +78,18 @@ func AzureClientInitializer() echo.Middleware {
 
 // Retrieve client initialized by middleware, send error response if not found
 // This function should be used by controller actions that need to use the client
-func GetAzureClient(c *echo.Context) (*http.Client, *echo.HTTPError) {
+func GetAzureClient(c *echo.Context) (*http.Client, error) {
 	client, _ := c.Get("azure").(*http.Client)
 	if client == nil {
-		return nil, &echo.HTTPError{Error: fmt.Errorf("failed to retrieve Azure client, check middleware")}
+		return nil, lib.GenericException(fmt.Sprintf("failed to retrieve Azure client, check middleware"))
 	}
 	return client, nil
 }
 
-func GetCookie(c *echo.Context, name string) (*http.Cookie, *echo.HTTPError) {
+func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
 	cookie, err := c.Request.Cookie(name)
 	if err != nil {
-		return nil, &echo.HTTPError{
-			Error: fmt.Errorf("cookie '%s' is missing", cookie),
-			Code:  400,
-		}
+		return nil, lib.GenericException(fmt.Sprintf("cookie '%s' is missing", cookie))
 	}
 	return cookie, nil
 }

@@ -29,7 +29,7 @@ func SetupProviderRoutes(e *echo.Echo) {
 	e.Post("/providers/:provider_name/register", registerProvider)
 }
 
-func listProviders(c *echo.Context) *echo.HTTPError {
+func listProviders(c *echo.Context) error {
 	code, body := getProviders(c, "")
 	var dat map[string][]*Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
@@ -38,7 +38,7 @@ func listProviders(c *echo.Context) *echo.HTTPError {
 	return c.JSON(code, dat["value"])
 }
 
-func listOneProvider(c *echo.Context) *echo.HTTPError {
+func listOneProvider(c *echo.Context) error {
 	provider_name := c.Param("provider_name")
 	code, body := getProviders(c, provider_name)
 	var dat *Provider
@@ -48,7 +48,7 @@ func listOneProvider(c *echo.Context) *echo.HTTPError {
 	return c.JSON(code, dat)
 }
 
-func registerProvider(c *echo.Context) *echo.HTTPError {
+func registerProvider(c *echo.Context) error {
 	provider_name := c.Param("provider_name")
 	_, body := getProviders(c, provider_name)
 	var dat *Provider
@@ -74,8 +74,8 @@ func registerProvider(c *echo.Context) *echo.HTTPError {
 	}
 
 	return &echo.HTTPError{
-		Error: fmt.Errorf("Provider %s already registered.", provider_name),
-		Code:  400,
+		Message: fmt.Sprintf("Provider %s already registered.", provider_name),
+		Code:    400,
 	}
 }
 

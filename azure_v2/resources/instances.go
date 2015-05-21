@@ -37,7 +37,7 @@ func SetupInstanceRoutes(e *echo.Echo) {
 	e.Post("/instances", createInstance)
 }
 
-func listInstances(c *echo.Context) *echo.HTTPError {
+func listInstances(c *echo.Context) error {
 	requestParams := c.Request.Form
 	if requestParams.Get("group_name") != "" {
 		code, resp := getInstances(c, requestParams.Get("group_name"))
@@ -73,7 +73,7 @@ func getInstances(c *echo.Context, group_name string) (int, []*Instance) {
 }
 
 // check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
-func createInstance(c *echo.Context) *echo.HTTPError {
+func createInstance(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := middleware.GetAzureClient(c)
 	var networkInterfaces []map[string]interface{}

@@ -16,7 +16,7 @@ import (
 func main() {
 	// Serve
 	s := HttpServer()
-	log.Printf("Azure plugin - listening on %s\n", *config.ListenFlag)
+	log.Printf("Azure plugin - listening on %s under %s environment\n", *config.ListenFlag, *config.Env)
 	s.Run(*config.ListenFlag)
 }
 
@@ -27,9 +27,15 @@ func HttpServer() *echo.Echo {
 	// Setup middleware
 	e := echo.New()
 	e.Use(middleware.RequestID)                 // Put that first so loggers can log request id
-	e.Use(em.Logger)                            // Log to console
+	e.Use(em.Logger())                          // Log to console
 	e.Use(middleware.HttpLogger(config.Logger)) // Log to syslog
 	e.Use(am.AzureClientInitializer())
+
+	if config.DebugMode {
+		e.SetDebug(true)
+	}
+
+	e.SetHTTPErrorHandler(AzureErrorHandler(e)) // override default error handler
 
 	// Setup routes
 	resources.SetupSubscriptionRoutes(e)
@@ -40,9 +46,4 @@ func HttpServer() *echo.Echo {
 	resources.SetupNetworkRoutes(e)
 
 	return e
-}
-
-// Simple wrapper that returns a echo error from a go error
-func Error(err error) *echo.HTTPError {
-	return &echo.HTTPError{Error: err}
 }

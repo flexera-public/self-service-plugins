@@ -24,8 +24,9 @@ var (
 	SubscriptionIdCred = app.Arg("subscription", "The client subscription id.").Required().String()
 	RefreshTokenCred   = app.Arg("refresh_token", "The token used for refreshing access token.").Required().String()
 	// set base url as variable to be able to modify it in the specs
-	BaseUrl = "https://management.azure.com"
-	Logger  *log.Logger // Global syslog logger
+	BaseUrl   = "https://management.azure.com"
+	Logger    *log.Logger // Global syslog logger
+	DebugMode = false
 )
 
 func init() {
@@ -42,7 +43,8 @@ func init() {
 
 	switch *Env {
 	case "development":
-		// add production specific settings here
+		// add development specific settings here
+		DebugMode = true
 	case "production":
 		// add production specific settings here
 		// example: *ListenFlag = "rightscale.com:80"

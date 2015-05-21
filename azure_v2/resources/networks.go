@@ -32,7 +32,7 @@ func SetupNetworkRoutes(e *echo.Echo) {
 	e.Post("/networks", createNetwork)
 }
 
-func listNetworks(c *echo.Context) *echo.HTTPError {
+func listNetworks(c *echo.Context) error {
 	requestParams := c.Request.Form
 	if requestParams.Get("group_name") != "" {
 		code, resp := getNetworks(c, requestParams.Get("group_name"))
@@ -50,7 +50,7 @@ func listNetworks(c *echo.Context) *echo.HTTPError {
 
 }
 
-func createNetwork(c *echo.Context) *echo.HTTPError {
+func createNetwork(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), networkPath, postParams.Get("name"), config.ApiVersion)

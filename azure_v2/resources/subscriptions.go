@@ -29,7 +29,7 @@ func SetupSubscriptionRoutes(e *echo.Echo) {
 	e.Get("/subscription", GetSubscription)
 }
 
-func listSubscriptions(c *echo.Context) *echo.HTTPError {
+func listSubscriptions(c *echo.Context) error {
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, config.ApiVersion)
 	log.Printf("Get Subscriptions request: %s\n", path)
@@ -47,7 +47,7 @@ func listSubscriptions(c *echo.Context) *echo.HTTPError {
 	return c.JSON(resp.StatusCode, dat["value"])
 }
 
-func GetSubscription(c *echo.Context) *echo.HTTPError {
+func GetSubscription(c *echo.Context) error {
 	client, _ := middleware.GetAzureClient(c)
 	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, *config.SubscriptionIdCred, "2015-01-01")
 	log.Printf("Get Subscription request: %s\n", path)
