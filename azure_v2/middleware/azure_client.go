@@ -65,7 +65,7 @@ func AzureClientInitializer() echo.Middleware {
 
 			// prepare request params to use
 			if err := c.Request.ParseForm(); err != nil {
-				return lib.GenericException(fmt.Sprintf("parseForm(): %v", err))
+				return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 			}
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
