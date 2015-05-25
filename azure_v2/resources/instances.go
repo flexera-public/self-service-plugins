@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -95,7 +94,7 @@ func createInstance(c *echo.Context) error {
 			},
 			"networkProfile": map[string]interface{}{
 				"networkInterfaces": append(networkInterfaces, map[string]interface{}{
-					"id": "/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/NetworkAdapters/Nic1",
+					"id": "/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni",
 				}),
 			},
 		},
@@ -104,9 +103,6 @@ func createInstance(c *echo.Context) error {
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), virtualMachinesPath, instanceParams.Name, config.ApiVersion)
 	log.Printf("Create Instances request with params: %s\n", postParams)
 	log.Printf("Create Instances path: %s\n", path)
-	data := url.Values{}
-	data.Set("name", postParams.Get("name"))
-	data.Set("location", "West US")
 
 	by, err := json.Marshal(instanceParams)
 	var reader io.Reader

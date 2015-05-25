@@ -46,6 +46,7 @@ func HttpServer() *echo.Echo {
 	resources.SetupNetworkRoutes(e)
 	resources.SetupSubnetsRoutes(e)
 	resources.SetupIpAddressesRoutes(e)
+	resources.SetupAuthRoutes(e)
 
 	return e
 }

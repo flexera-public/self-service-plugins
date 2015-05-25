@@ -22,6 +22,7 @@ var (
 	ClientSecretCred   = app.Arg("secret", "The client key of the application that is registered in Azure Active Directory.").Required().String()
 	ResourceCred       = app.Arg("resource", "The App ID URI of the web API (secured resource).").Required().String()
 	SubscriptionIdCred = app.Arg("subscription", "The client subscription id.").Required().String()
+	TenantIdCred       = app.Arg("tenant", "Azure Active Directory indentificator.").Required().String()
 	RefreshTokenCred   = app.Arg("refresh_token", "The token used for refreshing access token.").Required().String()
 	// set base url as variable to be able to modify it in the specs
 	BaseUrl   = "https://management.azure.com"
