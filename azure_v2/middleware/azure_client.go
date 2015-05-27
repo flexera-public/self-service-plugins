@@ -22,12 +22,12 @@ func AzureClientInitializer() echo.Middleware {
 		return func(c *echo.Context) error {
 			token, err := c.Request.Cookie(CredCookieName)
 			if err != nil {
-				authResponse, err := lib.RequestToken("refresh_token", "")
+				accessToken, err = getAccessToken(c)
 				if err != nil {
 					return err
 				}
-				accessToken = authResponse.AccessToken
 			} else {
+				fmt.Printf("URI: %s", c.Request.RequestURI)
 				// get access token from cookies
 				accessToken = token.Value
 			}
@@ -43,4 +43,23 @@ func AzureClientInitializer() echo.Middleware {
 			return h(c)
 		}
 	}
+}
+
+func getAccessToken(c *echo.Context) (string, error) {
+	var grantType string
+	var resource string
+	// use client specific access token only while app registration
+	if c.Request.RequestURI == "/application/register" {
+		grantType = "refresh_token"
+		resource = ""
+	} else {
+		grantType = "client_credentials"
+		resource = "https://management.core.windows.net/"
+	}
+
+	authResponse, err := lib.RequestToken(grantType, resource)
+	if err != nil {
+		return "", err
+	}
+	return authResponse.AccessToken, nil
 }

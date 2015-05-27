@@ -34,11 +34,13 @@ func RequestToken(grantType string, resource string) (*authResponse, error) {
 	data.Set("client_secret", *config.ClientSecretCred)
 	data.Set("refresh_token", *config.RefreshTokenCred)
 	data.Set("grant_type", grantType)
+	message := grantType
 	if resource != "" {
 		data.Set("resource", resource)
+		message = fmt.Sprintf("%s for resource %s", grantType, resource)
 	}
 	path := fmt.Sprintf("%s/%s/%s", authHost, *config.TenantIdCred, tokenEndpoint)
-	fmt.Printf("Requesting %s: %s\n", grantType, path)
+	fmt.Printf("Requesting %s: %s\n", message, path)
 	resp, err := http.PostForm(path, data)
 	defer resp.Body.Close()
 	if err != nil {
