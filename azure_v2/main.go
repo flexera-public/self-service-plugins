@@ -30,6 +30,7 @@ func HttpServer() *echo.Echo {
 	e.Use(em.Logger())                          // Log to console
 	e.Use(middleware.HttpLogger(config.Logger)) // Log to syslog
 	e.Use(am.AzureClientInitializer())
+	e.Use(em.Recover())
 
 	if config.DebugMode {
 		e.SetDebug(true)
