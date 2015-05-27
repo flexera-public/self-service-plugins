@@ -39,25 +39,7 @@ func SetupNetworkRoutes(e *echo.Echo) {
 }
 
 func listNetworks(c *echo.Context) error {
-	group_name := c.Param("group_name")
-	if group_name != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, config.ApiVersion)
-		networks, err := lib.GetResources(c, path)
-		if err != nil {
-			return err
-		}
-		return c.JSON(200, networks)
-	} else {
-		code, resp := getResources(c, "")
-		var networks []*Network
-		for _, resource_group := range resp {
-			_, resp := getNetworks(c, resource_group.Name)
-			networks = append(networks, resp...)
-		}
-		// [].to_json => null ... why?
-		return c.JSON(code, networks)
-	}
-
+	return lib.ListResource(c, networkPath)
 }
 
 func createNetwork(c *echo.Context) error {
@@ -102,21 +84,4 @@ func createNetwork(c *echo.Context) error {
 	}
 
 	return c.JSON(response.StatusCode, dat)
-}
-
-func getNetworks(c *echo.Context, group_name string) (int, []*Network) {
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, config.ApiVersion)
-	log.Printf("Get Networks request: %s\n", path)
-	resp, err := client.Get(path)
-
-	if err != nil {
-		log.Fatal("Get:", err)
-	}
-	defer resp.Body.Close()
-	var m map[string][]*Network
-	b, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(b, &m)
-
-	return resp.StatusCode, m["value"]
 }

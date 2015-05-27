@@ -39,25 +39,7 @@ func SetupIpAddressesRoutes(e *echo.Echo) {
 }
 
 func listIpAddresses(c *echo.Context) error {
-	group_name := c.Param("group_name")
-	if group_name != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, IpAddressPath, config.ApiVersion)
-		ips, err := lib.GetResources(c, path)
-		if err != nil {
-			return err
-		}
-		return c.JSON(200, ips)
-	} else {
-		code, resp := getResources(c, "")
-		var addresses []*IpAddress
-		for _, resource_group := range resp {
-			_, resp := getIpAddresses(c, resource_group.Name)
-			addresses = append(addresses, resp...)
-		}
-		// [].to_json => null ... why?
-		return c.JSON(code, addresses)
-	}
-
+	return lib.ListResource(c, IpAddressPath)
 }
 
 func createIpAddress(c *echo.Context) error {
@@ -100,21 +82,4 @@ func createIpAddress(c *echo.Context) error {
 	}
 
 	return c.JSON(response.StatusCode, dat)
-}
-
-func getIpAddresses(c *echo.Context, group_name string) (int, []*IpAddress) {
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, IpAddressPath, config.ApiVersion)
-	log.Printf("Get IpAddresses request: %s\n", path)
-	resp, err := client.Get(path)
-
-	if err != nil {
-		log.Fatal("Get:", err)
-	}
-	defer resp.Body.Close()
-	var m map[string][]*IpAddress
-	b, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(b, &m)
-
-	return resp.StatusCode, m["value"]
 }

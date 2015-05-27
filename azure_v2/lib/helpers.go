@@ -11,7 +11,7 @@ import (
 	"regexp"
 
 	"github.com/labstack/echo"
-	//"github.com/rightscale/self-service-plugins/azure_v2/config"
+	"github.com/rightscale/self-service-plugins/azure_v2/config"
 )
 
 // Retrieve client initialized by middleware, send error response if not found
@@ -50,6 +50,27 @@ func ListNestedResources(c *echo.Context, parentPath string, relativePath string
 		resources = append(resources, resp...)
 	}
 	return resources, nil
+}
+
+func ListResource(c *echo.Context, resourcePath string) error {
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, resourcePath, config.ApiVersion)
+		resources, err := GetResources(c, path)
+		if err != nil {
+			return err
+		}
+		return c.JSON(200, resources)
+	} else {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
+		relativePath := fmt.Sprintf("/%s?api-version=%s", resourcePath, config.ApiVersion)
+		resources, err := ListNestedResources(c, path, relativePath)
+		if err != nil {
+			return err
+		}
+		return c.JSON(200, resources)
+	}
+
 }
 
 func GetResources(c *echo.Context, path string) ([]interface{}, error) {

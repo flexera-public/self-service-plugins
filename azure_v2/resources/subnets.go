@@ -42,17 +42,23 @@ func listSubnets(c *echo.Context) error {
 		}
 		return c.JSON(200, subnets)
 	} else {
-		code, resp := getResources(c, "")
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
+		resp, _ := lib.GetResources(c, path)
 		var subnets []*Subnet
 		for _, resource_group := range resp {
-			_, networks := getNetworks(c, resource_group.Name)
+			group := resource_group.(map[string]interface{})
+			groupName := group["name"].(string)
+			path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
+			networks, _ := lib.GetResources(c, path)
+
 			for _, network := range networks {
-				_, resp := getSubnets(c, resource_group.Name, network.Name)
+				network := network.(map[string]interface{})
+				_, resp := getSubnets(c, groupName, network["name"].(string))
 				subnets = append(subnets, resp...)
 			}
 		}
 		// [].to_json => null ... why?
-		return c.JSON(code, subnets)
+		return c.JSON(200, subnets)
 	}
 
 }

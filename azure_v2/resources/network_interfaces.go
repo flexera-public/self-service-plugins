@@ -39,25 +39,7 @@ func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 }
 
 func listNetworkInterfaces(c *echo.Context) error {
-	group_name := c.Param("group_name")
-	if group_name != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, config.ApiVersion)
-		interfaces, err := lib.GetResources(c, path)
-		if err != nil {
-			return err
-		}
-		return c.JSON(200, interfaces)
-	} else {
-		code, resp := getResources(c, "")
-		var interfaces []*NetworkInterface
-		for _, resource_group := range resp {
-			_, resp := getNetworkInterfaces(c, resource_group.Name)
-			interfaces = append(interfaces, resp...)
-		}
-		// [].to_json => null ... why?
-		return c.JSON(code, interfaces)
-	}
-
+	return lib.ListResource(c, NetworkInterfacePath)
 }
 
 func createNetworkInterface(c *echo.Context) error {
@@ -113,21 +95,4 @@ func createNetworkInterface(c *echo.Context) error {
 	}
 
 	return c.JSON(response.StatusCode, dat)
-}
-
-func getNetworkInterfaces(c *echo.Context, group_name string) (int, []*NetworkInterface) {
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, config.ApiVersion)
-	log.Printf("Get NetworkInterfaces request: %s\n", path)
-	resp, err := client.Get(path)
-
-	if err != nil {
-		log.Fatal("Get:", err)
-	}
-	defer resp.Body.Close()
-	var m map[string][]*NetworkInterface
-	b, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(b, &m)
-
-	return resp.StatusCode, m["value"]
 }

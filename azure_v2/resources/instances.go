@@ -43,24 +43,7 @@ func SetupInstanceRoutes(e *echo.Echo) {
 }
 
 func listInstances(c *echo.Context) error {
-	group_name := c.Param("group_name")
-	if group_name != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, config.ApiVersion)
-		instances, err := lib.GetResources(c, path)
-		if err != nil {
-			return err
-		}
-		return c.JSON(200, instances)
-	} else {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-		relativePath := fmt.Sprintf("/%s?api-version=%s", virtualMachinesPath, config.ApiVersion)
-		instances, err := lib.ListNestedResources(c, path, relativePath)
-		if err != nil {
-			return err
-		}
-		return c.JSON(200, instances)
-	}
-
+	return lib.ListResource(c, virtualMachinesPath)
 }
 
 func deleteInstance(c *echo.Context) error {
@@ -70,23 +53,6 @@ func deleteInstance(c *echo.Context) error {
 	}
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
 	return lib.DeleteResource(c, path)
-}
-
-func getInstances(c *echo.Context, group_name string) (int, []interface{}) {
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, config.ApiVersion)
-	log.Printf("Get Instances request: %s\n", path)
-	resp, err := client.Get(path)
-
-	if err != nil {
-		log.Fatal("Get:", err)
-	}
-	defer resp.Body.Close()
-	var m map[string][]interface{}
-	b, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(b, &m)
-
-	return resp.StatusCode, m["value"]
 }
 
 // check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
@@ -125,7 +91,6 @@ func createInstance(c *echo.Context) error {
 	by, err := json.Marshal(instanceParams)
 	var reader io.Reader
 	reader = bytes.NewBufferString(string(by))
-	log.Printf("READER: %s", reader)
 	request, _ := http.NewRequest("PUT", path, reader)
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)

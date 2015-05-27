@@ -37,25 +37,7 @@ func SetupStorageAccountsRoutes(e *echo.Echo) {
 }
 
 func listStorageAccounts(c *echo.Context) error {
-	group_name := c.Param("group_name")
-	if group_name != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, storageAccountPath, config.ApiVersion)
-		accounts, err := lib.GetResources(c, path)
-		if err != nil {
-			return err
-		}
-		return c.JSON(200, accounts)
-	} else {
-		code, resp := getResources(c, "")
-		var storage_accounts []*StorageAccout
-		for _, resource_group := range resp {
-			_, resp := getAccounts(c, resource_group.Name)
-			storage_accounts = append(storage_accounts, resp...)
-		}
-		// [].to_json => null ... why?
-		return c.JSON(code, storage_accounts)
-	}
-
+	return lib.ListResource(c, storageAccountPath)
 }
 
 func createStorageAccount(c *echo.Context) error {
@@ -86,21 +68,4 @@ func createStorageAccount(c *echo.Context) error {
 	b, _ := ioutil.ReadAll(response.Body)
 	//TODO: handle 202 state
 	return c.JSON(response.StatusCode, string(b))
-}
-
-func getAccounts(c *echo.Context, group_name string) (int, []*StorageAccout) {
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, storageAccountPath, config.ApiVersion)
-	log.Printf("Get Storage accounts request: %s\n", path)
-	resp, err := client.Get(path)
-
-	if err != nil {
-		log.Fatal("Get:", err)
-	}
-	defer resp.Body.Close()
-	var m map[string][]*StorageAccout
-	b, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(b, &m)
-
-	return resp.StatusCode, m["value"]
 }
