@@ -42,7 +42,7 @@ func RequestToken(grantType string, resource string) (*authResponse, error) {
 	resp, err := http.PostForm(path, data)
 	defer resp.Body.Close()
 	if err != nil {
-		return nil, GenericException(fmt.Sprintf("failed to build code redeem request: %v", err))
+		return nil, GenericException(fmt.Sprintf("Access token refreshing failed: %v", err))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
