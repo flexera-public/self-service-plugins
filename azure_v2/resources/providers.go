@@ -30,27 +30,36 @@ func SetupProviderRoutes(e *echo.Echo) {
 }
 
 func listProviders(c *echo.Context) error {
-	code, body := getProviders(c, "")
+	body, err := getProviders(c, "")
+	if err != nil {
+		return err
+	}
 	var dat map[string][]*Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
-	return c.JSON(code, dat["value"])
+	return c.JSON(200, dat["value"])
 }
 
 func listOneProvider(c *echo.Context) error {
 	provider_name := c.Param("provider_name")
-	code, body := getProviders(c, provider_name)
+	body, err := getProviders(c, provider_name)
+	if err != nil {
+		return err
+	}
 	var dat *Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
-	return c.JSON(code, dat)
+	return c.JSON(200, dat)
 }
 
 func registerProvider(c *echo.Context) error {
 	provider_name := c.Param("provider_name")
-	_, body := getProviders(c, provider_name)
+	body, err := getProviders(c, provider_name)
+	if err != nil {
+		return err
+	}
 	var dat *Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
 		log.Fatal("Unmarshaling failed:", err)
@@ -62,13 +71,13 @@ func registerProvider(c *echo.Context) error {
 		log.Printf("Registering Provider %s: %s\n", provider_name, path)
 		resp, err := client.PostForm(path, nil)
 		if err != nil {
-			log.Fatal("Get:", err)
+			return lib.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
 		}
 		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 		var dat *Provider
 		if err := json.Unmarshal(body, &dat); err != nil {
-			log.Fatal("Unmarshaling failed:", err)
+			return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 		}
 		return c.JSON(resp.StatusCode, dat)
 	}
@@ -79,16 +88,16 @@ func registerProvider(c *echo.Context) error {
 	}
 }
 
-func getProviders(c *echo.Context, provider_name string) (int, []byte) {
+func getProviders(c *echo.Context, provider_name string) ([]byte, error) {
 	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
 	log.Printf("Get Providers request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		log.Fatal("Get:", err)
+		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while getting provider: %v", err))
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	// TODO: handle 400+ statuses
-	return resp.StatusCode, body
+	return body, nil
 }

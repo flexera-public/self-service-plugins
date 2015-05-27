@@ -66,13 +66,16 @@ func createIpAddress(c *echo.Context) error {
 	by, err := json.Marshal(data)
 	var reader io.Reader
 	reader = bytes.NewBufferString(string(by))
-	request, _ := http.NewRequest("PUT", path, reader)
+	request, err := http.NewRequest("PUT", path, reader)
+	if err != nil {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while creating ip address: %v", err))
+	}
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)
 	request.Header.Add("User-Agent", config.UserAgent)
 	response, err := client.Do(request)
 	if err != nil {
-		log.Fatal("PUT:", err)
+		return lib.GenericException(fmt.Sprintf("Error has occurred while creating ip address: %v", err))
 	}
 
 	defer response.Body.Close()

@@ -43,16 +43,18 @@ func listSubnets(c *echo.Context) error {
 	} else {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
 		resp, _ := lib.GetResources(c, path)
+		//TODO: add error handling
 		var subnets []*Subnet
 		for _, resource_group := range resp {
 			group := resource_group.(map[string]interface{})
 			groupName := group["name"].(string)
 			path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
 			networks, _ := lib.GetResources(c, path)
-
+			//TODO: add error handling
 			for _, network := range networks {
 				network := network.(map[string]interface{})
-				_, resp := getSubnets(c, groupName, network["name"].(string))
+				resp, _ := getSubnets(c, groupName, network["name"].(string))
+				//TODO: add error handling
 				subnets = append(subnets, resp...)
 			}
 		}
@@ -84,13 +86,16 @@ func createSubnet(c *echo.Context) error {
 	by, err := json.Marshal(data)
 	var reader io.Reader
 	reader = bytes.NewBufferString(string(by))
-	request, _ := http.NewRequest("PUT", path, reader)
+	request, err := http.NewRequest("PUT", path, reader)
+	if err != nil {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while creating subnet: %v", err))
+	}
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)
 	request.Header.Add("User-Agent", config.UserAgent)
 	response, err := client.Do(request)
 	if err != nil {
-		log.Fatal("PUT:", err)
+		return lib.GenericException(fmt.Sprintf("Error has occurred while creating subnet: %v", err))
 	}
 
 	defer response.Body.Close()
@@ -101,25 +106,24 @@ func createSubnet(c *echo.Context) error {
 
 	var dat *Subnet
 	if err := json.Unmarshal(b, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 
 	return c.JSON(response.StatusCode, dat)
 }
 
-func getSubnets(c *echo.Context, group_name string, network_name string) (int, []*Subnet) {
+func getSubnets(c *echo.Context, group_name string, network_name string) ([]*Subnet, error) {
 	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, network_name, config.ApiVersion)
 	log.Printf("Get Subents request: %s\n", path)
 	resp, err := client.Get(path)
-
 	if err != nil {
-		log.Fatal("Get:", err)
+		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while getting subnet: %v", err))
 	}
 	defer resp.Body.Close()
 	var m map[string][]*Subnet
 	b, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(b, &m)
 
-	return resp.StatusCode, m["value"]
+	return m["value"], nil
 }

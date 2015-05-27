@@ -35,13 +35,13 @@ func listSubscriptions(c *echo.Context) error {
 	log.Printf("Get Subscriptions request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		log.Fatal("Get:", err)
+		return lib.GenericException(fmt.Sprintf("Error has occurred while getting subscriptions: %v", err))
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	var dat map[string][]*Subscription
 	if err := json.Unmarshal(body, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 
 	return c.JSON(resp.StatusCode, dat["value"])
@@ -53,13 +53,13 @@ func GetSubscription(c *echo.Context) error {
 	log.Printf("Get Subscription request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		log.Fatal("Get:", err)
+		return lib.GenericException(fmt.Sprintf("Error has occurred while getting subscription: %v", err))
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	var dat *Subscription
 	if err := json.Unmarshal(body, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 
 	return c.JSON(resp.StatusCode, dat)
