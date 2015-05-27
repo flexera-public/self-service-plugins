@@ -27,23 +27,28 @@ type StorageAccout struct {
 
 func SetupStorageAccountsRoutes(e *echo.Echo) {
 	e.Get("/storage_accounts", listStorageAccounts)
-	e.Post("/storage_accounts", createStorageAccount)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/storage_accounts")
 	group.Get("", listStorageAccounts)
-	// group.Post("", createInstance)
-	// group.Delete("/:id", deleteInstance)
+	group.Post("", createStorageAccount)
+	group.Delete("/:id", deleteStorageAccount)
 }
 
 func listStorageAccounts(c *echo.Context) error {
 	return lib.ListResource(c, storageAccountPath)
 }
 
+func deleteStorageAccount(c *echo.Context) error {
+	group_name := c.Param("group_name")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, storageAccountPath, c.Param("id"), config.ApiVersion)
+	return lib.DeleteResource(c, path)
+}
+
 func createStorageAccount(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), storageAccountPath, postParams.Get("name"), config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), storageAccountPath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create Storage Account request with params: %s\n", postParams)
 	log.Printf("Create Storage Account path: %s\n", path)
 	data := StorageAccout{
@@ -55,7 +60,6 @@ func createStorageAccount(c *echo.Context) error {
 	by, err := json.Marshal(data)
 	var reader io.Reader
 	reader = bytes.NewBufferString(string(by))
-	log.Printf("READER: %s", reader)
 	request, _ := http.NewRequest("PUT", path, reader)
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)

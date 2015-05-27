@@ -23,13 +23,12 @@ type Subnet struct {
 
 func SetupSubnetsRoutes(e *echo.Echo) {
 	e.Get("/subnets", listSubnets)
-	e.Post("/subnets", createSubnet)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/networks/:network_id/subnets")
 	group.Get("", listSubnets)
-	// group.Post("", createInstance)
-	// group.Delete("/:id", deleteInstance)
+	group.Post("", createSubnet)
+	group.Delete("/:id", deleteSubnet)
 }
 
 func listSubnets(c *echo.Context) error {
@@ -63,10 +62,16 @@ func listSubnets(c *echo.Context) error {
 
 }
 
+func deleteSubnet(c *echo.Context) error {
+	group_name := c.Param("group_name")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), c.Param("id"), config.ApiVersion)
+	return lib.DeleteResource(c, path)
+}
+
 func createSubnet(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), networkPath, postParams.Get("network_name"), postParams.Get("name"), config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), networkPath, c.Param("network_id"), postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create Subnet request with params: %s\n", postParams)
 	log.Printf("Create Subnet path: %s\n", path)
 	data := Subnet{

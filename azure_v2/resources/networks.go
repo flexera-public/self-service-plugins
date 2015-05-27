@@ -29,23 +29,28 @@ type Network struct {
 
 func SetupNetworkRoutes(e *echo.Echo) {
 	e.Get("/networks", listNetworks)
-	e.Post("/networks", createNetwork)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/networks")
 	group.Get("", listNetworks)
-	// group.Post("", createInstance)
-	// group.Delete("/:id", deleteInstance)
+	group.Post("", createNetwork)
+	group.Delete("/:id", deleteNetwork)
 }
 
 func listNetworks(c *echo.Context) error {
 	return lib.ListResource(c, networkPath)
 }
 
+func deleteNetwork(c *echo.Context) error {
+	group_name := c.Param("group_name")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("id"), config.ApiVersion)
+	return lib.DeleteResource(c, path)
+}
+
 func createNetwork(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), networkPath, postParams.Get("name"), config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), networkPath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create Network request with params: %s\n", postParams)
 	log.Printf("Create Network path: %s\n", path)
 	var subnets []map[string]interface{}

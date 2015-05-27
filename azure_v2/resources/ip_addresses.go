@@ -29,23 +29,28 @@ type IpAddress struct {
 
 func SetupIpAddressesRoutes(e *echo.Echo) {
 	e.Get("/ip_addresses", listIpAddresses)
-	e.Post("/ip_addresses", createIpAddress)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/ip_addresses")
 	group.Get("", listIpAddresses)
-	// group.Post("", createInstance)
-	// group.Delete("/:id", deleteInstance)
+	group.Post("", createIpAddress)
+	group.Delete("/:id", deleteIpAddress)
 }
 
 func listIpAddresses(c *echo.Context) error {
 	return lib.ListResource(c, IpAddressPath)
 }
 
+func deleteIpAddress(c *echo.Context) error {
+	group_name := c.Param("group_name")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, IpAddressPath, c.Param("id"), config.ApiVersion)
+	return lib.DeleteResource(c, path)
+}
+
 func createIpAddress(c *echo.Context) error {
 	postParams := c.Request.Form
 	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), IpAddressPath, postParams.Get("name"), config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), IpAddressPath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create IpAddress request with params: %s\n", postParams)
 	log.Printf("Create IpAddress path: %s\n", path)
 	data := IpAddress{

@@ -48,9 +48,6 @@ func listInstances(c *echo.Context) error {
 
 func deleteInstance(c *echo.Context) error {
 	group_name := c.Param("group_name")
-	if group_name == "" {
-		return lib.GenericException("Parameter 'group_name' is required.")
-	}
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
 	return lib.DeleteResource(c, path)
 }
