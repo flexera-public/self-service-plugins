@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
+	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 const (
@@ -30,7 +30,7 @@ func SetupSubscriptionRoutes(e *echo.Echo) {
 }
 
 func listSubscriptions(c *echo.Context) error {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, config.ApiVersion)
 	log.Printf("Get Subscriptions request: %s\n", path)
 	resp, err := client.Get(path)
@@ -48,7 +48,7 @@ func listSubscriptions(c *echo.Context) error {
 }
 
 func GetSubscription(c *echo.Context) error {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, *config.SubscriptionIdCred, "2015-01-01")
 	log.Printf("Get Subscription request: %s\n", path)
 	resp, err := client.Get(path)

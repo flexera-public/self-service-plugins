@@ -11,7 +11,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
+	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 const (
@@ -30,13 +30,19 @@ type Network struct {
 func SetupNetworkRoutes(e *echo.Echo) {
 	e.Get("/networks", listNetworks)
 	e.Post("/networks", createNetwork)
+
+	//nested routes
+	group := e.Group("/resource_groups/:group_name/networks")
+	group.Get("", listNetworks)
+	// group.Post("", createInstance)
+	// group.Delete("/:id", deleteInstance)
 }
 
 func listNetworks(c *echo.Context) error {
-	requestParams := c.Request.Form
-	if requestParams.Get("group_name") != "" {
-		code, resp := getNetworks(c, requestParams.Get("group_name"))
-		return c.JSON(code, resp)
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, config.ApiVersion)
+		return lib.GetResources(c, path)
 	} else {
 		code, resp := getResources(c, "")
 		var networks []*Network
@@ -52,7 +58,7 @@ func listNetworks(c *echo.Context) error {
 
 func createNetwork(c *echo.Context) error {
 	postParams := c.Request.Form
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), networkPath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create Network request with params: %s\n", postParams)
 	log.Printf("Create Network path: %s\n", path)
@@ -95,7 +101,7 @@ func createNetwork(c *echo.Context) error {
 }
 
 func getNetworks(c *echo.Context, group_name string) (int, []*Network) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, config.ApiVersion)
 	log.Printf("Get Networks request: %s\n", path)
 	resp, err := client.Get(path)

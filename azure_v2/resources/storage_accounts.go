@@ -11,7 +11,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
+	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 const (
@@ -28,13 +28,19 @@ type StorageAccout struct {
 func SetupStorageAccountsRoutes(e *echo.Echo) {
 	e.Get("/storage_accounts", listStorageAccounts)
 	e.Post("/storage_accounts", createStorageAccount)
+
+	//nested routes
+	group := e.Group("/resource_groups/:group_name/storage_accounts")
+	group.Get("", listStorageAccounts)
+	// group.Post("", createInstance)
+	// group.Delete("/:id", deleteInstance)
 }
 
 func listStorageAccounts(c *echo.Context) error {
-	requestParams := c.Request.Form
-	if requestParams.Get("group_name") != "" {
-		code, resp := getAccounts(c, requestParams.Get("group_name"))
-		return c.JSON(code, resp)
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, storageAccountPath, config.ApiVersion)
+		return lib.GetResources(c, path)
 	} else {
 		code, resp := getResources(c, "")
 		var storage_accounts []*StorageAccout
@@ -50,7 +56,7 @@ func listStorageAccounts(c *echo.Context) error {
 
 func createStorageAccount(c *echo.Context) error {
 	postParams := c.Request.Form
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), storageAccountPath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create Storage Account request with params: %s\n", postParams)
 	log.Printf("Create Storage Account path: %s\n", path)
@@ -79,7 +85,7 @@ func createStorageAccount(c *echo.Context) error {
 }
 
 func getAccounts(c *echo.Context, group_name string) (int, []*StorageAccout) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, storageAccountPath, config.ApiVersion)
 	log.Printf("Get Storage accounts request: %s\n", path)
 	resp, err := client.Get(path)

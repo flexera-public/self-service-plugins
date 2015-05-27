@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
+	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 type Provider struct {
@@ -57,7 +57,7 @@ func registerProvider(c *echo.Context) error {
 	}
 	if dat.RegistrationState == "NotRegistered" {
 		log.Printf("Register required: \n")
-		client, _ := middleware.GetAzureClient(c)
+		client, _ := lib.GetAzureClient(c)
 		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
 		log.Printf("Registering Provider %s: %s\n", provider_name, path)
 		resp, err := client.PostForm(path, nil)
@@ -80,7 +80,7 @@ func registerProvider(c *echo.Context) error {
 }
 
 func getProviders(c *echo.Context, provider_name string) (int, []byte) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
 	log.Printf("Get Providers request: %s\n", path)
 	resp, err := client.Get(path)

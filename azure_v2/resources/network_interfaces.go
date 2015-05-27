@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	"github.com/rightscale/self-service-plugins/azure_v2/lib"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
 )
 
 const (
@@ -31,13 +30,19 @@ type NetworkInterface struct {
 func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 	e.Get("/network_interfaces", listNetworkInterfaces)
 	e.Post("/network_interfaces", createNetworkInterface)
+
+	//nested routes
+	group := e.Group("/resource_groups/:group_name/network_interfaces")
+	group.Get("", listNetworkInterfaces)
+	// group.Post("", createInstance)
+	// group.Delete("/:id", deleteInstance)
 }
 
 func listNetworkInterfaces(c *echo.Context) error {
-	requestParams := c.Request.Form
-	if requestParams.Get("group_name") != "" {
-		code, resp := getNetworkInterfaces(c, requestParams.Get("group_name"))
-		return c.JSON(code, resp)
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, config.ApiVersion)
+		return lib.GetResources(c, path)
 	} else {
 		code, resp := getResources(c, "")
 		var interfaces []*NetworkInterface
@@ -53,7 +58,7 @@ func listNetworkInterfaces(c *echo.Context) error {
 
 func createNetworkInterface(c *echo.Context) error {
 	postParams := c.Request.Form
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), NetworkInterfacePath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create NetworkInterface request with params: %s\n", postParams)
 	log.Printf("Create NetworkInterface path: %s\n", path)
@@ -107,7 +112,7 @@ func createNetworkInterface(c *echo.Context) error {
 }
 
 func getNetworkInterfaces(c *echo.Context, group_name string) (int, []*NetworkInterface) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, config.ApiVersion)
 	log.Printf("Get NetworkInterfaces request: %s\n", path)
 	resp, err := client.Get(path)

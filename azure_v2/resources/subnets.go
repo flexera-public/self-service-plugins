@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	"github.com/rightscale/self-service-plugins/azure_v2/lib"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
 )
 
 type Subnet struct {
@@ -25,13 +24,19 @@ type Subnet struct {
 func SetupSubnetsRoutes(e *echo.Echo) {
 	e.Get("/subnets", listSubnets)
 	e.Post("/subnets", createSubnet)
+
+	//nested routes
+	group := e.Group("/resource_groups/:group_name/networks/:network_id/subnets")
+	group.Get("", listSubnets)
+	// group.Post("", createInstance)
+	// group.Delete("/:id", deleteInstance)
 }
 
 func listSubnets(c *echo.Context) error {
-	requestParams := c.Request.Form
-	if requestParams.Get("group_name") != "" && requestParams.Get("network_name") != "" {
-		code, resp := getSubnets(c, requestParams.Get("group_name"), requestParams.Get("network_name"))
-		return c.JSON(code, resp)
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), config.ApiVersion)
+		return lib.GetResources(c, path)
 	} else {
 		code, resp := getResources(c, "")
 		var subnets []*Subnet
@@ -50,7 +55,7 @@ func listSubnets(c *echo.Context) error {
 
 func createSubnet(c *echo.Context) error {
 	postParams := c.Request.Form
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), networkPath, postParams.Get("network_name"), postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create Subnet request with params: %s\n", postParams)
 	log.Printf("Create Subnet path: %s\n", path)
@@ -88,7 +93,7 @@ func createSubnet(c *echo.Context) error {
 }
 
 func getSubnets(c *echo.Context, group_name string, network_name string) (int, []*Subnet) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, network_name, config.ApiVersion)
 	log.Printf("Get Subents request: %s\n", path)
 	resp, err := client.Get(path)

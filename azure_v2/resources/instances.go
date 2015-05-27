@@ -11,7 +11,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
+	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 const (
@@ -32,30 +32,39 @@ type Instance struct {
 }
 
 func SetupInstanceRoutes(e *echo.Echo) {
+	//get all instances from all groups
 	e.Get("/instances", listInstances)
-	e.Post("/instances", createInstance)
+
+	//nested routes
+	group := e.Group("/resource_groups/:group_name/instances")
+	group.Get("", listInstances)
+	group.Post("", createInstance)
+	group.Delete("/:id", deleteInstance)
 }
 
 func listInstances(c *echo.Context) error {
-	requestParams := c.Request.Form
-	if requestParams.Get("group_name") != "" {
-		code, resp := getInstances(c, requestParams.Get("group_name"))
-		return c.JSON(code, resp)
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, config.ApiVersion)
+		//code, resp :=
+		return lib.GetResources(c, path)
 	} else {
-		code, resp := getResources(c, "")
-		var instances []*Instance
-		for _, resource_group := range resp {
-			_, resp := getInstances(c, resource_group.Name)
-			instances = append(instances, resp...)
-		}
-		// [].to_json => null ... why?
-		return c.JSON(code, instances)
+		return c.JSON(200, "") //lib.ListNestedResources(c, virtualMachinesPath)
 	}
 
 }
 
+func deleteInstance(c *echo.Context) error {
+	group_name := c.Param("group_name")
+	if group_name == "" {
+		return lib.GenericException("Parameter 'group_name' is required.")
+	}
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
+	return lib.DeleteResource(c, path)
+}
+
 func getInstances(c *echo.Context, group_name string) (int, []*Instance) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, config.ApiVersion)
 	log.Printf("Get Instances request: %s\n", path)
 	resp, err := client.Get(path)
@@ -74,7 +83,7 @@ func getInstances(c *echo.Context, group_name string) (int, []*Instance) {
 // check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
 func createInstance(c *echo.Context) error {
 	postParams := c.Request.Form
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	var networkInterfaces []map[string]interface{}
 	instanceParams := Instance{
 		Name:     postParams.Get("name"),
@@ -100,7 +109,7 @@ func createInstance(c *echo.Context) error {
 		},
 	}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), virtualMachinesPath, instanceParams.Name, config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), virtualMachinesPath, instanceParams.Name, config.ApiVersion)
 	log.Printf("Create Instances request with params: %s\n", postParams)
 	log.Printf("Create Instances path: %s\n", path)
 

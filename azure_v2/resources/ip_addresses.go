@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	"github.com/rightscale/self-service-plugins/azure_v2/lib"
-	"github.com/rightscale/self-service-plugins/azure_v2/middleware"
 )
 
 const (
@@ -31,13 +30,19 @@ type IpAddress struct {
 func SetupIpAddressesRoutes(e *echo.Echo) {
 	e.Get("/ip_addresses", listIpAddresses)
 	e.Post("/ip_addresses", createIpAddress)
+
+	//nested routes
+	group := e.Group("/resource_groups/:group_name/ip_addresses")
+	group.Get("", listIpAddresses)
+	// group.Post("", createInstance)
+	// group.Delete("/:id", deleteInstance)
 }
 
 func listIpAddresses(c *echo.Context) error {
-	requestParams := c.Request.Form
-	if requestParams.Get("group_name") != "" {
-		code, resp := getIpAddresses(c, requestParams.Get("group_name"))
-		return c.JSON(code, resp)
+	group_name := c.Param("group_name")
+	if group_name != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, IpAddressPath, config.ApiVersion)
+		return lib.GetResources(c, path)
 	} else {
 		code, resp := getResources(c, "")
 		var addresses []*IpAddress
@@ -53,7 +58,7 @@ func listIpAddresses(c *echo.Context) error {
 
 func createIpAddress(c *echo.Context) error {
 	postParams := c.Request.Form
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), IpAddressPath, postParams.Get("name"), config.ApiVersion)
 	log.Printf("Create IpAddress request with params: %s\n", postParams)
 	log.Printf("Create IpAddress path: %s\n", path)
@@ -94,7 +99,7 @@ func createIpAddress(c *echo.Context) error {
 }
 
 func getIpAddresses(c *echo.Context, group_name string) (int, []*IpAddress) {
-	client, _ := middleware.GetAzureClient(c)
+	client, _ := lib.GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, IpAddressPath, config.ApiVersion)
 	log.Printf("Get IpAddresses request: %s\n", path)
 	resp, err := client.Get(path)

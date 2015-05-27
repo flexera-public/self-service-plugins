@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
 
 	"code.google.com/p/goauth2/oauth"
 	"github.com/labstack/echo"
@@ -44,22 +43,4 @@ func AzureClientInitializer() echo.Middleware {
 			return h(c)
 		}
 	}
-}
-
-// Retrieve client initialized by middleware, send error response if not found
-// This function should be used by controller actions that need to use the client
-func GetAzureClient(c *echo.Context) (*http.Client, error) {
-	client, _ := c.Get("azure").(*http.Client)
-	if client == nil {
-		return nil, lib.GenericException(fmt.Sprintf("failed to retrieve Azure client, check middleware"))
-	}
-	return client, nil
-}
-
-func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
-	cookie, err := c.Request.Cookie(name)
-	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("cookie '%s' is missing", cookie))
-	}
-	return cookie, nil
 }
