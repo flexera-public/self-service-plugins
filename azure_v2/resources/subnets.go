@@ -36,7 +36,11 @@ func listSubnets(c *echo.Context) error {
 	group_name := c.Param("group_name")
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), config.ApiVersion)
-		return lib.GetResources(c, path)
+		subnets, err := lib.GetResources(c, path)
+		if err != nil {
+			return err
+		}
+		return c.JSON(200, subnets)
 	} else {
 		code, resp := getResources(c, "")
 		var subnets []*Subnet

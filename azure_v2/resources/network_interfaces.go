@@ -42,7 +42,11 @@ func listNetworkInterfaces(c *echo.Context) error {
 	group_name := c.Param("group_name")
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, config.ApiVersion)
-		return lib.GetResources(c, path)
+		interfaces, err := lib.GetResources(c, path)
+		if err != nil {
+			return err
+		}
+		return c.JSON(200, interfaces)
 	} else {
 		code, resp := getResources(c, "")
 		var interfaces []*NetworkInterface

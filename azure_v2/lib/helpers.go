@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/labstack/echo"
 	//"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -31,37 +32,44 @@ func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-// func ListNestedResources(c *echo.Context, relativePath string) error {
-// 	code, resp := GetResources(c, "")
+func ListNestedResources(c *echo.Context, parentPath string, relativePath string) ([]interface{}, error) {
+	re := regexp.MustCompile("\\?(.+)") //remove tail with uri params
+	parentResources, err := GetResources(c, parentPath)
+	if err != nil {
+		return nil, err
+	}
 
-// 	var resources []interface{}
-// 	for _, resource_group := range resp {
-// 		name := resource_group.(*ResourceGroup).Name
-// 		_, resp := GetResources(c, "/"+name+"/"+relativePath)
-// 		resources = append(resources, resp...)
-// 	}
-// 	// [].to_json => null ... why?
-// 	return c.JSON(code, resources)
-// }
+	var resources []interface{}
+	for _, parent := range parentResources {
+		resource := parent.(map[string]interface{})
+		resourcePath := re.ReplaceAllLiteralString(parentPath, "/") + resource["name"].(string) + relativePath
+		resp, err := GetResources(c, resourcePath)
+		if err != nil {
+			return nil, err
+		}
+		resources = append(resources, resp...)
+	}
+	return resources, nil
+}
 
-func GetResources(c *echo.Context, path string) error {
+func GetResources(c *echo.Context, path string) ([]interface{}, error) {
 	client, _ := GetAzureClient(c)
 	log.Printf("Get Resources request: %s\n", path)
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while requesting resources: %v", err))
+		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resources: %v", err))
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
 	//TODO: add error handling here
 	if resp.StatusCode >= 400 {
-		return GenericException(fmt.Sprintf("Error has occurred while requesting resources: %s", string(b)))
+		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resources: %s", string(b)))
 	}
 
 	var m map[string][]interface{}
 	json.Unmarshal(b, &m)
 
-	return c.JSON(resp.StatusCode, m["value"])
+	return m["value"], nil
 }
 
 func DeleteResource(c *echo.Context, path string) error {

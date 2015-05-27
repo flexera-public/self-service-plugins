@@ -40,7 +40,11 @@ func listStorageAccounts(c *echo.Context) error {
 	group_name := c.Param("group_name")
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, storageAccountPath, config.ApiVersion)
-		return lib.GetResources(c, path)
+		accounts, err := lib.GetResources(c, path)
+		if err != nil {
+			return err
+		}
+		return c.JSON(200, accounts)
 	} else {
 		code, resp := getResources(c, "")
 		var storage_accounts []*StorageAccout
