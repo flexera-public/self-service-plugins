@@ -39,16 +39,17 @@ func HttpServer() *echo.Echo {
 	e.SetHTTPErrorHandler(AzureErrorHandler(e)) // override default error handler
 
 	// Setup routes
-	resources.SetupSubscriptionRoutes(e)
-	resources.SetupInstanceRoutes(e)
-	resources.SetupGroupsRoutes(e)
-	resources.SetupStorageAccountsRoutes(e)
-	resources.SetupProviderRoutes(e)
-	resources.SetupNetworkRoutes(e)
-	resources.SetupSubnetsRoutes(e)
-	resources.SetupIpAddressesRoutes(e)
-	resources.SetupAuthRoutes(e)
-	resources.SetupNetworkInterfacesRoutes(e)
+	prefix := e.Group("/azure_plugin")
+	resources.SetupSubscriptionRoutes(prefix)
+	resources.SetupInstanceRoutes(prefix)
+	resources.SetupGroupsRoutes(prefix)
+	resources.SetupStorageAccountsRoutes(prefix)
+	resources.SetupProviderRoutes(prefix)
+	resources.SetupNetworkRoutes(prefix)
+	resources.SetupSubnetsRoutes(prefix)
+	resources.SetupIpAddressesRoutes(prefix)
+	resources.SetupAuthRoutes(prefix)
+	resources.SetupNetworkInterfacesRoutes(prefix)
 
 	return e
 }

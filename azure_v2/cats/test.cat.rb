@@ -13,20 +13,21 @@ namespace "azure" do
   type "instance" do                           # defines resource of type "pod"
     provision "provision_instance"             # name of RCL definition to use to provision the resource
     delete "delete_instance"                   # name of RCL definition to use to delete the resource
+    path "/azure_plugin/instances"
     fields do
-      field "name" do                               
+      field "name" do
         type "string"
         required true
       end
-      field "location" do                               
+      field "location" do
         type "string"
         required true
       end
-      field "instance_type_uid" do                               
+      field "instance_type_uid" do
         type "string"
         required true
       end
-      field "group_name" do                               
+      field "group_name" do
         type "string"
         required true
       end
@@ -54,12 +55,12 @@ resource "base_server", type: "azure.instance" do
   location              "westus"
   group_name            "Group-1"
 end
- 
+
 # Define the RCL definitions to create and destroy the resource
 define provision_instance(@raw_instance) return @instance do
   $obj = to_object(@raw_instance)
   $fields = $obj["fields"]
-  @instance = azure.instance.create($fields) # Calls .create on the API resource
+  @instance = azure.instances.create($fields) # Calls .create on the API resource
 end
 define delete_instance(@instance) do
   @instance.destroy() # Calls .delete on the API resource

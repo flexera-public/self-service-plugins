@@ -34,11 +34,12 @@ type Instance struct {
 func SetupInstanceRoutes(e *echo.Echo) {
 	//get all instances from all groups
 	e.Get("/instances", listInstances)
+	e.Post("/instances", createInstance)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/instances")
 	group.Get("", listInstances)
-	group.Post("", createInstance)
+	//group.Post("", createInstance)
 	group.Delete("/:id", deleteInstance)
 }
 
@@ -81,7 +82,7 @@ func createInstance(c *echo.Context) error {
 		},
 	}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), virtualMachinesPath, instanceParams.Name, config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), virtualMachinesPath, instanceParams.Name, config.ApiVersion)
 	log.Printf("Create Instances request with params: %s\n", postParams)
 	log.Printf("Create Instances path: %s\n", path)
 
