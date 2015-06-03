@@ -40,10 +40,10 @@ func AzureClientInitializer() echo.Middleware {
 				return lib.GenericException("Azure plugin supports only \"application/json\" Content-Type.")
 			}
 			//
-			// 	// prepare request params to use from form
-			// 	if err := c.Request.ParseForm(); err != nil {
-			// 		return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
-			// 	}
+			// prepare request params to use from form
+			if err := c.Request.ParseForm(); err != nil {
+				return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
+			}
 			// }
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}

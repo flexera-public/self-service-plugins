@@ -41,6 +41,7 @@ var createParams struct {
 func SetupInstanceRoutes(e *echo.Echo) {
 	//get all instances from all groups
 	e.Get("/instances", listInstances)
+	e.Get("/instances/:id", listOneInstance)
 	e.Post("/instances", createInstance)
 
 	//nested routes
@@ -52,6 +53,16 @@ func SetupInstanceRoutes(e *echo.Echo) {
 
 func listInstances(c *echo.Context) error {
 	return lib.ListResource(c, virtualMachinesPath)
+}
+func listOneInstance(c *echo.Context) error {
+	params := c.Request.Form
+	group_name := params.Get("group_name")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
+	resource, err := lib.GetResource(c, path)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resource)
 }
 
 func deleteInstance(c *echo.Context) error {
@@ -114,5 +125,13 @@ func createInstance(c *echo.Context) error {
 	}
 	defer response.Body.Close()
 	b, _ := ioutil.ReadAll(response.Body)
-	return c.JSON(response.StatusCode, string(b))
+	if response.StatusCode >= 400 {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while creating instance: %s", string(b)))
+	}
+
+	var m *Instance
+	json.Unmarshal(b, &m)
+	c.Response.Header().Add("Location", "/azure_plugin/instances/"+m.Name+"?group_name="+createParams.Group)
+	fmt.Printf("HEADER: %s", "/azure_plugin/instances/"+m.Name+"?group_name="+createParams.Group)
+	return c.JSON(response.StatusCode, "")
 }

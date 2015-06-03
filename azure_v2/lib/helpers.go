@@ -93,6 +93,26 @@ func GetResources(c *echo.Context, path string) ([]interface{}, error) {
 	return m["value"], nil
 }
 
+func GetResource(c *echo.Context, path string) (map[string]interface{}, error) {
+	client, _ := GetAzureClient(c)
+	log.Printf("Get Resource request: %s\n", path)
+	resp, err := client.Get(path)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
+	}
+	b, _ := ioutil.ReadAll(resp.Body)
+	//TODO: add error handling here
+	if resp.StatusCode >= 400 {
+		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(b, &m)
+
+	return m, nil
+}
+
 func DeleteResource(c *echo.Context, path string) error {
 	client, _ := GetAzureClient(c)
 	log.Printf("Delete request: %s\n", path)
