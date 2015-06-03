@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"code.google.com/p/goauth2/oauth"
@@ -32,10 +33,18 @@ func AzureClientInitializer() echo.Middleware {
 				accessToken = token.Value
 			}
 
-			// prepare request params to use
-			if err := c.Request.ParseForm(); err != nil {
-				return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
+			if c.Request.Header.Get("Content-Type") == "application/json" {
+				bodyDecoder := json.NewDecoder(c.Request.Body)
+				c.Set("bodyDecoder", bodyDecoder)
+			} else {
+				return lib.GenericException("Azure plugin supports only \"application/json\" Content-Type.")
 			}
+			//
+			// 	// prepare request params to use from form
+			// 	if err := c.Request.ParseForm(); err != nil {
+			// 		return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
+			// 	}
+			// }
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
 			client := t.Client()

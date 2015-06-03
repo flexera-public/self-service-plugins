@@ -31,6 +31,13 @@ type Instance struct {
 	Properties        map[string]interface{} `json:"properties,omitempty"` // used for create instance
 }
 
+var createParams struct {
+	Name     string `json:"name,omitempty"`
+	Location string `json:"location,omitempty"`
+	Size     string `json:"instance_type_uid,omitempty"`
+	Group    string `json:"group_name,omitempty"`
+}
+
 func SetupInstanceRoutes(e *echo.Echo) {
 	//get all instances from all groups
 	e.Get("/instances", listInstances)
@@ -55,19 +62,22 @@ func deleteInstance(c *echo.Context) error {
 
 // check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
 func createInstance(c *echo.Context) error {
-	postParams := c.Request.Form
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
+	if err != nil {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+	}
 	client, _ := lib.GetAzureClient(c)
 	var networkInterfaces []map[string]interface{}
 	instanceParams := Instance{
-		Name:     postParams.Get("name"),
-		Location: postParams.Get("location"),
+		Name:     createParams.Name,
+		Location: createParams.Location,
 		Properties: map[string]interface{}{
-			"hardwareProfile": map[string]interface{}{"vmSize": postParams.Get("instance_type_uid")},
+			"hardwareProfile": map[string]interface{}{"vmSize": createParams.Size},
 			"storageProfile": map[string]interface{}{
 				"osDisk": map[string]interface{}{
 					"vhd": map[string]interface{}{
 						"uri": "https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"},
-					"name":   "os-" + postParams.Get("name") + "-rs",
+					"name":   "os-" + createParams.Name + "-rs",
 					"osType": "Linux"},
 				// "sourceImage": map[string]interface{}{
 				// 	"id": "/2d2b2267-ff0a-46d3-9912-8577acb18a0a/services/images/7bb63e06fb004b2597e854325d2fe7b9__Test-Windows-Server-2012-Datacenter-201401.01-en.us-127GB.vhd",
@@ -82,8 +92,8 @@ func createInstance(c *echo.Context) error {
 		},
 	}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, postParams.Get("group_name"), virtualMachinesPath, instanceParams.Name, config.ApiVersion)
-	log.Printf("Create Instances request with params: %s\n", postParams)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, virtualMachinesPath, instanceParams.Name, config.ApiVersion)
+	log.Printf("Create Instances request with params: %#v\n", createParams)
 	log.Printf("Create Instances path: %s\n", path)
 
 	by, err := json.Marshal(instanceParams)
