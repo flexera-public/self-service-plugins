@@ -128,5 +128,5 @@ func DeleteResource(c *echo.Context, path string) error {
 		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
 	}
 
-	return c.JSON(resp.StatusCode, "")
+	return c.JSON(204, "")
 }

@@ -43,12 +43,13 @@ func SetupInstanceRoutes(e *echo.Echo) {
 	e.Get("/instances", listInstances)
 	e.Get("/instances/:id", listOneInstance)
 	e.Post("/instances", createInstance)
+	e.Delete("/instances/:id", deleteInstance)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/instances")
 	group.Get("", listInstances)
 	//group.Post("", createInstance)
-	group.Delete("/:id", deleteInstance)
+	//group.Delete("/:id", deleteInstance)
 }
 
 func listInstances(c *echo.Context) error {
@@ -68,7 +69,8 @@ func listOneInstance(c *echo.Context) error {
 }
 
 func deleteInstance(c *echo.Context) error {
-	group_name := c.Param("group_name")
+	params := c.Request.Form
+	group_name := params.Get("group_name")
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
 	return lib.DeleteResource(c, path)
 }
