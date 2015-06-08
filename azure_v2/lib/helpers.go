@@ -99,7 +99,7 @@ func GetResources(c *echo.Context, path string, href string) ([]map[string]inter
 	return resources, nil
 }
 
-func GetResource(c *echo.Context, path string) (map[string]interface{}, error) {
+func GetResource(c *echo.Context, path string, href string) (map[string]interface{}, error) {
 	client, _ := GetAzureClient(c)
 	log.Printf("Get Resource request: %s\n", path)
 	resp, err := client.Get(path)
@@ -116,10 +116,12 @@ func GetResource(c *echo.Context, path string) (map[string]interface{}, error) {
 		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
 	}
 
-	var m map[string]interface{}
-	json.Unmarshal(b, &m)
+	var resource map[string]interface{}
+	json.Unmarshal(b, &resource)
 
-	return m, nil
+	resource["href"] = fmt.Sprintf(href, c.Param("id"))
+
+	return resource, nil
 }
 
 func DeleteResource(c *echo.Context, path string) error {

@@ -59,11 +59,10 @@ func listOneInstance(c *echo.Context) error {
 	params := c.Request.Form
 	group_name := params.Get("group_name")
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
-	resource, err := lib.GetResource(c, path)
+	resource, err := lib.GetResource(c, path, "/azure_plugin/instances/%s?group_name="+group_name)
 	if err != nil {
 		return err
 	}
-	resource["href"] = "/azure_plugin/instances/" + c.Param("id") + "?group_name=" + group_name
 	c.Response.Header().Add("Content-Type", "vnd.rightscale.instance+json")
 	return c.JSON(200, resource)
 }
