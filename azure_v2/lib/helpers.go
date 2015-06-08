@@ -102,6 +102,9 @@ func GetResource(c *echo.Context, path string) (map[string]interface{}, error) {
 		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode == 404 {
+		return nil, RecordNotFound(c.Param("id"))
+	}
 	//TODO: add error handling here
 	if resp.StatusCode >= 400 {
 		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
@@ -126,6 +129,11 @@ func DeleteResource(c *echo.Context, path string) error {
 
 	if err != nil {
 		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
+	}
+
+	if resp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(resp.Body)
+		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
 	}
 
 	return c.JSON(204, "")
