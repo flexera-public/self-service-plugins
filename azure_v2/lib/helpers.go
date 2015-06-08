@@ -32,18 +32,17 @@ func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func ListNestedResources(c *echo.Context, parentPath string, relativePath string) ([]interface{}, error) {
+func ListNestedResources(c *echo.Context, parentPath string, relativePath string, resourcesName string) ([]map[string]interface{}, error) {
 	re := regexp.MustCompile("\\?(.+)") //remove tail with uri params
-	parentResources, err := GetResources(c, parentPath)
+	parentResources, err := GetResources(c, parentPath, "/azure_plugin/resource_group/%s")
 	if err != nil {
 		return nil, err
 	}
 
-	var resources []interface{}
+	var resources []map[string]interface{}
 	for _, parent := range parentResources {
-		resource := parent.(map[string]interface{})
-		resourcePath := re.ReplaceAllLiteralString(parentPath, "/") + resource["name"].(string) + relativePath
-		resp, err := GetResources(c, resourcePath)
+		resourcePath := re.ReplaceAllLiteralString(parentPath, "/") + parent["name"].(string) + relativePath
+		resp, err := GetResources(c, resourcePath, "/azure_plugin/"+resourcesName+"/%s?group_name="+parent["name"].(string))
 		if err != nil {
 			return nil, err
 		}
@@ -52,28 +51,29 @@ func ListNestedResources(c *echo.Context, parentPath string, relativePath string
 	return resources, nil
 }
 
-func ListResource(c *echo.Context, resourcePath string) error {
+func ListResource(c *echo.Context, resourcePath string, resourcesName string) error {
 	group_name := c.Param("group_name")
+	var resources []map[string]interface{}
+	var err error
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, resourcePath, config.ApiVersion)
-		resources, err := GetResources(c, path)
+		resources, err = GetResources(c, path, "/azure_plugin/"+resourcesName+"/%s?group_name="+group_name)
 		if err != nil {
 			return err
 		}
-		return c.JSON(200, resources)
 	} else {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
 		relativePath := fmt.Sprintf("/%s?api-version=%s", resourcePath, config.ApiVersion)
-		resources, err := ListNestedResources(c, path, relativePath)
+		resources, err = ListNestedResources(c, path, relativePath, resourcesName)
 		if err != nil {
 			return err
 		}
-		return c.JSON(200, resources)
 	}
 
+	return c.JSON(200, resources)
 }
 
-func GetResources(c *echo.Context, path string) ([]interface{}, error) {
+func GetResources(c *echo.Context, path string, href string) ([]map[string]interface{}, error) {
 	client, _ := GetAzureClient(c)
 	log.Printf("Get Resources request: %s\n", path)
 	resp, err := client.Get(path)
@@ -87,10 +87,16 @@ func GetResources(c *echo.Context, path string) ([]interface{}, error) {
 		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resources: %s", string(b)))
 	}
 
-	var m map[string][]interface{}
+	var m map[string][]map[string]interface{}
 	json.Unmarshal(b, &m)
 
-	return m["value"], nil
+	resources := m["value"]
+	//add href for each resource
+	for _, resource := range resources {
+		resource["href"] = fmt.Sprintf(href, resource["name"])
+	}
+
+	return resources, nil
 }
 
 func GetResource(c *echo.Context, path string) (map[string]interface{}, error) {

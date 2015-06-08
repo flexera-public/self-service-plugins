@@ -19,6 +19,7 @@ type Subnet struct {
 	Name       string      `json:"name,omitempty"`
 	Etag       string      `json:"etag,omitempty"`
 	Properties interface{} `json:"properties,omitempty"`
+	Href       string      `json:"href,omitempty"` // required by response
 }
 
 func SetupSubnetsRoutes(e *echo.Echo) {
@@ -35,24 +36,27 @@ func listSubnets(c *echo.Context) error {
 	group_name := c.Param("group_name")
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), config.ApiVersion)
-		subnets, err := lib.GetResources(c, path)
+		subnets, err := lib.GetResources(c, path, "/azure_plugin/subnets/%s?group_name="+group_name)
 		if err != nil {
 			return err
+		}
+		//add href for each subnet
+		for _, subnet := range subnets {
+			subnet["href"] = fmt.Sprintf("/azure_plugin/resource_groups/%s/networks/%s/subnets/%s", group_name, c.Param("network_id"), subnet["name"])
 		}
 		return c.JSON(200, subnets)
 	} else {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-		resp, _ := lib.GetResources(c, path)
+		resp, _ := lib.GetResources(c, path, "/azure_plugin/resource_group/%s")
 		//TODO: add error handling
 		var subnets []*Subnet
 		for _, resource_group := range resp {
-			group := resource_group.(map[string]interface{})
-			groupName := group["name"].(string)
+			groupName := resource_group["name"].(string)
 			path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
-			networks, _ := lib.GetResources(c, path)
+			networks, _ := lib.GetResources(c, path, "/azure_plugin/networks/%s?group_name="+groupName)
 			//TODO: add error handling
 			for _, network := range networks {
-				network := network.(map[string]interface{})
+				network := network //.(map[string]interface{})
 				resp, _ := getSubnets(c, groupName, network["name"].(string))
 				//TODO: add error handling
 				subnets = append(subnets, resp...)
@@ -125,5 +129,11 @@ func getSubnets(c *echo.Context, group_name string, network_name string) ([]*Sub
 	b, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(b, &m)
 
-	return m["value"], nil
+	subnets := m["value"]
+
+	for _, subnet := range subnets {
+		subnet.Href = fmt.Sprintf("/azure_plugin/resource_groups/%s/networks/%s/subnets/%s", group_name, network_name, subnet.Name)
+	}
+
+	return subnets, nil
 }

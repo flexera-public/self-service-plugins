@@ -36,7 +36,7 @@ func SetupStorageAccountsRoutes(e *echo.Echo) {
 }
 
 func listStorageAccounts(c *echo.Context) error {
-	return lib.ListResource(c, storageAccountPath)
+	return lib.ListResource(c, storageAccountPath, "storage_accounts")
 }
 
 func deleteStorageAccount(c *echo.Context) error {

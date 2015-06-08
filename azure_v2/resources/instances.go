@@ -53,7 +53,7 @@ func SetupInstanceRoutes(e *echo.Echo) {
 }
 
 func listInstances(c *echo.Context) error {
-	return lib.ListResource(c, virtualMachinesPath)
+	return lib.ListResource(c, virtualMachinesPath, "instances")
 }
 func listOneInstance(c *echo.Context) error {
 	params := c.Request.Form

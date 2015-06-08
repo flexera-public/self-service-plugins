@@ -38,7 +38,7 @@ func SetupIpAddressesRoutes(e *echo.Echo) {
 }
 
 func listIpAddresses(c *echo.Context) error {
-	return lib.ListResource(c, IpAddressPath)
+	return lib.ListResource(c, IpAddressPath, "ip_addresses")
 }
 
 func deleteIpAddress(c *echo.Context) error {

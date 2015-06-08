@@ -38,7 +38,7 @@ func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 }
 
 func listNetworkInterfaces(c *echo.Context) error {
-	return lib.ListResource(c, NetworkInterfacePath)
+	return lib.ListResource(c, NetworkInterfacePath, "network_interfaces")
 }
 
 func deleteNetworkInterface(c *echo.Context) error {

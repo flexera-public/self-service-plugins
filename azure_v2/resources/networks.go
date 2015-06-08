@@ -38,7 +38,7 @@ func SetupNetworkRoutes(e *echo.Echo) {
 }
 
 func listNetworks(c *echo.Context) error {
-	return lib.ListResource(c, networkPath)
+	return lib.ListResource(c, networkPath, "networks")
 }
 
 func deleteNetwork(c *echo.Context) error {
