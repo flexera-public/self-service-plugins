@@ -62,6 +62,8 @@ func listOneInstance(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+	resource["href"] = "/azure_plugin/instances/" + c.Param("id") + "?group_name=" + group_name
+	c.Response.Header().Add("Content-Type", "vnd.rightscale.instance+json")
 	return c.JSON(200, resource)
 }
 
