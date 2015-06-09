@@ -64,8 +64,7 @@ func listOneInstance(c *echo.Context) error {
 		return err
 	}
 
-	c.Response.Header().Add("Content-Type", "vnd.rightscale.instance+json")
-	return c.JSON(200, resource)
+	return lib.Render(c, 200, resource, "vnd.rightscale.instance+json")
 }
 
 func deleteInstance(c *echo.Context) error {

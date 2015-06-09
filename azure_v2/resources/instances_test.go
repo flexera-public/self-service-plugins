@@ -24,6 +24,8 @@ var _ = Describe("instances", func() {
 
 	var do *ghttp.Server
 	var client *AzureClient
+	var response *Response
+	var err error
 
 	BeforeEach(func() {
 		do = ghttp.NewServer()
@@ -44,24 +46,73 @@ var _ = Describe("instances", func() {
 					ghttp.RespondWith(http.StatusOK, listInstancesResponse),
 				),
 			)
+			response, err = client.Get("/resource_groups/Group-1/instances")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 200 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(200))
+		})
+
+		It("returns a resource specific content type in the header", func() {
+			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instances+json"))
 		})
 
 		It("lists all instances inside one resource group", func() {
-			resp, err := client.Get("/resource_groups/Group-1/instances")
-			Expect(err).NotTo(HaveOccurred())
-			Ω(do.ReceivedRequests()).Should(HaveLen(1))
 			instances := make(map[string]interface{}, 0)
 			err = json.Unmarshal([]byte(listInstancesResponse), &instances)
 			Expect(err).NotTo(HaveOccurred())
 			expected, err := json.Marshal(instances["value"])
 			Expect(err).NotTo(HaveOccurred())
-			Ω(resp.Body).Should(MatchJSON(expected))
+			Ω(response.Body).Should(MatchJSON(expected))
+		})
+	})
+
+	Describe("listing via 'flat' route", func() {
+		BeforeEach(func() {
+			subscriptionIdW := "test"
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups"),
+					ghttp.RespondWith(http.StatusOK, `{"value": [{"name":"Group-1"}]}`),
+				),
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath),
+					ghttp.RespondWith(http.StatusOK, listInstancesResponse),
+				),
+			)
+			response, err = client.Get("/instances")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 200 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(2))
+			Ω(response.Status).Should(Equal(200))
+		})
+
+		It("returns a resource specific content type in the header", func() {
+			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instances+json"))
+		})
+
+		It("lists all instances inside one resource group", func() {
+			instances := make(map[string]interface{}, 0)
+			err = json.Unmarshal([]byte(listInstancesResponse), &instances)
+			Expect(err).NotTo(HaveOccurred())
+			expected, err := json.Marshal(instances["value"])
+			Expect(err).NotTo(HaveOccurred())
+			Ω(response.Body).Should(MatchJSON(expected))
 		})
 	})
 
 	Describe("listing empty", func() {
 		BeforeEach(func() {
-
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath),
@@ -71,11 +122,11 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns empty array", func() {
-			resp, err := client.Get("/resource_groups/Group-1/instances")
+			response, err = client.Get("/resource_groups/Group-1/instances")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
-			Ω(resp.Status).Should(Equal(200))
-			Ω(resp.Body).Should(Equal("[]\n"))
+			Ω(response.Status).Should(Equal(200))
+			Ω(response.Body).Should(Equal("[]\n"))
 		})
 	})
 
@@ -87,19 +138,29 @@ var _ = Describe("instances", func() {
 					ghttp.RespondWith(http.StatusOK, listOneInstanceResponse),
 				),
 			)
+			response, err = client.Get("/instances/khrvi?group_name=Group-1")
 		})
 
-		It("retrieves an existing action", func() {
-			resp, err := client.Get("/instances/khrvi?group_name=Group-1")
+		It("no error occured", func() {
 			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 200 status code", func() {
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
-			Ω(resp.Status).Should(Equal(200))
+			Ω(response.Status).Should(Equal(200))
+		})
+
+		It("returns a resource specific content type in the header", func() {
+			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instance+json"))
+		})
+
+		It("retrieves an existing instance", func() {
 			var instance map[string]interface{}
-			err = json.Unmarshal([]byte(listOneInstanceResponse), &instance)
+			err := json.Unmarshal([]byte(listOneInstanceResponse), &instance)
 			Expect(err).NotTo(HaveOccurred())
 			expected, err := json.Marshal(instance)
 			Expect(err).NotTo(HaveOccurred())
-			Ω(resp.Body).Should(MatchJSON(expected))
+			Ω(response.Body).Should(MatchJSON(expected))
 		})
 	})
 
@@ -114,11 +175,11 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns 404", func() {
-			resp, err := client.Get("/instances/khrvi1?group_name=Group-1")
+			response, err = client.Get("/instances/khrvi1?group_name=Group-1")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
-			Ω(resp.Status).Should(Equal(404))
-			Ω(resp.Body).Should(Equal("{\"Code\":404,\"Message\":\"Could not find resource with id: khrvi1\"}\n"))
+			Ω(response.Status).Should(Equal(404))
+			Ω(response.Body).Should(Equal("{\"Code\":404,\"Message\":\"Could not find resource with id: khrvi1\"}\n"))
 		})
 	})
 })

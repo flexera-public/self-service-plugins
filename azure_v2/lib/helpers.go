@@ -32,6 +32,13 @@ func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
 	return cookie, nil
 }
 
+// JSON sends an resource specific content type response with status code.
+func Render(c *echo.Context, code int, i interface{}, contentType string) error {
+	c.Response.Header().Set(echo.ContentType, contentType) //ApplicationJSON
+	c.Response.WriteHeader(code)
+	return json.NewEncoder(c.Response).Encode(i)
+}
+
 func ListNestedResources(c *echo.Context, parentPath string, relativePath string, resourcesName string) ([]map[string]interface{}, error) {
 	re := regexp.MustCompile("\\?(.+)") //remove tail with uri params
 	parentResources, err := GetResources(c, parentPath, "/resource_group/%s")
@@ -73,7 +80,8 @@ func ListResource(c *echo.Context, resourcePath string, resourcesName string) er
 	if len(resources) == 0 {
 		resources = make([]map[string]interface{}, 0)
 	}
-	return c.JSON(200, resources)
+	return Render(c, 200, resources, "vnd.rightscale."+resourcesName+"+json")
+
 }
 
 func GetResources(c *echo.Context, path string, href string) ([]map[string]interface{}, error) {
