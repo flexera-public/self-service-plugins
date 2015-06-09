@@ -76,12 +76,10 @@ func deleteInstance(c *echo.Context) error {
 
 // check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
 func createInstance(c *echo.Context) error {
-	var str string
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&str) //decode body as a string due to bug in SS
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
 	if err != nil {
 		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
-	json.Unmarshal([]byte(str), &createParams)
 	client, _ := lib.GetAzureClient(c)
 	var networkInterfaces []map[string]interface{}
 	instanceParams := Instance{
