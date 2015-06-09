@@ -69,7 +69,10 @@ func ListResource(c *echo.Context, resourcePath string, resourcesName string) er
 			return err
 		}
 	}
-
+	// init empty array
+	if len(resources) == 0 {
+		resources = make([]map[string]interface{}, 0)
+	}
 	return c.JSON(200, resources)
 }
 

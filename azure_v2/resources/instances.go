@@ -63,6 +63,7 @@ func listOneInstance(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	c.Response.Header().Add("Content-Type", "vnd.rightscale.instance+json")
 	return c.JSON(200, resource)
 }

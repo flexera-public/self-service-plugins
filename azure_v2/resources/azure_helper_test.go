@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-errors/errors"
 	"github.com/labstack/echo"
 	em "github.com/labstack/echo/middleware"
 	. "github.com/onsi/ginkgo"
@@ -75,6 +76,7 @@ func (c *AzureClient) do(verb, url, body string) (*Response, error) {
 		return nil, err
 	}
 	req.AddCookie(&http.Cookie{Name: am.CredCookieName, Value: "fake"})
+	req.Header.Add("Content-Type", "application/json")
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -97,13 +99,46 @@ func HttpServer() *echo.Echo {
 	// Setup middleware
 	e := echo.New()
 	e.Use(gm.RequestID)                 // Put that first so loggers can log request id
-	e.Use(em.Logger)                    // Log to console
 	e.Use(gm.HttpLogger(config.Logger)) // Log to syslog
 	e.Use(am.AzureClientInitializer())
+	e.Use(em.Recover())
 
+	e.SetHTTPErrorHandler(AzureErrorHandler(e)) // override default error handler
 	// Setup routes
 	SetupSubscriptionRoutes(e)
 	SetupInstanceRoutes(e)
 
 	return e
+}
+
+type GenericError struct {
+	echo.HTTPError
+	StackTrace string `json:"StackTrace,omitempty"`
+}
+
+func AzureErrorHandler(e *echo.Echo) echo.HTTPErrorHandler {
+	return func(err error, c *echo.Context) {
+		ge := new(GenericError)
+		ge.Code = http.StatusInternalServerError //default status code is 500
+		ge.Message = http.StatusText(ge.Code)    // default message is 'Internal Server Error'
+		switch error := err.(type) {
+		case *errors.Error:
+			if he, ok := error.Err.(*echo.HTTPError); ok {
+				ge.Code = he.Code
+				ge.Message = he.Message
+			}
+			if e.Debug() && ge.Code >= 500 {
+				ge.StackTrace = error.ErrorStack()
+			}
+		case *echo.HTTPError:
+			ge.Code = error.Code
+			ge.Message = error.Message
+		case error:
+			if e.Debug() && ge.Code >= 500 {
+				ge.Message = err.Error() //show original error message in case of debug mode https://github.com/labstack/echo/blob/1e117621e9006481bfc0fd8e6bafab48c1848639/echo.go#L161
+			}
+		}
+
+		c.JSON(ge.Code, ge)
+	}
 }

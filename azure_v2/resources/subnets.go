@@ -62,7 +62,11 @@ func listSubnets(c *echo.Context) error {
 				subnets = append(subnets, resp...)
 			}
 		}
-		// [].to_json => null ... why?
+
+		// init empty array
+		if len(subnets) == 0 {
+			subnets = make([]*Subnet, 0)
+		}
 		return c.JSON(200, subnets)
 	}
 
