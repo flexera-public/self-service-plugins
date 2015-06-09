@@ -36,24 +36,24 @@ func listSubnets(c *echo.Context) error {
 	group_name := c.Param("group_name")
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), config.ApiVersion)
-		subnets, err := lib.GetResources(c, path, "/azure_plugin/subnets/%s?group_name="+group_name)
+		subnets, err := lib.GetResources(c, path, "/subnets/%s?group_name="+group_name)
 		if err != nil {
 			return err
 		}
 		//add href for each subnet
 		for _, subnet := range subnets {
-			subnet["href"] = fmt.Sprintf("/azure_plugin/resource_groups/%s/networks/%s/subnets/%s", group_name, c.Param("network_id"), subnet["name"])
+			subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", group_name, c.Param("network_id"), subnet["name"])
 		}
 		return c.JSON(200, subnets)
 	} else {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-		resp, _ := lib.GetResources(c, path, "/azure_plugin/resource_group/%s")
+		resp, _ := lib.GetResources(c, path, "/resource_group/%s")
 		//TODO: add error handling
 		var subnets []*Subnet
 		for _, resource_group := range resp {
 			groupName := resource_group["name"].(string)
 			path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
-			networks, _ := lib.GetResources(c, path, "/azure_plugin/networks/%s?group_name="+groupName)
+			networks, _ := lib.GetResources(c, path, "/networks/%s?group_name="+groupName)
 			//TODO: add error handling
 			for _, network := range networks {
 				network := network //.(map[string]interface{})
@@ -132,7 +132,7 @@ func getSubnets(c *echo.Context, group_name string, network_name string) ([]*Sub
 	subnets := m["value"]
 
 	for _, subnet := range subnets {
-		subnet.Href = fmt.Sprintf("/azure_plugin/resource_groups/%s/networks/%s/subnets/%s", group_name, network_name, subnet.Name)
+		subnet.Href = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", group_name, network_name, subnet.Name)
 	}
 
 	return subnets, nil

@@ -17,11 +17,12 @@ type ResourceGroup struct {
 
 func SetupGroupsRoutes(e *echo.Echo) {
 	e.Get("/resource_groups", listResourceGroups)
+	//TODO: add list one action
 }
 
 func listResourceGroups(c *echo.Context) error {
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-	groups, err := lib.GetResources(c, path, "/azure_plugin/resource_group/%s")
+	groups, err := lib.GetResources(c, path, "/resource_group/%s")
 	if err != nil {
 		return err
 	}

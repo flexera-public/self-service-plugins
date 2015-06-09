@@ -59,7 +59,7 @@ func listOneInstance(c *echo.Context) error {
 	params := c.Request.Form
 	group_name := params.Get("group_name")
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, virtualMachinesPath, c.Param("id"), config.ApiVersion)
-	resource, err := lib.GetResource(c, path, "/azure_plugin/instances/%s?group_name="+group_name)
+	resource, err := lib.GetResource(c, path, "/instances/%s?group_name="+group_name)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,6 @@ func createInstance(c *echo.Context) error {
 
 	var m *Instance
 	json.Unmarshal(b, &m)
-	c.Response.Header().Add("Location", "/azure_plugin/instances/"+m.Name+"?group_name="+createParams.Group)
-	fmt.Printf("HEADER: %s", "/azure_plugin/instances/"+m.Name+"?group_name="+createParams.Group)
+	c.Response.Header().Add("Location", "/instances/"+m.Name+"?group_name="+createParams.Group)
 	return c.JSON(response.StatusCode, "")
 }

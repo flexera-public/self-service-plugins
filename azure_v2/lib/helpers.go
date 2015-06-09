@@ -34,7 +34,7 @@ func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
 
 func ListNestedResources(c *echo.Context, parentPath string, relativePath string, resourcesName string) ([]map[string]interface{}, error) {
 	re := regexp.MustCompile("\\?(.+)") //remove tail with uri params
-	parentResources, err := GetResources(c, parentPath, "/azure_plugin/resource_group/%s")
+	parentResources, err := GetResources(c, parentPath, "/resource_group/%s")
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func ListNestedResources(c *echo.Context, parentPath string, relativePath string
 	var resources []map[string]interface{}
 	for _, parent := range parentResources {
 		resourcePath := re.ReplaceAllLiteralString(parentPath, "/") + parent["name"].(string) + relativePath
-		resp, err := GetResources(c, resourcePath, "/azure_plugin/"+resourcesName+"/%s?group_name="+parent["name"].(string))
+		resp, err := GetResources(c, resourcePath, "/"+resourcesName+"/%s?group_name="+parent["name"].(string))
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +57,7 @@ func ListResource(c *echo.Context, resourcePath string, resourcesName string) er
 	var err error
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, resourcePath, config.ApiVersion)
-		resources, err = GetResources(c, path, "/azure_plugin/"+resourcesName+"/%s?group_name="+group_name)
+		resources, err = GetResources(c, path, "/"+resourcesName+"/%s?group_name="+group_name)
 		if err != nil {
 			return err
 		}
