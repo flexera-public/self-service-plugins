@@ -88,15 +88,16 @@ func createInstance(c *echo.Context) error {
 		Properties: map[string]interface{}{
 			"hardwareProfile": map[string]interface{}{"vmSize": createParams.Size},
 			"storageProfile": map[string]interface{}{
-				"osDisk": map[string]interface{}{
-					"vhd": map[string]interface{}{
-						"uri": "https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"},
-					"name":   "os-" + createParams.Name + "-rs",
-					"osType": "Linux"},
-				// "sourceImage": map[string]interface{}{
-				// 	"id": "/2d2b2267-ff0a-46d3-9912-8577acb18a0a/services/images/7bb63e06fb004b2597e854325d2fe7b9__Test-Windows-Server-2012-Datacenter-201401.01-en.us-127GB.vhd",
-				// },
-				// "destinationVhdsContainer": "http://khrvitestgo.blob.core.windows.net/vhds", // hard coded for now...should be used Placement group
+				// "osDisk": map[string]interface{}{
+				// 	"vhd": map[string]interface{}{
+				// 		"uri": "https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"},
+				// 	"name":   "os-" + createParams.Name + "-rs",
+				// 	"osType": "Linux"},
+				"sourceImage": map[string]interface{}{
+					//for 'westus' - "/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/zend/ArtifactTypes/VMImage/Offers/php-zend-server/Skus/zs-d-00-u-php5_6"
+					"id": "/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/zend/ArtifactTypes/VMImage/Offers/php-zend-server/Skus/zs-d-00-u-php5_6",
+				},
+				"destinationVhdsContainer": "http://khrvitestgo.blob.core.windows.net/vhds", // hard coded for now...should be used Placement group
 			},
 			"networkProfile": map[string]interface{}{
 				"networkInterfaces": append(networkInterfaces, map[string]interface{}{

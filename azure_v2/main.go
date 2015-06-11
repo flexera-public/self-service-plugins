@@ -50,6 +50,7 @@ func HttpServer() *echo.Echo {
 	resources.SetupIpAddressesRoutes(prefix)
 	resources.SetupAuthRoutes(prefix)
 	resources.SetupNetworkInterfacesRoutes(prefix)
+	resources.SetupImageRoutes(prefix)
 
 	return e
 }

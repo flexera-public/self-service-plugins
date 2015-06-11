@@ -99,9 +99,14 @@ func GetResources(c *echo.Context, path string, href string) ([]map[string]inter
 	}
 
 	var m map[string][]map[string]interface{}
-	json.Unmarshal(b, &m)
+	var resources []map[string]interface{}
+	err = json.Unmarshal(b, &m)
+	resources = m["value"]
+	if err != nil {
+		//try to unmarshal with different interface
+		json.Unmarshal(b, &resources)
+	}
 
-	resources := m["value"]
 	//add href for each resource
 	for _, resource := range resources {
 		resource["href"] = fmt.Sprintf(href, resource["name"])
