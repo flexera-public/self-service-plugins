@@ -29,6 +29,7 @@ type Instance struct {
 	Type              string                 `json:"type,omitempty"`
 	Location          string                 `json:"location"`
 	Properties        map[string]interface{} `json:"properties,omitempty"` // used for create instance
+	// Plan              map[string]interface{} `json:"plan,omitempty"`       // used for create instance
 }
 
 var createParams struct {
@@ -74,6 +75,7 @@ func deleteInstance(c *echo.Context) error {
 	return lib.DeleteResource(c, path)
 }
 
+// https://msdn.microsoft.com/en-us/library/azure/mt163591.aspx
 // check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
 func createInstance(c *echo.Context) error {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
@@ -85,19 +87,38 @@ func createInstance(c *echo.Context) error {
 	instanceParams := Instance{
 		Name:     createParams.Name,
 		Location: createParams.Location,
+		// Plan is required for images from marketplace
+		// Plan: map[string]interface{}{
+		// 	"name":      "Ubuntu15.04Snappy",
+		// 	"publisher": "Canonical",
+		// 	//"product":   "imageProduct",
+		// },
 		Properties: map[string]interface{}{
 			"hardwareProfile": map[string]interface{}{"vmSize": createParams.Size},
+			//"storageProfile":{"imageReference":{"publisher":"CoreOS","offer":"CoreOS","sku":"Alpha","version":"660.0.0"},"osDisk":{"name":"cli64174115e3045f57-os-1434041634239","vhd":{"uri":"https://cli64174115e3045f5714340.blob.core.windows.net/vhds/cli64174115e3045f57-os-1434041634239.vhd"},"caching":"ReadWrite","createOption":"FromImage"}}
 			"storageProfile": map[string]interface{}{
-				// "osDisk": map[string]interface{}{
-				// 	"vhd": map[string]interface{}{
-				// 		"uri": "https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"},
-				// 	"name":   "os-" + createParams.Name + "-rs",
-				// 	"osType": "Linux"},
-				"sourceImage": map[string]interface{}{
-					//for 'westus' - "/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/zend/ArtifactTypes/VMImage/Offers/php-zend-server/Skus/zs-d-00-u-php5_6"
-					"id": "/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/zend/ArtifactTypes/VMImage/Offers/php-zend-server/Skus/zs-d-00-u-php5_6",
+				"imageReference": map[string]interface{}{
+					"publisher": "Canonical",         //publisher,
+					"offer":     "Ubuntu15.04Snappy", //offer,
+					"sku":       "15.04-Snappy",      //sku,
+					"version":   "15.04.201505060",   //version,
 				},
-				"destinationVhdsContainer": "http://khrvitestgo.blob.core.windows.net/vhds", // hard coded for now...should be used Placement group
+
+				"osDisk": map[string]interface{}{
+					"caching":      "ReadWrite",
+					"createOption": "FromImage",
+					"vhd": map[string]interface{}{
+						"uri": "https://khrvitestgo1.blob.core.windows.net/vhds/cli64174115e3045f57-os-" + createParams.Name + ".vhd",
+					},
+					"name": "cli64174115e3045f57-os-" + createParams.Name,
+					//"osType": "Windows",
+				},
+			},
+			"osProfile": map[string]interface{}{
+				"computerName":  "khrvi",
+				"adminUsername": "azureuser",
+				"adminPassword": "Pass1234@",
+				//"linuxConfiguration":{"disablePasswordAuthentication":false}
 			},
 			"networkProfile": map[string]interface{}{
 				"networkInterfaces": append(networkInterfaces, map[string]interface{}{
@@ -107,7 +128,7 @@ func createInstance(c *echo.Context) error {
 		},
 	}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, virtualMachinesPath, instanceParams.Name, config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, virtualMachinesPath, instanceParams.Name, "2015-05-01-preview")
 	log.Printf("Create Instances request with params: %#v\n", createParams)
 	log.Printf("Create Instances path: %s\n", path)
 
@@ -134,5 +155,6 @@ func createInstance(c *echo.Context) error {
 	var m *Instance
 	json.Unmarshal(b, &m)
 	c.Response.Header().Add("Location", "/instances/"+m.Name+"?group_name="+createParams.Group)
+	c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
 	return c.JSON(response.StatusCode, "")
 }
