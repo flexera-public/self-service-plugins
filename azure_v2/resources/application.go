@@ -22,23 +22,32 @@ const (
 )
 
 func SetupAuthRoutes(e *echo.Echo) {
-	e.Get("/application/register", registerApp)
+	e.Post("/application/register", registerApp)
 }
 
 // Get App-Only Access Token for Azure AD Graph API
 func registerApp(c *echo.Context) error {
-	authResponse, err := lib.RequestToken("client_credentials", "https://graph.windows.net/")
+	var registrationCreds struct {
+		TenantId     string `json:"tenant"`
+		ClientId     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		Subscription string `json:"subscription"`
+	}
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&registrationCreds)
+	if err != nil {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+	}
+	authResponse, err := lib.RequestToken(registrationCreds.TenantId, "client_credentials", "https://graph.windows.net/", registrationCreds.ClientId, registrationCreds.ClientSecret, "")
 	if err != nil {
 		return err
 	}
-
 	t := &oauth.Transport{Token: &oauth.Token{AccessToken: authResponse.AccessToken}}
 	graphClient := t.Client()
-	principalId, err1 := getServicePrincipal(graphClient)
+	principalId, err1 := getServicePrincipal(graphClient, registrationCreds.TenantId, registrationCreds.ClientId)
 	if err1 != nil {
 		return err1
 	}
-	return assignRoleToApp(c, principalId)
+	return assignRoleToApp(c, principalId, registrationCreds.Subscription)
 }
 
 // {"odata.metadata":"https://graph.windows.net/09b8fec1-4b8d-48dd-8afa-5c1a775ea0f2/$metadata#directoryObjects/Microsoft.DirectoryServices.ServicePrincipal",
@@ -66,14 +75,14 @@ func registerApp(c *echo.Context) error {
 // 		"samlMetadataUrl":null,
 // 		"servicePrincipalNames":["https://test.rightscale.com","57e3974e-7bb8-47a3-8b28-1f4026b6ac65"],
 //  "tags":["WindowsAzureActiveDirectoryIntegratedApp"]}]}
-func getServicePrincipal(client *http.Client) (string, error) {
-	path := fmt.Sprintf("https://graph.windows.net/%s/servicePrincipals?api-version=1.5", "09b8fec1-4b8d-48dd-8afa-5c1a775ea0f2")
-	path = path + "&$filter=appId%20eq%20'" + *config.ClientIdCred + "'"
+func getServicePrincipal(client *http.Client, tenantId string, cliectId string) (string, error) {
+	path := fmt.Sprintf("%s/%s/servicePrincipals?api-version=1.5", config.GraphUrl, tenantId)
+	path = path + "&$filter=appId%20eq%20'" + cliectId + "'"
 	log.Printf("Get Service Principals request: %s\n", path)
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
-
 	if err != nil {
+
 		return "", lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 	}
 
@@ -91,16 +100,16 @@ func getServicePrincipal(client *http.Client) (string, error) {
 }
 
 //Assign RBAC role to Application
-func assignRoleToApp(c *echo.Context, principalId string) error {
+func assignRoleToApp(c *echo.Context, principalId string, subscription string) error {
 	name := uuid.New()
 	var properties = map[string]interface{}{
 		"properties": map[string]interface{}{
-			"roleDefinitionId": fmt.Sprintf("/subscriptions/%s/%s/%s", *config.SubscriptionIdCred, authPath, roleContributorId),
+			"roleDefinitionId": fmt.Sprintf("/subscriptions/%s/%s/%s", subscription, authPath, roleContributorId),
 			"principalId":      principalId,
 		},
 	}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/providers/microsoft.authorization/roleassignments/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, name, "2014-10-01-preview")
+	path := fmt.Sprintf("%s/subscriptions/%s/providers/microsoft.authorization/roleassignments/%s?api-version=%s", config.BaseUrl, subscription, name, "2014-10-01-preview")
 	log.Printf("Assign RBAC role to Application with params: %s\n", properties)
 	log.Printf("Assign RBAC role to Application path: %s\n", path)
 
@@ -127,5 +136,8 @@ func assignRoleToApp(c *echo.Context, principalId string) error {
 	if response.StatusCode >= 400 {
 		return lib.GenericException(fmt.Sprintf("Assign RBAC role to Application failed: %s", string(b)))
 	}
-	return c.JSON(response.StatusCode, string(b))
+	if response.StatusCode != 201 {
+		return lib.GenericException(fmt.Sprintf("Assign RBAC role to Application returned status %s with body: %s", response.StatusCode, string(b)))
+	}
+	return c.NoContent(201)
 }

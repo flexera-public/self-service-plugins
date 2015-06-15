@@ -26,6 +26,8 @@ var (
 	RefreshTokenCred   = app.Arg("refresh_token", "The token used for refreshing access token.").Required().String()
 	// set base url as variable to be able to modify it in the specs
 	BaseUrl   = "https://management.azure.com"
+	AuthHost  = "https://login.windows.net"
+	GraphUrl  = "https://graph.windows.net"
 	Logger    *log.Logger // Global syslog logger
 	DebugMode = false
 )

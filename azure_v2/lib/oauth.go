@@ -3,14 +3,14 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/rightscale/self-service-plugins/azure_v2/config"
 )
 
 const (
-	authHost      = "https://login.windows.net"
 	tokenEndpoint = "oauth2/token"
 )
 
@@ -28,18 +28,20 @@ type authResponse struct {
 }
 
 // Build request to redeem authorization code and get access token
-func RequestToken(grantType string, resource string) (*authResponse, error) {
+func RequestToken(tenantId string, grantType string, resource string, clientId string, clientSecret string, refreshToken string) (*authResponse, error) {
 	data := url.Values{}
-	data.Set("client_id", *config.ClientIdCred)
-	data.Set("client_secret", *config.ClientSecretCred)
-	data.Set("refresh_token", *config.RefreshTokenCred)
+	data.Set("client_id", clientId)
+	data.Set("client_secret", clientSecret)
 	data.Set("grant_type", grantType)
 	message := grantType
 	if resource != "" {
 		data.Set("resource", resource)
 		message = fmt.Sprintf("%s for resource %s", grantType, resource)
 	}
-	path := fmt.Sprintf("%s/%s/%s", authHost, *config.TenantIdCred, tokenEndpoint)
+	if refreshToken != "" {
+		data.Set("refresh_token", refreshToken)
+	}
+	path := fmt.Sprintf("%s/%s/%s", config.AuthHost, tenantId, tokenEndpoint)
 	fmt.Printf("Requesting %s: %s\n", message, path)
 	resp, err := http.PostForm(path, data)
 	defer resp.Body.Close()

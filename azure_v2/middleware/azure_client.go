@@ -6,6 +6,7 @@ import (
 
 	"code.google.com/p/goauth2/oauth"
 	"github.com/labstack/echo"
+	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
@@ -39,12 +40,10 @@ func AzureClientInitializer() echo.Middleware {
 			} else {
 				return lib.GenericException("Azure plugin supports only \"application/json\" Content-Type.")
 			}
-			//
 			// prepare request params to use from form
 			if err := c.Request.ParseForm(); err != nil {
 				return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 			}
-			// }
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
 			client := t.Client()
@@ -65,8 +64,7 @@ func getAccessToken(c *echo.Context) (string, error) {
 		grantType = "client_credentials"
 		resource = "https://management.core.windows.net/"
 	}
-
-	authResponse, err := lib.RequestToken(grantType, resource)
+	authResponse, err := lib.RequestToken(*config.TenantIdCred, grantType, resource, *config.ClientIdCred, *config.ClientSecretCred, *config.RefreshTokenCred)
 	if err != nil {
 		return "", err
 	}

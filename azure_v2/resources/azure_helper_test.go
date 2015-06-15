@@ -107,6 +107,14 @@ func HttpServer() *echo.Echo {
 	// Setup routes
 	SetupSubscriptionRoutes(e)
 	SetupInstanceRoutes(e)
+	SetupGroupsRoutes(e)
+	SetupStorageAccountsRoutes(e)
+	SetupProviderRoutes(e)
+	SetupNetworkRoutes(e)
+	SetupSubnetsRoutes(e)
+	SetupIpAddressesRoutes(e)
+	SetupAuthRoutes(e)
+	SetupNetworkInterfacesRoutes(e)
 
 	return e
 }
