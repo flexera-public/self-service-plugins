@@ -75,7 +75,7 @@ func (c *AzureClient) do(verb, url, body string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.AddCookie(&http.Cookie{Name: am.CredCookieName, Value: "fake"})
+	req.AddCookie(&http.Cookie{Name: "AccessToken", Value: "fake"})
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := c.client.Do(req)
 	if err != nil {

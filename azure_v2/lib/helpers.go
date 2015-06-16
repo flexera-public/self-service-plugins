@@ -24,12 +24,12 @@ func GetAzureClient(c *echo.Context) (*http.Client, error) {
 	return client, nil
 }
 
-func GetCookie(c *echo.Context, name string) (*http.Cookie, error) {
+func GetCookie(c *echo.Context, name string) (string, error) {
 	cookie, err := c.Request.Cookie(name)
 	if err != nil {
-		return nil, GenericException(fmt.Sprintf("cookie '%s' is missing", cookie))
+		return "", GenericException(fmt.Sprintf("cookie '%s' is missing", cookie))
 	}
-	return cookie, nil
+	return cookie.Value, nil
 }
 
 // JSON sends an resource specific content type response with status code.
