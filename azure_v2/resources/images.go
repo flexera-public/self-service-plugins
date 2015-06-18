@@ -18,6 +18,29 @@ func SetupImageRoutes(e *echo.Echo) {
 	e.Get("/offers", listOffers)
 	e.Get("/skus", listSkus)
 	e.Get("/versions", listVersions)
+	e.Get("/images", listImages)
+}
+
+func listImages(c *echo.Context) error {
+	params := c.Request.Form
+	location := params.Get("location")
+	publishers, err := GetPublishers(c, location)
+	if err != nil {
+		return err
+	}
+	var result []map[string]interface{}
+	for _, publisher := range publishers {
+		offers, _ := GetOffers(c, location, publisher["name"].(string))
+		for _, offer := range offers {
+			skus, _ := GetSkus(c, location, publisher["name"].(string), offer["name"].(string))
+			for _, sku := range skus {
+				versions, _ := GetVersions(c, location, publisher["name"].(string), offer["name"].(string), sku["name"].(string))
+				result = append(result, versions...)
+			}
+		}
+	}
+
+	return c.JSON(200, result)
 }
 
 func listLocations(c *echo.Context) error {

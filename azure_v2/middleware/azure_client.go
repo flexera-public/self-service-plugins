@@ -31,6 +31,18 @@ func AzureClientInitializer() echo.Middleware {
 				return lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 			}
 
+			subscriptionId, err := lib.GetCookie(c, "SubscriptionId")
+			if err != nil {
+				if *config.Env == "development" {
+					subscriptionId = *config.SubscriptionIdCred
+				}
+				if subscriptionId == "" {
+					return lib.GenericException("The'SubscriptionId' cookie is required.")
+				}
+			} else {
+				*config.SubscriptionIdCred = subscriptionId
+			}
+
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
 			client := t.Client()
 			c.Set("azure", client)
