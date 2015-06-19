@@ -18,6 +18,7 @@ var (
 	app              = kingpin.New("azure_plugin", "Azure V2 RightScale Self-Service plugin.")
 	ListenFlag       = app.Flag("listen", "Hostname and port to listen on, e.g. 'localhost:8080' - hostname is optional.").Default("localhost:8080").String()
 	Env              = app.Flag("env", "Environment name: 'development' (default) or 'production'.").Default("development").String()
+	AppPrefix        = app.Flag("prefix", "URL prefix.").Default("/azure_plugin").String()
 	ClientIdCred     = app.Arg("client", "The client id of the application that is registered in Azure Active Directory.").String()
 	ClientSecretCred = app.Arg("secret", "The client key of the application that is registered in Azure Active Directory.").String()
 	//	ResourceCred       = app.Arg("resource", "The App ID URI of the web API (secured resource).").String()

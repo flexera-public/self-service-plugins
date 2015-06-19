@@ -39,7 +39,7 @@ func HttpServer() *echo.Echo {
 	e.SetHTTPErrorHandler(AzureErrorHandler(e)) // override default error handler
 
 	// Setup routes
-	prefix := e.Group("/azure_plugin") // added prefix to use multiple nginx location on one SS box
+	prefix := e.Group(*config.AppPrefix) // added prefix to use multiple nginx location on one SS box
 	resources.SetupSubscriptionRoutes(prefix)
 	resources.SetupInstanceRoutes(prefix)
 	resources.SetupGroupsRoutes(prefix)
