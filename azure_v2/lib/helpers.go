@@ -1,10 +1,10 @@
 package lib
 
 import (
-	// "bytes"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	// "io"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -161,4 +161,33 @@ func DeleteResource(c *echo.Context, path string) error {
 	}
 
 	return c.JSON(204, "")
+}
+
+func CreateResource(c *echo.Context, path string, createParams interface{}) ([]byte, error) {
+	client, _ := GetAzureClient(c)
+
+	log.Printf("Create Instances request with params: %#v\n", createParams)
+	log.Printf("Create Instances path: %s\n", path)
+
+	by, err := json.Marshal(createParams)
+	var reader io.Reader
+	reader = bytes.NewBufferString(string(by))
+	request, err := http.NewRequest("PUT", path, reader)
+	if err != nil {
+		return nil, GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
+	}
+	request.Header.Add("Content-Type", config.MediaType)
+	request.Header.Add("Accept", config.MediaType)
+	request.Header.Add("User-Agent", config.UserAgent)
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
+	}
+	defer response.Body.Close()
+	b, _ := ioutil.ReadAll(response.Body)
+	if response.StatusCode >= 400 {
+		return nil, GenericException(fmt.Sprintf("Error has occurred while creating instance: %s", string(b)))
+	}
+	c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
+	return b, nil
 }

@@ -1,13 +1,8 @@
 package resources
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -30,13 +25,6 @@ type Instance struct {
 	Location          string                 `json:"location"`
 	Properties        map[string]interface{} `json:"properties,omitempty"` // used for create instance
 	// Plan              map[string]interface{} `json:"plan,omitempty"`       // used for create instance
-}
-
-var createParams struct {
-	Name     string `json:"name,omitempty"`
-	Location string `json:"location,omitempty"`
-	Size     string `json:"instance_type_uid,omitempty"`
-	Group    string `json:"group_name,omitempty"`
 }
 
 func SetupInstanceRoutes(e *echo.Echo) {
@@ -76,13 +64,19 @@ func deleteInstance(c *echo.Context) error {
 }
 
 // https://msdn.microsoft.com/en-us/library/azure/mt163591.aspx
-// check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
+// TODO: check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
 func createInstance(c *echo.Context) error {
+	var createParams struct {
+		Name     string `json:"name,omitempty"`
+		Location string `json:"location,omitempty"`
+		Size     string `json:"instance_type_uid,omitempty"`
+		Group    string `json:"group_name,omitempty"`
+	}
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
 	if err != nil {
 		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
-	client, _ := lib.GetAzureClient(c)
+
 	var networkInterfaces []map[string]interface{}
 	instanceParams := Instance{
 		Name:     createParams.Name,
@@ -129,32 +123,12 @@ func createInstance(c *echo.Context) error {
 	}
 
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, virtualMachinesPath, instanceParams.Name, "2015-05-01-preview")
-	log.Printf("Create Instances request with params: %#v\n", createParams)
-	log.Printf("Create Instances path: %s\n", path)
-
-	by, err := json.Marshal(instanceParams)
-	var reader io.Reader
-	reader = bytes.NewBufferString(string(by))
-	request, err := http.NewRequest("PUT", path, reader)
+	b, err := lib.CreateResource(c, path, instanceParams)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating instance: %v", err))
+		return err
 	}
-	request.Header.Add("Content-Type", config.MediaType)
-	request.Header.Add("Accept", config.MediaType)
-	request.Header.Add("User-Agent", config.UserAgent)
-	response, err := client.Do(request)
-	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating instance: %v", err))
-	}
-	defer response.Body.Close()
-	b, _ := ioutil.ReadAll(response.Body)
-	if response.StatusCode >= 400 {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating instance: %s", string(b)))
-	}
-
 	var m *Instance
 	json.Unmarshal(b, &m)
 	c.Response.Header().Add("Location", "/instances/"+m.Name+"?group_name="+createParams.Group)
-	c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
-	return c.JSON(response.StatusCode, "")
+	return c.JSON(201, "")
 }
