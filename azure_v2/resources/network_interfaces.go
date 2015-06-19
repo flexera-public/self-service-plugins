@@ -40,7 +40,8 @@ func listNetworkInterfaces(c *echo.Context) error {
 }
 
 func deleteNetworkInterface(c *echo.Context) error {
-	group_name := c.Param("group_name")
+	postParams := c.Request.Form
+	group_name := postParams.Get("group_name")
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, c.Param("id"), config.ApiVersion)
 	return lib.DeleteResource(c, path)
 }
@@ -84,10 +85,10 @@ func createNetworkInterface(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	var dat *IpAddress
+	var dat *NetworkInterface
 	if err := json.Unmarshal(b, &dat); err != nil {
 		log.Fatal("Unmarshaling failed:", err)
 	}
-
-	return c.JSON(201, dat)
+	c.Response.Header().Add("Location", "/network_interfaces/"+dat.Name+"?group_name="+createParams.Group)
+	return c.NoContent(201)
 }

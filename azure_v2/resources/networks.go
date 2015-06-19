@@ -1,13 +1,9 @@
 package resources
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -29,12 +25,14 @@ type Network struct {
 
 func SetupNetworkRoutes(e *echo.Echo) {
 	e.Get("/networks", listNetworks)
+	e.Post("/networks", createNetwork)
+	e.Delete("/networks/:id", deleteNetwork)
 
 	//nested routes
-	group := e.Group("/resource_groups/:group_name/networks")
-	group.Get("", listNetworks)
-	group.Post("", createNetwork)
-	group.Delete("/:id", deleteNetwork)
+	// group := e.Group("/resource_groups/:group_name/networks")
+	// group.Get("", listNetworks)
+	// group.Post("", createNetwork)
+	// group.Delete("/:id", deleteNetwork)
 }
 
 func listNetworks(c *echo.Context) error {
@@ -42,27 +40,33 @@ func listNetworks(c *echo.Context) error {
 }
 
 func deleteNetwork(c *echo.Context) error {
-	group_name := c.Param("group_name")
+	postParams := c.Request.Form
+	group_name := postParams.Get("group_name")
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("id"), config.ApiVersion)
 	return lib.DeleteResource(c, path)
 }
 
 func createNetwork(c *echo.Context) error {
-	postParams := c.Request.Form
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), networkPath, postParams.Get("name"), config.ApiVersion)
-	log.Printf("Create Network request with params: %s\n", postParams)
-	log.Printf("Create Network path: %s\n", path)
+	var createParams struct {
+		Name     string `json:"name,omitempty"`
+		Location string `json:"location,omitempty"`
+		Group    string `json:"group_name,omitempty"`
+	}
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
+	if err != nil {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+	}
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, networkPath, createParams.Name, config.ApiVersion)
 	var subnets []map[string]interface{}
 	data := Network{
-		Name:     postParams.Get("name"),
-		Location: postParams.Get("location"),
+		Name:     createParams.Name,
+		Location: createParams.Location,
 		Properties: map[string]interface{}{
 			"addressSpace": map[string]interface{}{
 				"addressPrefixes": []string{"10.0.0.0/16"},
 			},
 			"subnets": append(subnets, map[string]interface{}{
-				"name": postParams.Get("name"),
+				"name": createParams.Name,
 				"properties": map[string]interface{}{
 					"addressPrefix": "10.0.0.0/16",
 				},
@@ -70,26 +74,14 @@ func createNetwork(c *echo.Context) error {
 		},
 	}
 
-	by, err := json.Marshal(data)
-	var reader io.Reader
-	reader = bytes.NewBufferString(string(by))
-	request, err := http.NewRequest("PUT", path, reader)
+	b, err := lib.CreateResource(c, path, data)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating network: %v", err))
+		return err
 	}
-	request.Header.Add("Content-Type", config.MediaType)
-	request.Header.Add("Accept", config.MediaType)
-	request.Header.Add("User-Agent", config.UserAgent)
-	response, err := client.Do(request)
-	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating network: %v", err))
-	}
-	defer response.Body.Close()
-	b, _ := ioutil.ReadAll(response.Body)
 	var dat *Network
 	if err := json.Unmarshal(b, &dat); err != nil {
 		log.Fatal("Unmarshaling failed:", err)
 	}
-
-	return c.JSON(response.StatusCode, dat)
+	c.Response.Header().Add("Location", "/networks/"+dat.Name+"?group_name="+createParams.Group)
+	return c.NoContent(201)
 }

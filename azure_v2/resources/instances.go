@@ -130,5 +130,5 @@ func createInstance(c *echo.Context) error {
 	var m *Instance
 	json.Unmarshal(b, &m)
 	c.Response.Header().Add("Location", "/instances/"+m.Name+"?group_name="+createParams.Group)
-	return c.JSON(201, "")
+	return c.NoContent(201)
 }

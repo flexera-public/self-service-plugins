@@ -186,8 +186,13 @@ func CreateResource(c *echo.Context, path string, createParams interface{}) ([]b
 	defer response.Body.Close()
 	b, _ := ioutil.ReadAll(response.Body)
 	if response.StatusCode >= 400 {
-		return nil, GenericException(fmt.Sprintf("Error has occurred while creating instance: %s", string(b)))
+		return nil, GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
 	}
-	c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
+	if response.Header.Get("azure-asyncoperation") != "" {
+		c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
+	}
+	if response.StatusCode == 202 {
+		return nil, nil
+	}
 	return b, nil
 }

@@ -1,13 +1,9 @@
 package resources
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -29,12 +25,14 @@ type IpAddress struct {
 
 func SetupIpAddressesRoutes(e *echo.Echo) {
 	e.Get("/ip_addresses", listIpAddresses)
+	e.Post("/ip_addresses", createIpAddress)
+	e.Delete("/ip_addresses/:id", deleteIpAddress)
 
 	//nested routes
-	group := e.Group("/resource_groups/:group_name/ip_addresses")
-	group.Get("", listIpAddresses)
-	group.Post("", createIpAddress)
-	group.Delete("/:id", deleteIpAddress)
+	//group := e.Group("/resource_groups/:group_name/ip_addresses")
+	//group.Get("", listIpAddresses)
+	//group.Post("", createIpAddress)
+	//group.Delete("/:id", deleteIpAddress)
 }
 
 func listIpAddresses(c *echo.Context) error {
@@ -42,19 +40,25 @@ func listIpAddresses(c *echo.Context) error {
 }
 
 func deleteIpAddress(c *echo.Context) error {
-	group_name := c.Param("group_name")
+	postParams := c.Request.Form
+	group_name := postParams.Get("group_name")
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, IpAddressPath, c.Param("id"), config.ApiVersion)
 	return lib.DeleteResource(c, path)
 }
 
 func createIpAddress(c *echo.Context) error {
-	postParams := c.Request.Form
-	client, _ := lib.GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, c.Param("group_name"), IpAddressPath, postParams.Get("name"), config.ApiVersion)
-	log.Printf("Create IpAddress request with params: %s\n", postParams)
-	log.Printf("Create IpAddress path: %s\n", path)
+	var createParams struct {
+		Name     string `json:"name,omitempty"`
+		Location string `json:"location,omitempty"`
+		Group    string `json:"group_name,omitempty"`
+	}
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
+	if err != nil {
+		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+	}
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, IpAddressPath, createParams.Name, config.ApiVersion)
 	data := IpAddress{
-		Location: postParams.Get("location"),
+		Location: createParams.Location,
 		Properties: map[string]interface{}{
 			"publicIPAllocationMethod": "Dynamic",
 			//"dnsSettings":   map[string]interface{}{
@@ -63,31 +67,14 @@ func createIpAddress(c *echo.Context) error {
 		},
 	}
 
-	by, err := json.Marshal(data)
-	var reader io.Reader
-	reader = bytes.NewBufferString(string(by))
-	request, err := http.NewRequest("PUT", path, reader)
+	b, err := lib.CreateResource(c, path, data)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating ip address: %v", err))
+		return err
 	}
-	request.Header.Add("Content-Type", config.MediaType)
-	request.Header.Add("Accept", config.MediaType)
-	request.Header.Add("User-Agent", config.UserAgent)
-	response, err := client.Do(request)
-	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while creating ip address: %v", err))
-	}
-
-	defer response.Body.Close()
-	b, _ := ioutil.ReadAll(response.Body)
-	if response.StatusCode >= 400 {
-		return lib.GenericException(fmt.Sprintf("IpAddress creation failed: %s", string(b)))
-	}
-
 	var dat *IpAddress
 	if err := json.Unmarshal(b, &dat); err != nil {
 		log.Fatal("Unmarshaling failed:", err)
 	}
-
-	return c.JSON(response.StatusCode, dat)
+	c.Response.Header().Add("Location", "/ip_addresses/"+dat.Name+"?group_name="+createParams.Group)
+	return c.NoContent(201)
 }
