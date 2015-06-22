@@ -21,68 +21,42 @@ const (
 	roleContributorId = "b24988ac-6180-42a0-ab88-20f7382dd24c"
 )
 
+type ServicePrincipal struct {
+	// Add more fields if needed
+	ObjectId string `json:"objectId"`
+}
+
 func SetupAuthRoutes(e *echo.Echo) {
 	e.Post("/application/register", registerApp)
 }
 
 // Get App-Only Access Token for Azure AD Graph API
 func registerApp(c *echo.Context) error {
-	var registrationCreds struct {
-		TenantId     string `json:"tenant"`
-		ClientId     string `json:"client_id"`
-		ClientSecret string `json:"client_secret"`
-		Subscription string `json:"subscription"`
-	}
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&registrationCreds)
+	creds := lib.Credentials{GrantType: "client_credentials", Resource: "https://graph.windows.net/"}
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&creds)
 	if err != nil {
 		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
-	authResponse, err := lib.RequestToken(registrationCreds.TenantId, "client_credentials", "https://graph.windows.net/", registrationCreds.ClientId, registrationCreds.ClientSecret, "")
+	authResponse, err := creds.RequestToken()
 	if err != nil {
 		return err
 	}
 	t := &oauth.Transport{Token: &oauth.Token{AccessToken: authResponse.AccessToken}}
 	graphClient := t.Client()
-	principalId, err1 := getServicePrincipal(graphClient, registrationCreds.TenantId, registrationCreds.ClientId)
-	if err1 != nil {
-		return err1
+	principalId, err := getServicePrincipal(graphClient, &creds)
+	if err != nil {
+		return err
 	}
-	return assignRoleToApp(c, principalId, registrationCreds.Subscription)
+	return assignRoleToApp(c, principalId, creds.Subscription)
 }
 
-// {"odata.metadata":"https://graph.windows.net/09b8fec1-4b8d-48dd-8afa-5c1a775ea0f2/$metadata#directoryObjects/Microsoft.DirectoryServices.ServicePrincipal",
-//  "value":[{
-// 		"odata.type":"Microsoft.DirectoryServices.ServicePrincipal",
-// 		"objectType":"ServicePrincipal",
-// 		"objectId":"7f06b355-4136-4d8b-a3c8-7028f59869ae",
-// 		"deletionTimestamp":null,
-// 		"accountEnabled":true,
-// 		"appDisplayName":"RightScale",
-// 		"appId":"57e3974e-7bb8-47a3-8b28-1f4026b6ac65",
-// 		"appOwnerTenantId":"b6bf44a6-1833-4f1e-aff2-52c7a6834b63",
-// 		"appRoleAssignmentRequired":false,
-// 		"appRoles":[],
-// 		"displayName":"RightScale",
-// 		"errorUrl":null,
-//	 	"homepage":"https://my.rightscale.com",
-// 		"keyCredentials":[],
-// 		"logoutUrl":null,
-// 		"oauth2Permissions":[{"adminConsentDescription":"Allow the application to access RightScale.com on behalf of the signed-in user.","adminConsentDisplayName":"Access RightScale.com","id":"677c5e7a-82f1-4889-8ff8-21b61569c8c0","isEnabled":true,"type":"User","userConsentDescription":"Allow the application to access RightScale.com on your behalf.","userConsentDisplayName":"Access RightScale.com","value":"user_impersonation"}],
-// 		"passwordCredentials":[],
-// 		"preferredTokenSigningKeyThumbprint":null,
-// 		"publisherName":"RightScale Test",
-// 		"replyUrls":["https://ad.test.rightscale.com"],
-// 		"samlMetadataUrl":null,
-// 		"servicePrincipalNames":["https://test.rightscale.com","57e3974e-7bb8-47a3-8b28-1f4026b6ac65"],
-//  "tags":["WindowsAzureActiveDirectoryIntegratedApp"]}]}
-func getServicePrincipal(client *http.Client, tenantId string, cliectId string) (string, error) {
-	path := fmt.Sprintf("%s/%s/servicePrincipals?api-version=1.5", config.GraphUrl, tenantId)
-	path = path + "&$filter=appId%20eq%20'" + cliectId + "'"
+func getServicePrincipal(client *http.Client, creds *lib.Credentials) (string, error) {
+	path := fmt.Sprintf("%s/%s/servicePrincipals?api-version=1.5", config.GraphUrl, creds.TenantId)
+	path = path + "&$filter=appId%20eq%20'" + creds.ClientId + "'"
 	log.Printf("Get Service Principals request: %s\n", path)
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
-
 		return "", lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 	}
 
@@ -90,13 +64,13 @@ func getServicePrincipal(client *http.Client, tenantId string, cliectId string) 
 	if resp.StatusCode >= 400 {
 		return "", lib.GenericException(fmt.Sprintf("Get Service Principals failed: %s", string(b)))
 	}
-	var response map[string]interface{}
+	var response map[string][]*ServicePrincipal
 
 	if err = json.Unmarshal(b, &response); err != nil {
 		return "", lib.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
 	}
-	principal := response["value"].([]interface{})[0].(map[string]interface{})
-	return principal["objectId"].(string), nil
+	principal := response["value"][0]
+	return principal.ObjectId, nil
 }
 
 //Assign RBAC role to Application

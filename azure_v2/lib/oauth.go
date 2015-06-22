@@ -14,6 +14,16 @@ const (
 	tokenEndpoint = "oauth2/token"
 )
 
+type Credentials struct {
+	TenantId     string `json:"tenant"`
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Subscription string `json:"subscription"`
+	GrantType    string
+	Resource     string
+	RefreshToken string
+}
+
 type authResponse struct {
 	Type         string `json:"token_type"`
 	ExpiresIn    string `json:"expires_in"` // seconds
@@ -28,20 +38,20 @@ type authResponse struct {
 }
 
 // Build request to redeem authorization code and get access token
-func RequestToken(tenantId string, grantType string, resource string, clientId string, clientSecret string, refreshToken string) (*authResponse, error) {
+func (c *Credentials) RequestToken() (*authResponse, error) {
 	data := url.Values{}
-	data.Set("client_id", clientId)
-	data.Set("client_secret", clientSecret)
-	data.Set("grant_type", grantType)
-	message := grantType
-	if resource != "" {
-		data.Set("resource", resource)
-		message = fmt.Sprintf("%s for resource %s", grantType, resource)
+	data.Set("client_id", c.ClientId)
+	data.Set("client_secret", c.ClientSecret)
+	data.Set("grant_type", c.GrantType)
+	message := c.GrantType
+	if c.Resource != "" {
+		data.Set("resource", c.Resource)
+		message = fmt.Sprintf("%s for resource %s", c.GrantType, c.Resource)
 	}
-	if refreshToken != "" {
-		data.Set("refresh_token", refreshToken)
+	if c.RefreshToken != "" {
+		data.Set("refresh_token", c.RefreshToken)
 	}
-	path := fmt.Sprintf("%s/%s/%s", config.AuthHost, tenantId, tokenEndpoint)
+	path := fmt.Sprintf("%s/%s/%s", config.AuthHost, c.TenantId, tokenEndpoint)
 	fmt.Printf("Requesting %s: %s\n", message, path)
 	resp, err := http.PostForm(path, data)
 	defer resp.Body.Close()

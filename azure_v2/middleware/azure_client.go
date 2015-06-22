@@ -62,45 +62,45 @@ func getAccessToken(c *echo.Context) (string, error) {
 }
 
 func refreshAccessToken(c *echo.Context) (string, error) {
-	tenantId, err := lib.GetCookie(c, "TenantId")
+	creds := new(lib.Credentials)
+	var err error
+	creds.TenantId, err = lib.GetCookie(c, "TenantId")
 	if err != nil {
 		if *config.Env == "development" {
-			tenantId = *config.TenantIdCred
+			creds.TenantId = *config.TenantIdCred
 		}
 	}
-	clientId, err := lib.GetCookie(c, "ClientId")
+	creds.ClientId, err = lib.GetCookie(c, "ClientId")
 	if err != nil {
 		if *config.Env == "development" {
-			clientId = *config.ClientIdCred
+			creds.ClientId = *config.ClientIdCred
 		}
 	}
-	clientSecret, err := lib.GetCookie(c, "ClientSecret")
+	creds.ClientSecret, err = lib.GetCookie(c, "ClientSecret")
 	if err != nil {
 		if *config.Env == "development" {
-			clientSecret = *config.ClientSecretCred
+			creds.ClientSecret = *config.ClientSecretCred
 		}
 	}
-	refreshToken, err := lib.GetCookie(c, "RefreshToken")
+	creds.RefreshToken, err = lib.GetCookie(c, "RefreshToken")
 	if err != nil {
 		if *config.Env == "development" {
-			refreshToken = *config.RefreshTokenCred
+			creds.RefreshToken = *config.RefreshTokenCred
 		}
 	}
 
-	if tenantId == "" || clientId == "" || clientSecret == "" || refreshToken == "" {
+	if creds.TenantId == "" || creds.ClientId == "" || creds.ClientSecret == "" || creds.RefreshToken == "" {
 		return "", lib.GenericException("The credentials are missing in the cookie. Please set 'AccessToken' or combination of 'TenantId', 'ClientId', 'ClientSecret', 'RefreshToken'.")
 	}
-	var grantType string
-	var resource string
 	// use client specific access token only while app registration
 	if c.Request.RequestURI == "/application/register" {
-		grantType = "refresh_token"
-		resource = ""
+		creds.GrantType = "refresh_token"
+		creds.Resource = ""
 	} else {
-		grantType = "client_credentials"
-		resource = "https://management.core.windows.net/"
+		creds.GrantType = "client_credentials"
+		creds.Resource = "https://management.core.windows.net/"
 	}
-	authResponse, err := lib.RequestToken(tenantId, grantType, resource, clientId, clientSecret, *config.RefreshTokenCred)
+	authResponse, err := creds.RequestToken()
 	if err != nil {
 		return "", err
 	}
