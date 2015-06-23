@@ -24,7 +24,7 @@ type Subscription struct {
 }
 
 func SetupSubscriptionRoutes(e *echo.Echo) {
-	//e.Get("/subscriptions", listSubscriptions)
+	// e.Get("/subscriptions", listSubscriptions)
 	// get a current subscription
 	e.Get("/subscription", GetSubscription)
 }

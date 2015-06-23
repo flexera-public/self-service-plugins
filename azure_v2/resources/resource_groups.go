@@ -25,7 +25,7 @@ func SetupGroupsRoutes(e *echo.Echo) {
 
 func listResourceGroups(c *echo.Context) error {
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-	groups, err := lib.GetResources(c, path, "/resource_group/%s")
+	groups, err := lib.GetResources(c, path)
 	if err != nil {
 		return err
 	}

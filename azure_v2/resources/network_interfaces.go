@@ -3,7 +3,6 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -14,17 +13,37 @@ const (
 	NetworkInterfacePath = "providers/Microsoft.Network/networkInterfaces"
 )
 
-type NetworkInterface struct {
-	Id         string      `json:"id,omitempty"`
-	Name       string      `json:"name,omitempty"`
-	Location   string      `json:"location"`
-	Tags       interface{} `json:"tags,omitempty"`
-	Etag       string      `json:"etag,omitempty"`
-	Properties interface{} `json:"properties,omitempty"`
-}
+type (
+	NetworkInterfaceResponseParams struct {
+		Id         string      `json:"id,omitempty"`
+		Name       string      `json:"name,omitempty"`
+		Location   string      `json:"location"`
+		Tags       interface{} `json:"tags,omitempty"`
+		Etag       string      `json:"etag,omitempty"`
+		Properties interface{} `json:"properties,omitempty"`
+		Href       string      `json:"href,omitempty"`
+	}
+
+	NetworkInterfaceRequestParams struct {
+		Location   string                 `json:"location"`
+		Properties map[string]interface{} `json:"properties,omitempty"`
+	}
+	NetworkInterfaceCreateParams struct {
+		Name     string `json:"name,omitempty"`
+		Location string `json:"location,omitempty"`
+		SubnetId string `json:"subnet_id,omitempty"`
+		Group    string `json:"group_name,omitempty"`
+	}
+	NetworkInterface struct {
+		CreateParams   NetworkInterfaceCreateParams
+		RequestParams  NetworkInterfaceRequestParams
+		ResponseParams NetworkInterfaceResponseParams
+	}
+)
 
 func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 	e.Get("/network_interfaces", listNetworkInterfaces)
+	e.Get("/network_interfaces/:id", listOneNetworkInterface)
 	e.Post("/network_interfaces", createNetworkInterface)
 	e.Delete("/network_interfaces/:id", deleteNetworkInterface)
 
@@ -36,59 +55,92 @@ func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 }
 
 func listNetworkInterfaces(c *echo.Context) error {
-	return lib.ListResource(c, NetworkInterfacePath, "network_interfaces")
+	return lib.List(c, new(NetworkInterface))
 }
 
-func deleteNetworkInterface(c *echo.Context) error {
-	postParams := c.Request.Form
-	group_name := postParams.Get("group_name")
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, NetworkInterfacePath, c.Param("id"), config.ApiVersion)
-	return lib.DeleteResource(c, path)
+func listOneNetworkInterface(c *echo.Context) error {
+	params := c.Request.Form
+	network_interface := NetworkInterface{
+		CreateParams: NetworkInterfaceCreateParams{
+			Name:  c.Param("id"),
+			Group: params.Get("group_name"),
+		},
+	}
+	return lib.Get(c, &network_interface)
 }
 
 func createNetworkInterface(c *echo.Context) error {
-	var createParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
-		SubnetId string `json:"subnet_id,omitempty"`
-		Group    string `json:"group_name,omitempty"`
-	}
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
-	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
-	}
-	var configs []map[string]interface{}
-	data := NetworkInterface{
-		Location: createParams.Location,
-		Properties: map[string]interface{}{
-			"ipConfigurations": append(configs, map[string]interface{}{
-				"name": createParams.Name + "_ip",
-				"properties": map[string]interface{}{
-					"subnet": map[string]interface{}{
-						"id": createParams.SubnetId,
-					},
-					//"privateIPAddress": "10.0.0.8",
-					"privateIPAllocationMethod": "Dynamic",
-					// "publicIPAddress": map[string]interface{}{
-					// 	"id": ""
-					// }
-				},
-			}),
-			// "dnsSettings": map[string]interface{}{
-			// 	"dnsServers": postParams.Get("dns_servers")
-			// }
+	network_interface := new(NetworkInterface)
+	return lib.Create(c, network_interface)
+}
+
+func deleteNetworkInterface(c *echo.Context) error {
+	params := c.Request.Form
+	network_interface := NetworkInterface{
+		CreateParams: NetworkInterfaceCreateParams{
+			Name:  c.Param("id"),
+			Group: params.Get("group_name"),
 		},
 	}
+	return lib.Delete(c, &network_interface)
+}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Group, NetworkInterfacePath, createParams.Name, config.ApiVersion)
-	b, err := lib.CreateResource(c, path, data)
+func (ni *NetworkInterface) GetRequestParams(c *echo.Context) (interface{}, error) {
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&ni.CreateParams)
 	if err != nil {
-		return err
+		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
-	var dat *NetworkInterface
-	if err := json.Unmarshal(b, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+
+	var configs []map[string]interface{}
+	ni.RequestParams.Location = ni.CreateParams.Location
+	ni.RequestParams.Properties = map[string]interface{}{
+		"ipConfigurations": append(configs, map[string]interface{}{
+			"name": ni.CreateParams.Name + "_ip",
+			"properties": map[string]interface{}{
+				"subnet": map[string]interface{}{
+					"id": ni.CreateParams.SubnetId,
+				},
+				//"privateIPAddress": "10.0.0.8",
+				"privateIPAllocationMethod": "Dynamic",
+				// "publicIPAddress": map[string]interface{}{
+				// 	"id": ""
+				// }
+			},
+		}),
+		// "dnsSettings": map[string]interface{}{
+		// 	"dnsServers": postParams.Get("dns_servers")
+		// }
 	}
-	c.Response.Header().Add("Location", "/network_interfaces/"+dat.Name+"?group_name="+createParams.Group)
-	return c.NoContent(201)
+
+	return ni.RequestParams, nil
+}
+
+func (ni *NetworkInterface) GetResponseParams() interface{} {
+	return ni.ResponseParams
+}
+
+func (ni *NetworkInterface) GetPath() string {
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, ni.CreateParams.Group, NetworkInterfacePath, ni.CreateParams.Name, config.ApiVersion)
+}
+
+func (ni *NetworkInterface) GetCollectionPath(groupName string) string {
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, NetworkInterfacePath, config.ApiVersion)
+}
+
+func (ni *NetworkInterface) HandleResponse(c *echo.Context, body []byte, actionName string) {
+	json.Unmarshal(body, &ni.ResponseParams)
+	href := ni.GetHref(ni.CreateParams.Group, ni.ResponseParams.Name)
+	if actionName == "create" {
+		c.Response.Header().Add("Location", href)
+	} else if actionName == "get" {
+		ni.ResponseParams.Href = href
+	}
+}
+
+func (ni *NetworkInterface) GetContentType() string {
+	return "vnd.rightscale.network_interface+json"
+}
+
+func (ni *NetworkInterface) GetHref(groupName string, interfaceName string) string {
+	return fmt.Sprintf("/network_interfaces/%s?group_name=%s", groupName, interfaceName)
 }

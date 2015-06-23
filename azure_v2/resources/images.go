@@ -40,6 +40,7 @@ func listImages(c *echo.Context) error {
 		}
 	}
 
+	//TODO: add hrefs or use AzureResource interface
 	return c.JSON(200, result)
 }
 
@@ -53,7 +54,7 @@ func listLocations(c *echo.Context) error {
 
 func GetLocations(c *echo.Context) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/locations?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-	locations, err := lib.GetResources(c, path, "/locations/%s")
+	locations, err := lib.GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func listPublishers(c *echo.Context) error {
 
 func GetPublishers(c *echo.Context, locationName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, "2015-05-01-preview")
-	publishers, err := lib.GetResources(c, path, "/publishers/%s?location="+locationName)
+	publishers, err := lib.GetResources(c, path)
 	if err != nil {
 		fmt.Printf("SKIP FOR %s because of error: %s\n", locationName, err)
 		emptyArray := make([]map[string]interface{}, 0)
@@ -113,7 +114,7 @@ func listOffers(c *echo.Context) error {
 
 func GetOffers(c *echo.Context, locationName string, publisherName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, publisherName, "2015-05-01-preview")
-	offers, err := lib.GetResources(c, path, "/offers/%s?location="+locationName+"&publisher="+publisherName)
+	offers, err := lib.GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func listSkus(c *echo.Context) error {
 
 func GetSkus(c *echo.Context, locationName string, publisherName string, offerName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, publisherName, offerName, "2015-05-01-preview")
-	skus, err := lib.GetResources(c, path, "/offers/%s?location="+locationName+"&publisher="+publisherName+"&offer="+offerName)
+	skus, err := lib.GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func listVersions(c *echo.Context) error {
 
 func GetVersions(c *echo.Context, locationName string, publisherName string, offerName string, skuName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, publisherName, offerName, skuName, "2015-05-01-preview")
-	versions, err := lib.GetResources(c, path, "/offers/%s?location="+locationName+"&publisher="+publisherName+"&offer="+offerName+"&sku="+skuName)
+	versions, err := lib.GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
