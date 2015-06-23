@@ -127,5 +127,5 @@ func (ip *IpAddress) GetContentType() string {
 }
 
 func (ip *IpAddress) GetHref(groupName string, ipAddressName string) string {
-	return fmt.Sprintf("/ip_addresses/%s?group_name=%s", groupName, ipAddressName)
+	return fmt.Sprintf("/ip_addresses/%s?group_name=%s", ipAddressName, groupName)
 }

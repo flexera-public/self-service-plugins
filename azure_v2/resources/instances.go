@@ -163,5 +163,5 @@ func (i *Instance) GetContentType() string {
 }
 
 func (i *Instance) GetHref(groupName string, instanceName string) string {
-	return fmt.Sprintf("/instances/%s?group_name=%s", groupName, instanceName)
+	return fmt.Sprintf("/instances/%s?group_name=%s", instanceName, groupName)
 }

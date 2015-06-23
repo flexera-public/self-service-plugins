@@ -121,5 +121,5 @@ func (s *StorageAccount) GetContentType() string {
 }
 
 func (s *StorageAccount) GetHref(groupName string, networkName string) string {
-	return fmt.Sprintf("/storage_accounts/%s?group_name=%s", groupName, networkName)
+	return fmt.Sprintf("/storage_accounts/%s?group_name=%s", networkName, groupName)
 }

@@ -136,5 +136,5 @@ func (n *Network) GetContentType() string {
 }
 
 func (n *Network) GetHref(groupName string, networkName string) string {
-	return fmt.Sprintf("/networks/%s?group_name=%s", groupName, networkName)
+	return fmt.Sprintf("/networks/%s?group_name=%s", networkName, groupName)
 }

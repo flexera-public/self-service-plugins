@@ -3,59 +3,106 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
-type ResourceGroup struct {
-	Id         string      `json:"id,omitempty"`
-	Name       string      `json:"name,omitempty,omitempty"`
-	Location   string      `json:"location,omitempty"`
-	Properties interface{} `json:"properties,omitempty"`
-}
-
-func SetupGroupsRoutes(e *echo.Echo) {
-	e.Get("/resource_groups", listResourceGroups)
-	e.Post("/resource_groups", createResourceGroup)
-	//TODO: add list one action
-}
-
-func listResourceGroups(c *echo.Context) error {
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-	groups, err := lib.GetResources(c, path)
-	if err != nil {
-		return err
+type (
+	ResourceGroupResponseParams struct {
+		Id         string      `json:"id,omitempty"`
+		Name       string      `json:"name,omitempty,omitempty"`
+		Location   string      `json:"location,omitempty"`
+		Properties interface{} `json:"properties,omitempty"`
+		Href       string      `json:"href,omitempty"`
 	}
-	return c.JSON(200, groups)
-}
-func createResourceGroup(c *echo.Context) error {
-	var createParams struct {
+
+	ResourceGroupRequestParams struct {
+		Location string `json:"location"`
+	}
+	ResourceGroupCreateParams struct {
 		Name     string `json:"name,omitempty"`
 		Location string `json:"location,omitempty"`
 	}
+	ResourceGroup struct {
+		CreateParams   ResourceGroupCreateParams
+		RequestParams  ResourceGroupRequestParams
+		ResponseParams ResourceGroupResponseParams
+	}
+)
 
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&createParams)
+func SetupGroupsRoutes(e *echo.Echo) {
+	e.Get("/resource_groups", listResourceGroups)
+	e.Get("/resource_groups/:id", listOneResourceGroup)
+	e.Post("/resource_groups", createResourceGroup)
+	e.Delete("/resource_groups/:id", deleteResourceGroup)
+}
+
+func listResourceGroups(c *echo.Context) error {
+	return lib.List(c, new(ResourceGroup))
+}
+
+func listOneResourceGroup(c *echo.Context) error {
+	group := ResourceGroup{
+		CreateParams: ResourceGroupCreateParams{
+			Name: c.Param("id"),
+		},
+	}
+	return lib.Get(c, &group)
+}
+
+func createResourceGroup(c *echo.Context) error {
+	group := new(ResourceGroup)
+	return lib.Create(c, group)
+}
+
+func deleteResourceGroup(c *echo.Context) error {
+	group := ResourceGroup{
+		CreateParams: ResourceGroupCreateParams{
+			Name: c.Param("id"),
+		},
+	}
+	return lib.Delete(c, &group)
+}
+
+func (rg *ResourceGroup) GetRequestParams(c *echo.Context) (interface{}, error) {
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&rg.CreateParams)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
-	data := ResourceGroup{
-		Location: createParams.Location,
-	}
+	rg.RequestParams.Location = rg.CreateParams.Location
 
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, createParams.Name, "2015-01-01")
-	b, err := lib.CreateResource(c, path, data)
-	if err != nil {
-		return err
-	}
-	var dat *ResourceGroup
-	if err := json.Unmarshal(b, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
-	}
+	return rg.RequestParams, nil
+}
 
-	c.Response.Header().Add("Location", "/resource_groups/"+dat.Name)
-	return c.NoContent(201)
+func (rg *ResourceGroup) GetResponseParams() interface{} {
+	return rg.ResponseParams
+}
+
+func (rg *ResourceGroup) GetPath() string {
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, rg.CreateParams.Name, "2015-01-01")
+}
+
+func (rg *ResourceGroup) GetCollectionPath(_ string) string {
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
+}
+
+func (rg *ResourceGroup) HandleResponse(c *echo.Context, body []byte, actionName string) {
+	json.Unmarshal(body, &rg.ResponseParams)
+	href := rg.GetHref(rg.ResponseParams.Name, "")
+	if actionName == "create" {
+		c.Response.Header().Add("Location", href)
+	} else if actionName == "get" {
+		rg.ResponseParams.Href = href
+	}
+}
+
+func (rg *ResourceGroup) GetContentType() string {
+	return "vnd.rightscale.resource_group+json"
+}
+
+func (rg *ResourceGroup) GetHref(groupName string, _ string) string {
+	return fmt.Sprintf("/resource_groups/%s", groupName)
 }

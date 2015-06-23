@@ -1,16 +1,13 @@
 package lib
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/rightscale/self-service-plugins/azure_v2/config"
 )
 
 // Retrieve client initialized by middleware, send error response if not found
@@ -54,61 +51,4 @@ func GetResource(c *echo.Context, path string, href string) (map[string]interfac
 	resource["href"] = fmt.Sprintf(href, c.Param("id"))
 
 	return resource, nil
-}
-
-func DeleteResource(c *echo.Context, path string) error {
-	client, _ := GetAzureClient(c)
-	log.Printf("Delete request: %s\n", path)
-
-	req, err := http.NewRequest("DELETE", path, nil)
-	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
-	}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
-	}
-
-	if resp.StatusCode >= 400 {
-		b, _ := ioutil.ReadAll(resp.Body)
-		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
-	}
-
-	return c.JSON(204, "")
-}
-
-func CreateResource(c *echo.Context, path string, createParams interface{}) ([]byte, error) {
-	client, _ := GetAzureClient(c)
-
-	log.Printf("Create Resource request with params: %#v\n", createParams)
-	log.Printf("Create Resource path: %s\n", path)
-
-	by, err := json.Marshal(createParams)
-	var reader io.Reader
-	reader = bytes.NewBufferString(string(by))
-	request, err := http.NewRequest("PUT", path, reader)
-	if err != nil {
-		return nil, GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
-	}
-	request.Header.Add("Content-Type", config.MediaType)
-	request.Header.Add("Accept", config.MediaType)
-	request.Header.Add("User-Agent", config.UserAgent)
-	response, err := client.Do(request)
-	if err != nil {
-		return nil, GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
-	}
-	defer response.Body.Close()
-	b, _ := ioutil.ReadAll(response.Body)
-	if response.StatusCode >= 400 {
-		return nil, GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
-	}
-	if response.Header.Get("azure-asyncoperation") != "" {
-		c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
-	}
-	if response.StatusCode == 202 {
-		return nil, nil
-	}
-	return b, nil
 }

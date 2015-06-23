@@ -142,5 +142,5 @@ func (ni *NetworkInterface) GetContentType() string {
 }
 
 func (ni *NetworkInterface) GetHref(groupName string, interfaceName string) string {
-	return fmt.Sprintf("/network_interfaces/%s?group_name=%s", groupName, interfaceName)
+	return fmt.Sprintf("/network_interfa/%s?group_name=%s", interfaceName, groupName)
 }
