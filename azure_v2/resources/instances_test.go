@@ -59,7 +59,7 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns a resource specific content type in the header", func() {
-			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instances+json"))
+			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instance+json;type=collection"))
 		})
 
 		It("lists all instances inside one resource group", func() {
@@ -98,7 +98,7 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns a resource specific content type in the header", func() {
-			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instances+json"))
+			Ω(response.Headers["Content-Type"][0]).Should(Equal("vnd.rightscale.instance+json;type=collection"))
 		})
 
 		It("lists all instances inside one resource group", func() {

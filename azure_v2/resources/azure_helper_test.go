@@ -115,6 +115,7 @@ func HttpServer() *echo.Echo {
 	SetupIpAddressesRoutes(e)
 	SetupAuthRoutes(e)
 	SetupNetworkInterfacesRoutes(e)
+	SetupOperationRoutes(e)
 
 	return e
 }
