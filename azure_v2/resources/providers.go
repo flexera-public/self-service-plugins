@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 type Provider struct {
@@ -36,7 +36,7 @@ func listProviders(c *echo.Context) error {
 	}
 	var dat map[string][]*Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
-		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 	return c.JSON(200, dat["value"])
 }
@@ -49,7 +49,7 @@ func listOneProvider(c *echo.Context) error {
 	}
 	var dat *Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
-		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 	return c.JSON(200, dat)
 }
@@ -66,18 +66,18 @@ func registerProvider(c *echo.Context) error {
 	}
 	if dat.RegistrationState == "NotRegistered" {
 		log.Printf("Register required: \n")
-		client, _ := lib.GetAzureClient(c)
+		client, _ := GetAzureClient(c)
 		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
 		log.Printf("Registering Provider %s: %s\n", provider_name, path)
 		resp, err := client.PostForm(path, nil)
 		if err != nil {
-			return lib.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+			return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
 		}
 		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 		var dat *Provider
 		if err := json.Unmarshal(body, &dat); err != nil {
-			return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 		}
 		return c.JSON(resp.StatusCode, dat)
 	}
@@ -89,12 +89,12 @@ func registerProvider(c *echo.Context) error {
 }
 
 func getProviders(c *echo.Context, provider_name string) ([]byte, error) {
-	client, _ := lib.GetAzureClient(c)
+	client, _ := GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
 	log.Printf("Get Providers request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while getting provider: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting provider: %v", err))
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)

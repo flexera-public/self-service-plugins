@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -30,36 +30,36 @@ func SetupSubscriptionRoutes(e *echo.Echo) {
 }
 
 func listSubscriptions(c *echo.Context) error {
-	client, _ := lib.GetAzureClient(c)
+	client, _ := GetAzureClient(c)
 	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, config.ApiVersion)
 	log.Printf("Get Subscriptions request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while getting subscriptions: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while getting subscriptions: %v", err))
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	var dat map[string][]*Subscription
 	if err := json.Unmarshal(body, &dat); err != nil {
-		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 
 	return c.JSON(resp.StatusCode, dat["value"])
 }
 
 func GetSubscription(c *echo.Context) error {
-	client, _ := lib.GetAzureClient(c)
+	client, _ := GetAzureClient(c)
 	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, *config.SubscriptionIdCred, "2015-01-01")
 	log.Printf("Get Subscription request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while getting subscription: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while getting subscription: %v", err))
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	var dat *Subscription
 	if err := json.Unmarshal(body, &dat); err != nil {
-		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 
 	return c.JSON(resp.StatusCode, dat)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 type (
@@ -54,7 +54,7 @@ func listSubnets(c *echo.Context) error {
 	group_name := c.Param("group_name")
 	if group_name != "" {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), config.ApiVersion)
-		subnets, err := lib.GetResources(c, path)
+		subnets, err := GetResources(c, path)
 		if err != nil {
 			return err
 		}
@@ -65,13 +65,13 @@ func listSubnets(c *echo.Context) error {
 		return c.JSON(200, subnets)
 	} else {
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-		resp, _ := lib.GetResources(c, path)
+		resp, _ := GetResources(c, path)
 		//TODO: add error handling
 		var subnets []*SubnetResponseParams
 		for _, resource_group := range resp {
 			groupName := resource_group["name"].(string)
 			path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
-			networks, _ := lib.GetResources(c, path)
+			networks, _ := GetResources(c, path)
 			//TODO: add error handling
 			for _, network := range networks {
 				network := network //.(map[string]interface{})
@@ -92,7 +92,7 @@ func listSubnets(c *echo.Context) error {
 
 func createSubnet(c *echo.Context) error {
 	subnet := new(Subnet)
-	return lib.Create(c, subnet)
+	return Create(c, subnet)
 }
 
 func deleteSubnet(c *echo.Context) error {
@@ -104,13 +104,13 @@ func deleteSubnet(c *echo.Context) error {
 			NetworkId: params.Get("network_id"),
 		},
 	}
-	return lib.Delete(c, &subnet)
+	return Delete(c, &subnet)
 }
 
 func (s *Subnet) GetRequestParams(c *echo.Context) (interface{}, error) {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&s.CreateParams)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
 	s.RequestParams.Properties = map[string]interface{}{
@@ -154,12 +154,12 @@ func (s *Subnet) GetHref(groupName string, subnetName string) string {
 
 //TODO: generify ListSubnets and getSubnets
 func getSubnets(c *echo.Context, group_name string, network_name string) ([]*SubnetResponseParams, error) {
-	client, _ := lib.GetAzureClient(c)
+	client, _ := GetAzureClient(c)
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, network_name, config.ApiVersion)
 	log.Printf("Get Subents request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while getting subnet: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting subnet: %v", err))
 	}
 	defer resp.Body.Close()
 	var m map[string][]*SubnetResponseParams

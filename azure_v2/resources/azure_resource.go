@@ -1,4 +1,4 @@
-package lib
+package resources
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 type AzureResource interface {
@@ -33,20 +34,20 @@ func Create(c *echo.Context, r AzureResource) error {
 	path := r.GetPath()
 	request, err := http.NewRequest("PUT", path, reader)
 	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
 	}
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)
 	request.Header.Add("User-Agent", config.UserAgent)
 	response, err := client.Do(request)
 	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
 	}
 	//r.HandleResponse(response)
 	defer response.Body.Close()
 	b, _ := ioutil.ReadAll(response.Body)
 	if response.StatusCode >= 400 {
-		return GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
 	}
 	if response.Header.Get("azure-asyncoperation") != "" {
 		c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
@@ -63,18 +64,18 @@ func Delete(c *echo.Context, r AzureResource) error {
 
 	req, err := http.NewRequest("DELETE", path, nil)
 	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
 	}
 
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
 	}
 
 	if resp.StatusCode >= 400 {
 		b, _ := ioutil.ReadAll(resp.Body)
-		return GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
 	}
 
 	return c.JSON(204, "")
@@ -87,14 +88,14 @@ func Get(c *echo.Context, r AzureResource) error {
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
-		return GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode == 404 {
-		return RecordNotFound(c.Param("id"))
+		return eh.RecordNotFound(c.Param("id"))
 	}
 	if resp.StatusCode >= 400 {
-		return GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
 	}
 
 	r.HandleResponse(c, b, "get")
@@ -140,12 +141,12 @@ func GetResources(c *echo.Context, path string) ([]map[string]interface{}, error
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
-		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resources: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while requesting resources: %v", err))
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
 	//TODO: add error handling here
 	if resp.StatusCode >= 400 {
-		return nil, GenericException(fmt.Sprintf("Error has occurred while requesting resources: %s", string(b)))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while requesting resources: %s", string(b)))
 	}
 
 	var m map[string][]map[string]interface{}

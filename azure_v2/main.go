@@ -9,6 +9,7 @@ import (
 
 	// load app files
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 	am "github.com/rightscale/self-service-plugins/azure_v2/middleware"
 	"github.com/rightscale/self-service-plugins/azure_v2/resources"
 )
@@ -36,7 +37,7 @@ func HttpServer() *echo.Echo {
 		e.SetDebug(true)
 	}
 
-	e.SetHTTPErrorHandler(AzureErrorHandler(e)) // override default error handler
+	e.SetHTTPErrorHandler(eh.AzureErrorHandler(e)) // override default error handler
 
 	// Setup routes
 	prefix := e.Group(*config.AppPrefix) // added prefix to use multiple nginx location on one SS box

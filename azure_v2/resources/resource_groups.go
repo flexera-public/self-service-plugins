@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 type (
@@ -40,7 +40,7 @@ func SetupGroupsRoutes(e *echo.Echo) {
 }
 
 func listResourceGroups(c *echo.Context) error {
-	return lib.List(c, new(ResourceGroup))
+	return List(c, new(ResourceGroup))
 }
 
 func listOneResourceGroup(c *echo.Context) error {
@@ -49,12 +49,12 @@ func listOneResourceGroup(c *echo.Context) error {
 			Name: c.Param("id"),
 		},
 	}
-	return lib.Get(c, &group)
+	return Get(c, &group)
 }
 
 func createResourceGroup(c *echo.Context) error {
 	group := new(ResourceGroup)
-	return lib.Create(c, group)
+	return Create(c, group)
 }
 
 func deleteResourceGroup(c *echo.Context) error {
@@ -63,13 +63,13 @@ func deleteResourceGroup(c *echo.Context) error {
 			Name: c.Param("id"),
 		},
 	}
-	return lib.Delete(c, &group)
+	return Delete(c, &group)
 }
 
 func (rg *ResourceGroup) GetRequestParams(c *echo.Context) (interface{}, error) {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&rg.CreateParams)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
 	rg.RequestParams.Location = rg.CreateParams.Location

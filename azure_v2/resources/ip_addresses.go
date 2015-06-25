@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -54,7 +54,7 @@ func SetupIpAddressesRoutes(e *echo.Echo) {
 }
 
 func listIpAddresses(c *echo.Context) error {
-	return lib.List(c, new(IpAddress))
+	return List(c, new(IpAddress))
 }
 
 func listOneIpAddress(c *echo.Context) error {
@@ -65,12 +65,12 @@ func listOneIpAddress(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Get(c, &ip_address)
+	return Get(c, &ip_address)
 }
 
 func createIpAddress(c *echo.Context) error {
 	ip_address := new(IpAddress)
-	return lib.Create(c, ip_address)
+	return Create(c, ip_address)
 }
 
 func deleteIpAddress(c *echo.Context) error {
@@ -81,13 +81,13 @@ func deleteIpAddress(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Delete(c, &ip_address)
+	return Delete(c, &ip_address)
 }
 
 func (ip *IpAddress) GetRequestParams(c *echo.Context) (interface{}, error) {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&ip.CreateParams)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
 	ip.RequestParams.Location = ip.CreateParams.Location

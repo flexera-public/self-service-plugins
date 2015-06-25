@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -54,7 +54,7 @@ func listLocations(c *echo.Context) error {
 
 func GetLocations(c *echo.Context) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/locations?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-	locations, err := lib.GetResources(c, path)
+	locations, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func listPublishers(c *echo.Context) error {
 
 func GetPublishers(c *echo.Context, locationName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, "2015-05-01-preview")
-	publishers, err := lib.GetResources(c, path)
+	publishers, err := GetResources(c, path)
 	if err != nil {
 		fmt.Printf("SKIP FOR %s because of error: %s\n", locationName, err)
 		emptyArray := make([]map[string]interface{}, 0)
@@ -103,7 +103,7 @@ func listOffers(c *echo.Context) error {
 	location := params.Get("location")
 	publisher := params.Get("publisher")
 	if location == "" || publisher == "" {
-		return lib.GenericException("Please specify both params 'location' and 'publisher'.")
+		return eh.GenericException("Please specify both params 'location' and 'publisher'.")
 	}
 	offers, err := GetOffers(c, location, publisher)
 	if err != nil {
@@ -114,7 +114,7 @@ func listOffers(c *echo.Context) error {
 
 func GetOffers(c *echo.Context, locationName string, publisherName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, publisherName, "2015-05-01-preview")
-	offers, err := lib.GetResources(c, path)
+	offers, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func listSkus(c *echo.Context) error {
 	publisher := params.Get("publisher")
 	offer := params.Get("offer")
 	if location == "" || publisher == "" || offer == "" {
-		return lib.GenericException("Please specify the follwing params: 'location', 'publisher' and 'offer'.")
+		return eh.GenericException("Please specify the follwing params: 'location', 'publisher' and 'offer'.")
 	}
 	skus, err := GetSkus(c, location, publisher, offer)
 	if err != nil {
@@ -138,7 +138,7 @@ func listSkus(c *echo.Context) error {
 
 func GetSkus(c *echo.Context, locationName string, publisherName string, offerName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, publisherName, offerName, "2015-05-01-preview")
-	skus, err := lib.GetResources(c, path)
+	skus, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func listVersions(c *echo.Context) error {
 	offer := params.Get("offer")
 	sku := params.Get("sku")
 	if location == "" || publisher == "" || offer == "" || sku == "" {
-		return lib.GenericException("Please specify the follwing params: 'location', 'publisher', 'offer' and 'sku'.")
+		return eh.GenericException("Please specify the follwing params: 'location', 'publisher', 'offer' and 'sku'.")
 	}
 	versions, err := GetVersions(c, location, publisher, offer, sku)
 	if err != nil {
@@ -163,7 +163,7 @@ func listVersions(c *echo.Context) error {
 
 func GetVersions(c *echo.Context, locationName string, publisherName string, offerName string, skuName string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, locationName, publisherName, offerName, skuName, "2015-05-01-preview")
-	versions, err := lib.GetResources(c, path)
+	versions, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}

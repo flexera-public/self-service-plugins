@@ -13,7 +13,8 @@ import (
 	"code.google.com/p/goauth2/oauth"
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
+	am "github.com/rightscale/self-service-plugins/azure_v2/middleware"
 )
 
 const (
@@ -32,10 +33,10 @@ func SetupAuthRoutes(e *echo.Echo) {
 
 // Get App-Only Access Token for Azure AD Graph API
 func registerApp(c *echo.Context) error {
-	creds := lib.Credentials{GrantType: "client_credentials", Resource: "https://graph.windows.net/"}
+	creds := am.Credentials{GrantType: "client_credentials", Resource: "https://graph.windows.net/"}
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&creds)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 	authResponse, err := creds.RequestToken()
 	if err != nil {
@@ -50,24 +51,24 @@ func registerApp(c *echo.Context) error {
 	return assignRoleToApp(c, principalId, creds.Subscription)
 }
 
-func getServicePrincipal(client *http.Client, creds *lib.Credentials) (string, error) {
+func getServicePrincipal(client *http.Client, creds *am.Credentials) (string, error) {
 	path := fmt.Sprintf("%s/%s/servicePrincipals?api-version=1.5", config.GraphUrl, creds.TenantId)
 	path = path + "&$filter=appId%20eq%20'" + creds.ClientId + "'"
 	log.Printf("Get Service Principals request: %s\n", path)
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
-		return "", lib.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
+		return "", eh.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 	}
 
 	b, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
-		return "", lib.GenericException(fmt.Sprintf("Get Service Principals failed: %s", string(b)))
+		return "", eh.GenericException(fmt.Sprintf("Get Service Principals failed: %s", string(b)))
 	}
 	var response map[string][]*ServicePrincipal
 
 	if err = json.Unmarshal(b, &response); err != nil {
-		return "", lib.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
+		return "", eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
 	}
 	principal := response["value"][0]
 	return principal.ObjectId, nil
@@ -94,24 +95,24 @@ func assignRoleToApp(c *echo.Context, principalId string, subscription string) e
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)
 	request.Header.Add("User-Agent", config.UserAgent)
-	client, _ := lib.GetAzureClient(c)
+	client, _ := GetAzureClient(c)
 	//TODO: handle properly error
 	response, err := client.Do(request)
 	defer response.Body.Close()
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("Assign RBAC role to Application failed: %v", err))
+		return eh.GenericException(fmt.Sprintf("Assign RBAC role to Application failed: %v", err))
 	}
 
 	b, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return lib.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 
 	if response.StatusCode >= 400 {
-		return lib.GenericException(fmt.Sprintf("Assign RBAC role to Application failed: %s", string(b)))
+		return eh.GenericException(fmt.Sprintf("Assign RBAC role to Application failed: %s", string(b)))
 	}
 	if response.StatusCode != 201 {
-		return lib.GenericException(fmt.Sprintf("Assign RBAC role to Application returned status %s with body: %s", response.StatusCode, string(b)))
+		return eh.GenericException(fmt.Sprintf("Assign RBAC role to Application returned status %s with body: %s", response.StatusCode, string(b)))
 	}
 	return c.NoContent(201)
 }

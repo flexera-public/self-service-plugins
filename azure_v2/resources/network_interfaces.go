@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -55,7 +55,7 @@ func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 }
 
 func listNetworkInterfaces(c *echo.Context) error {
-	return lib.List(c, new(NetworkInterface))
+	return List(c, new(NetworkInterface))
 }
 
 func listOneNetworkInterface(c *echo.Context) error {
@@ -66,12 +66,12 @@ func listOneNetworkInterface(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Get(c, &network_interface)
+	return Get(c, &network_interface)
 }
 
 func createNetworkInterface(c *echo.Context) error {
 	network_interface := new(NetworkInterface)
-	return lib.Create(c, network_interface)
+	return Create(c, network_interface)
 }
 
 func deleteNetworkInterface(c *echo.Context) error {
@@ -82,13 +82,13 @@ func deleteNetworkInterface(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Delete(c, &network_interface)
+	return Delete(c, &network_interface)
 }
 
 func (ni *NetworkInterface) GetRequestParams(c *echo.Context) (interface{}, error) {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&ni.CreateParams)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
 	var configs []map[string]interface{}

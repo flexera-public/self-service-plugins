@@ -1,6 +1,7 @@
-package main
+package error_handler
 
 import (
+	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/labstack/echo"
 	"net/http"
@@ -36,4 +37,19 @@ func AzureErrorHandler(e *echo.Echo) echo.HTTPErrorHandler {
 
 		c.JSON(ge.Code, ge)
 	}
+}
+
+func GenericException(message string) error {
+	return errors.New(&echo.HTTPError{
+		Message: message,
+		Code:    400,
+	})
+}
+
+func RecordNotFound(resourceID string) error {
+	message := fmt.Sprintf("Could not find resource with id: %s", resourceID)
+	return errors.New(&echo.HTTPError{
+		Message: message,
+		Code:    404,
+	})
 }

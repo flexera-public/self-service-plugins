@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
 )
 
 type (
@@ -34,7 +33,7 @@ func listOneOperation(c *echo.Context) error {
 		Name:     c.Param("id"),
 		Location: params.Get("location"),
 	}
-	return lib.Get(c, &operation)
+	return Get(c, &operation)
 }
 
 func (o *Operation) GetResponseParams() interface{} {

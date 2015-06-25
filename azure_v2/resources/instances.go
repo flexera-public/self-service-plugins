@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -61,7 +61,7 @@ func SetupInstanceRoutes(e *echo.Echo) {
 }
 
 func listInstances(c *echo.Context) error {
-	return lib.List(c, new(Instance))
+	return List(c, new(Instance))
 }
 func listOneInstance(c *echo.Context) error {
 	params := c.Request.Form
@@ -71,14 +71,14 @@ func listOneInstance(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Get(c, &instance)
+	return Get(c, &instance)
 }
 
 // https://msdn.microsoft.com/en-us/library/azure/mt163591.aspx
 // TODO: check out that provider is already registered - https://msdn.microsoft.com/en-us/library/azure/dn790548.aspx
 func createInstance(c *echo.Context) error {
 	instance := new(Instance)
-	return lib.Create(c, instance)
+	return Create(c, instance)
 }
 
 func deleteInstance(c *echo.Context) error {
@@ -89,13 +89,13 @@ func deleteInstance(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Delete(c, &instance)
+	return Delete(c, &instance)
 }
 
 func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&i.CreateParams)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 	var networkInterfaces []map[string]interface{}
 	i.RequestParams.Name = i.CreateParams.Name

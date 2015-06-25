@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	"github.com/rightscale/self-service-plugins/azure_v2/lib"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -52,7 +52,7 @@ func SetupStorageAccountsRoutes(e *echo.Echo) {
 }
 
 func listStorageAccounts(c *echo.Context) error {
-	return lib.List(c, new(StorageAccount))
+	return List(c, new(StorageAccount))
 }
 
 func listOneStorageAccount(c *echo.Context) error {
@@ -63,12 +63,12 @@ func listOneStorageAccount(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Get(c, &storage_account)
+	return Get(c, &storage_account)
 }
 
 func createStorageAccount(c *echo.Context) error {
 	storage_account := new(StorageAccount)
-	return lib.Create(c, storage_account)
+	return Create(c, storage_account)
 }
 
 func deleteStorageAccount(c *echo.Context) error {
@@ -79,13 +79,13 @@ func deleteStorageAccount(c *echo.Context) error {
 			Group: params.Get("group_name"),
 		},
 	}
-	return lib.Delete(c, &storage_account)
+	return Delete(c, &storage_account)
 }
 
 func (s *StorageAccount) GetRequestParams(c *echo.Context) (interface{}, error) {
 	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&s.CreateParams)
 	if err != nil {
-		return nil, lib.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
 	s.RequestParams.Location = s.CreateParams.Location
