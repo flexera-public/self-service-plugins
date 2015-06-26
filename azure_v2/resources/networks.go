@@ -129,14 +129,17 @@ func (n *Network) GetCollectionPath(groupName string) string {
 }
 
 // HandleResponse manage raw cloud response
-func (n *Network) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &n.responseParams)
+func (n *Network) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	if err := json.Unmarshal(body, &n.responseParams); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
 	href := n.GetHref(n.createParams.Group, n.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
 		n.responseParams.Href = href
 	}
+	return nil
 }
 
 // GetContentType returns network content type

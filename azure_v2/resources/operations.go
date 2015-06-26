@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
+	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 type (
@@ -51,10 +52,13 @@ func (o *Operation) GetPath() string {
 }
 
 // HandleResponse manage raw cloud response
-func (o *Operation) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &o.responseParams)
+func (o *Operation) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	if err := json.Unmarshal(body, &o.responseParams); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
 	href := o.GetHref(o.responseParams.OperationID, o.Location)
 	o.responseParams.Href = href
+	return nil
 }
 
 // GetContentType returns content type of operation

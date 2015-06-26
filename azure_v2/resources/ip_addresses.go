@@ -120,14 +120,17 @@ func (ip *IPAddress) GetCollectionPath(groupName string) string {
 }
 
 // HandleResponse manage raw cloud response
-func (ip *IPAddress) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &ip.responseParams)
+func (ip *IPAddress) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	if err := json.Unmarshal(body, &ip.responseParams); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
 	href := ip.GetHref(ip.createParams.Group, ip.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
 		ip.responseParams.Href = href
 	}
+	return nil
 }
 
 // GetContentType returns ip address content type

@@ -59,10 +59,14 @@ func getServicePrincipal(client *http.Client, creds *am.Credentials) (string, er
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
-		return "", eh.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
+		return "", eh.GenericException(fmt.Sprintf("Error has occurred while sending request: %v", err))
 	}
 
-	b, _ := ioutil.ReadAll(resp.Body)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
+
 	if resp.StatusCode >= 400 {
 		return "", eh.GenericException(fmt.Sprintf("Get Service Principals failed: %s", string(b)))
 	}
@@ -90,14 +94,19 @@ func assignRoleToApp(c *echo.Context, principalID string, subscription string) e
 	log.Printf("Assign RBAC role to Application path: %s\n", path)
 
 	by, err := json.Marshal(properties)
+	if err != nil {
+		eh.GenericException(fmt.Sprintf("Error has occurred while marshaling data: %v", err))
+	}
 	var reader io.Reader
 	reader = bytes.NewBufferString(string(by))
 	request, _ := http.NewRequest("PUT", path, reader)
 	request.Header.Add("Content-Type", config.MediaType)
 	request.Header.Add("Accept", config.MediaType)
 	request.Header.Add("User-Agent", config.UserAgent)
-	client, _ := GetAzureClient(c)
-	//TODO: handle properly error
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
 	response, err := client.Do(request)
 	defer response.Body.Close()
 	if err != nil {

@@ -64,11 +64,14 @@ func registerProvider(c *echo.Context) error {
 	}
 	var dat *Provider
 	if err := json.Unmarshal(body, &dat); err != nil {
-		log.Fatal("Unmarshaling failed:", err)
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 	}
 	if dat.RegistrationState == "NotRegistered" {
 		log.Printf("Register required: \n")
-		client, _ := GetAzureClient(c)
+		client, err := GetAzureClient(c)
+		if err != nil {
+			return err
+		}
 		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerName, providerAPIVersion)
 		log.Printf("Registering Provider %s: %s\n", providerName, path)
 		resp, err := client.PostForm(path, nil)
@@ -76,7 +79,11 @@ func registerProvider(c *echo.Context) error {
 			return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
 		}
 		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		}
+
 		var dat *Provider
 		if err := json.Unmarshal(body, &dat); err != nil {
 			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
@@ -84,14 +91,14 @@ func registerProvider(c *echo.Context) error {
 		return c.JSON(resp.StatusCode, dat)
 	}
 
-	return &echo.HTTPError{
-		Message: fmt.Sprintf("Provider %s already registered.", providerName),
-		Code:    400,
-	}
+	return eh.GenericException(fmt.Sprintf("Provider %s already registered.", providerName))
 }
 
 func getProviders(c *echo.Context, providerName string) ([]byte, error) {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return nil, err
+	}
 	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerName, providerAPIVersion)
 	log.Printf("Get Providers request: %s\n", path)
 	resp, err := client.Get(path)
@@ -99,7 +106,10 @@ func getProviders(c *echo.Context, providerName string) ([]byte, error) {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting provider: %v", err))
 	}
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
 	// TODO: handle 400+ statuses
 	return body, nil
 }

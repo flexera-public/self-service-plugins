@@ -114,14 +114,17 @@ func (s *StorageAccount) GetCollectionPath(groupName string) string {
 }
 
 // HandleResponse manage raw cloud response
-func (s *StorageAccount) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &s.responseParams)
+func (s *StorageAccount) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	if err := json.Unmarshal(body, &s.responseParams); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
 	href := s.GetHref(s.createParams.Group, s.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
 		s.responseParams.Href = href
 	}
+	return nil
 }
 
 // GetContentType returns storage account content type

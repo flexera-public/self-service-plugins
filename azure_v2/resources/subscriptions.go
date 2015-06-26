@@ -32,7 +32,10 @@ func SetupSubscriptionRoutes(e *echo.Echo) {
 }
 
 func listSubscriptions(c *echo.Context) error {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != err {
+		return err
+	}
 	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseURL, subscriptionsPath, config.APIVersion)
 	log.Printf("Get Subscriptions request: %s\n", path)
 	resp, err := client.Get(path)
@@ -40,10 +43,13 @@ func listSubscriptions(c *echo.Context) error {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while getting subscriptions: %v", err))
 	}
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
 	var dat map[string][]*Subscription
 	if err := json.Unmarshal(body, &dat); err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
 
 	return c.JSON(resp.StatusCode, dat["value"])
@@ -51,7 +57,10 @@ func listSubscriptions(c *echo.Context) error {
 
 // getSubscription return info about subscription provided in creds
 func getSubscription(c *echo.Context) error {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != err {
+		return err
+	}
 	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseURL, subscriptionsPath, *config.SubscriptionIDCred, "2015-01-01")
 	log.Printf("Get Subscription request: %s\n", path)
 	resp, err := client.Get(path)
@@ -59,10 +68,13 @@ func getSubscription(c *echo.Context) error {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while getting subscription: %v", err))
 	}
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
 	var dat *Subscription
 	if err := json.Unmarshal(body, &dat); err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
 
 	return c.JSON(resp.StatusCode, dat)

@@ -20,17 +20,26 @@ type AzureResource interface {
 	GetResponseParams() interface{}
 	GetPath() string
 	GetCollectionPath(string) string
-	HandleResponse(*echo.Context, []byte, string)
+	HandleResponse(*echo.Context, []byte, string) error
 	GetContentType() string
 	GetHref(string, string) string
 }
 
 // Create new resource
 func Create(c *echo.Context, r AzureResource) error {
-	client, _ := GetAzureClient(c)
-	requestParams, _ := r.GetRequestParams(c)
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
+	requestParams, err := r.GetRequestParams(c)
+	if err != nil {
+		return err
+	}
 
 	by, err := json.Marshal(requestParams)
+	if err != nil {
+		eh.GenericException(fmt.Sprintf("Error has occurred while marshaling data: %v", err))
+	}
 	var reader io.Reader
 	reader = bytes.NewBufferString(string(by))
 	path := r.GetPath()
@@ -45,9 +54,11 @@ func Create(c *echo.Context, r AzureResource) error {
 	if err != nil {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %v", err))
 	}
-	//r.HandleResponse(response)
 	defer response.Body.Close()
-	b, _ := ioutil.ReadAll(response.Body)
+	b, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
 	if response.StatusCode >= 400 {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
 	}
@@ -55,13 +66,18 @@ func Create(c *echo.Context, r AzureResource) error {
 		c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
 	}
 
-	r.HandleResponse(c, b, "create")
+	if err := r.HandleResponse(c, b, "create"); err != nil {
+		return err
+	}
 	return c.NoContent(201)
 }
 
 // Delete resource
 func Delete(c *echo.Context, r AzureResource) error {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
 	path := r.GetPath()
 	log.Printf("Delete request: %s\n", path)
 
@@ -71,13 +87,15 @@ func Delete(c *echo.Context, r AzureResource) error {
 	}
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", err))
 	}
 
 	if resp.StatusCode >= 400 {
-		b, _ := ioutil.ReadAll(resp.Body)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+		}
 		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
 	}
 
@@ -86,7 +104,10 @@ func Delete(c *echo.Context, r AzureResource) error {
 
 // Get resource
 func Get(c *echo.Context, r AzureResource) error {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
 	path := r.GetPath()
 	log.Printf("Get Resource request: %s\n", path)
 	resp, err := client.Get(path)
@@ -94,7 +115,10 @@ func Get(c *echo.Context, r AzureResource) error {
 	if err != nil {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
 	}
-	b, _ := ioutil.ReadAll(resp.Body)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
 	if resp.StatusCode == 404 {
 		return eh.RecordNotFound(c.Param("id"))
 	}
@@ -102,7 +126,9 @@ func Get(c *echo.Context, r AzureResource) error {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
 	}
 
-	r.HandleResponse(c, b, "get")
+	if err := r.HandleResponse(c, b, "get"); err != nil {
+		return err
+	}
 	return Render(c, 200, r.GetResponseParams(), r.GetContentType())
 }
 
@@ -142,29 +168,34 @@ func List(c *echo.Context, r AzureResource) error {
 
 // GetResources makes a call to cloud to get all resources
 func GetResources(c *echo.Context, path string) ([]map[string]interface{}, error) {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("Get Resources request: %s\n", path)
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while requesting resources: %v", err))
 	}
-	b, _ := ioutil.ReadAll(resp.Body)
-	//TODO: add error handling here
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
 	if resp.StatusCode >= 400 {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while requesting resources: %s", string(b)))
 	}
 
 	var m map[string][]map[string]interface{}
-	var resources []map[string]interface{}
-	err = json.Unmarshal(b, &m)
-	resources = m["value"]
-	if err != nil {
-		//try to unmarshal with different interface
-		json.Unmarshal(b, &resources)
+	if err := json.Unmarshal(b, &m); err != nil {
+		if m["value"] != nil {
+			// return resources if unmarshaling is success for 'value' key
+			// error occurs if value of the hash is not a []map[string]interface{}
+			return m["value"], nil
+		}
+		return nil, eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
 	}
-
-	return resources, nil
+	return m["value"], nil
 }
 
 // Render sends a JSON resource specific content type response with status code.

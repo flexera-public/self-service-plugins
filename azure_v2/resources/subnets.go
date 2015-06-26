@@ -69,25 +69,26 @@ func listSubnets(c *echo.Context) error {
 	}
 
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
-	resp, _ := GetResources(c, path)
-	//TODO: add error handling
+	resp, err := GetResources(c, path)
+	if err != nil {
+		return err
+	}
 	var subnets []*subnetResponseParams
 	for _, resourceGroup := range resp {
 		groupName := resourceGroup["name"].(string)
 		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, config.APIVersion)
-		networks, _ := GetResources(c, path)
-		//TODO: add error handling
+		networks, err := GetResources(c, path)
+		if err != nil {
+			return err
+		}
 		for _, network := range networks {
 			network := network //.(map[string]interface{})
-			resp, _ := getSubnets(c, groupName, network["name"].(string))
-			//TODO: add error handling
+			resp, err := getSubnets(c, groupName, network["name"].(string))
+			if err != nil {
+				return err
+			}
 			subnets = append(subnets, resp...)
 		}
-	}
-
-	// init empty array
-	if len(subnets) == 0 {
-		subnets = make([]*subnetResponseParams, 0)
 	}
 
 	return c.JSON(200, subnets)
@@ -139,14 +140,17 @@ func (s *Subnet) GetPath() string {
 func (s *Subnet) GetCollectionPath(groupName string) string { return "" }
 
 // HandleResponse manage raw cloud response
-func (s *Subnet) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &s.responseParams)
+func (s *Subnet) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	if err := json.Unmarshal(body, &s.responseParams); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
 	href := s.GetHref(s.createParams.Group, s.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
 		s.responseParams.Href = href
 	}
+	return nil
 }
 
 // GetContentType returns subnet content type
@@ -161,7 +165,10 @@ func (s *Subnet) GetHref(groupName string, subnetName string) string {
 
 //TODO: generify ListSubnets and getSubnets
 func getSubnets(c *echo.Context, groupName string, networkName string) ([]*subnetResponseParams, error) {
-	client, _ := GetAzureClient(c)
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return nil, err
+	}
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkName, config.APIVersion)
 	log.Printf("Get Subents request: %s\n", path)
 	resp, err := client.Get(path)
@@ -169,12 +176,19 @@ func getSubnets(c *echo.Context, groupName string, networkName string) ([]*subne
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting subnet: %v", err))
 	}
 	defer resp.Body.Close()
-	var m map[string][]*subnetResponseParams
-	b, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(b, &m)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
+	var m struct {
+		Value    []*subnetResponseParams
+		NextLink string
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
+	}
 
-	subnets := m["value"]
-
+	subnets := m.Value
 	for _, subnet := range subnets {
 		subnet.Href = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, networkName, subnet.Name)
 	}
