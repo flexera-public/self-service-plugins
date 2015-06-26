@@ -41,12 +41,12 @@ Note: don't forget about creds in the cookies (see below)
 
 ##Make requests
 With no access token passed in the cookies
-curl -v -b "TenantId=...;ClientId=...;ClientSecret=...;SubscriptionId=..."'http://localhost:8080/instances'
+curl -v -b "TenantID=...;ClientID=...;ClientSecret=...;SubscriptionID=..."'http://localhost:8080/instances'
 This kind of call will go through azure oauth to get application specific access token.
 Note: application should be registered in advance
 
 Pass access token in the cookies
-curl -v -b "AccessToken=eyJ0eXAiOiJKV1QiLCJhbGci...;SubscriptionId=..." 'http://localhost:8080/instances'
+curl -v -b "AccessToken=eyJ0eXAiOiJKV1QiLCJhbGci...;SubscriptionID=..." 'http://localhost:8080/instances'
 Note: could be used either user or app specific access token but take into account that plugin doesn't refresh token automatically
 
 ##Run tests

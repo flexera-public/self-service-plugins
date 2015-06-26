@@ -12,32 +12,35 @@ import (
 )
 
 type (
-	SubnetResponseParams struct {
-		Id         string      `json:"id,omitempty"`
+	subnetResponseParams struct {
+		ID         string      `json:"id,omitempty"`
 		Name       string      `json:"name,omitempty"`
 		Etag       string      `json:"etag,omitempty"`
 		Properties interface{} `json:"properties,omitempty"`
 		Href       string      `json:"href,omitempty"` // required by response
 	}
 
-	SubnetRequestParams struct {
+	subnetRequestParams struct {
 		Name       string                 `json:"name,omitempty"`
 		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
-	SubnetCreateParams struct {
+	subnetCreateParams struct {
 		Name          string `json:"name,omitempty"`
 		Group         string `json:"group_name,omitempty"`
-		NetworkId     string `json:"network_id,omitempty"`
+		NetworkID     string `json:"network_id,omitempty"`
 		AddressPrefix string `json:"address_prefix,omitempty"`
 	}
+	// Subnet is base struct for Azure Subnet resource to store input create params,
+	// request create params and response params gotten from cloud.
 	Subnet struct {
-		CreateParams   SubnetCreateParams
-		RequestParams  SubnetRequestParams
-		ResponseParams SubnetResponseParams
+		createParams   subnetCreateParams
+		requestParams  subnetRequestParams
+		responseParams subnetResponseParams
 	}
 )
 
+// SetupSubnetsRoutes declares routes for Subnet resource
 func SetupSubnetsRoutes(e *echo.Echo) {
 	e.Get("/subnets", listSubnets)
 	e.Post("/subnets", createSubnet)
@@ -51,43 +54,43 @@ func SetupSubnetsRoutes(e *echo.Echo) {
 }
 
 func listSubnets(c *echo.Context) error {
-	group_name := c.Param("group_name")
-	if group_name != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, c.Param("network_id"), config.ApiVersion)
+	groupName := c.Param("group_name")
+	if groupName != "" {
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, c.Param("network_id"), config.APIVersion)
 		subnets, err := GetResources(c, path)
 		if err != nil {
 			return err
 		}
 		//add href for each subnet
 		for _, subnet := range subnets {
-			subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", group_name, c.Param("network_id"), subnet["name"])
-		}
-		return c.JSON(200, subnets)
-	} else {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
-		resp, _ := GetResources(c, path)
-		//TODO: add error handling
-		var subnets []*SubnetResponseParams
-		for _, resource_group := range resp {
-			groupName := resource_group["name"].(string)
-			path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
-			networks, _ := GetResources(c, path)
-			//TODO: add error handling
-			for _, network := range networks {
-				network := network //.(map[string]interface{})
-				resp, _ := getSubnets(c, groupName, network["name"].(string))
-				//TODO: add error handling
-				subnets = append(subnets, resp...)
-			}
-		}
-
-		// init empty array
-		if len(subnets) == 0 {
-			subnets = make([]*SubnetResponseParams, 0)
+			subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, c.Param("network_id"), subnet["name"])
 		}
 		return c.JSON(200, subnets)
 	}
 
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
+	resp, _ := GetResources(c, path)
+	//TODO: add error handling
+	var subnets []*subnetResponseParams
+	for _, resourceGroup := range resp {
+		groupName := resourceGroup["name"].(string)
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, config.APIVersion)
+		networks, _ := GetResources(c, path)
+		//TODO: add error handling
+		for _, network := range networks {
+			network := network //.(map[string]interface{})
+			resp, _ := getSubnets(c, groupName, network["name"].(string))
+			//TODO: add error handling
+			subnets = append(subnets, resp...)
+		}
+	}
+
+	// init empty array
+	if len(subnets) == 0 {
+		subnets = make([]*subnetResponseParams, 0)
+	}
+
+	return c.JSON(200, subnets)
 }
 
 func createSubnet(c *echo.Context) error {
@@ -98,78 +101,82 @@ func createSubnet(c *echo.Context) error {
 func deleteSubnet(c *echo.Context) error {
 	params := c.Request.Form
 	subnet := Subnet{
-		CreateParams: SubnetCreateParams{
+		createParams: subnetCreateParams{
 			Name:      c.Param("id"),
 			Group:     params.Get("group_name"),
-			NetworkId: params.Get("network_id"),
+			NetworkID: params.Get("network_id"),
 		},
 	}
 	return Delete(c, &subnet)
 }
 
+// GetRequestParams prepares parameters for create  request to the cloud
 func (s *Subnet) GetRequestParams(c *echo.Context) (interface{}, error) {
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&s.CreateParams)
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&s.createParams)
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
-	s.RequestParams.Properties = map[string]interface{}{
-		"addressPrefix": s.CreateParams.AddressPrefix,
+	s.requestParams.Properties = map[string]interface{}{
+		"addressPrefix": s.createParams.AddressPrefix,
 		//"dhcpOptions":   postParams.Get("dhcp_options"),
 	}
 
-	return s.RequestParams, nil
+	return s.requestParams, nil
 }
 
+// GetResponseParams is accessor function for getting access to responseParams struct
 func (s *Subnet) GetResponseParams() interface{} {
-	return s.ResponseParams
+	return s.responseParams
 }
 
+// GetPath returns full path to the sigle subnet
 func (s *Subnet) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, s.CreateParams.Group, networkPath, s.CreateParams.NetworkId, s.CreateParams.Name, config.ApiVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, networkPath, s.createParams.NetworkID, s.createParams.Name, config.APIVersion)
 }
 
-//fake function to support AzureResource by Subnet
-func (s *Subnet) GetCollectionPath(groupName string) string {
-	return ""
-}
+// GetCollectionPath is a fake function to support AzureResource by Subnet
+func (s *Subnet) GetCollectionPath(groupName string) string { return "" }
 
+// HandleResponse manage raw cloud response
 func (s *Subnet) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &s.ResponseParams)
-	href := s.GetHref(s.CreateParams.Group, s.ResponseParams.Name)
+	json.Unmarshal(body, &s.responseParams)
+	href := s.GetHref(s.createParams.Group, s.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
-		s.ResponseParams.Href = href
+		s.responseParams.Href = href
 	}
 }
 
+// GetContentType returns subnet content type
 func (s *Subnet) GetContentType() string {
 	return "vnd.rightscale.subnet+json"
 }
 
+// GetHref returns subnet href
 func (s *Subnet) GetHref(groupName string, subnetName string) string {
-	return fmt.Sprintf("/subnets/%s?group_name=%s&network=%s", subnetName, groupName, s.CreateParams.NetworkId)
+	return fmt.Sprintf("/subnets/%s?group_name=%s&network=%s", subnetName, groupName, s.createParams.NetworkID)
 }
 
 //TODO: generify ListSubnets and getSubnets
-func getSubnets(c *echo.Context, group_name string, network_name string) ([]*SubnetResponseParams, error) {
+func getSubnets(c *echo.Context, groupName string, networkName string) ([]*subnetResponseParams, error) {
 	client, _ := GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, group_name, networkPath, network_name, config.ApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkName, config.APIVersion)
 	log.Printf("Get Subents request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting subnet: %v", err))
 	}
 	defer resp.Body.Close()
-	var m map[string][]*SubnetResponseParams
+	var m map[string][]*subnetResponseParams
 	b, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(b, &m)
 
 	subnets := m["value"]
 
 	for _, subnet := range subnets {
-		subnet.Href = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", group_name, network_name, subnet.Name)
+		subnet.Href = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, networkName, subnet.Name)
 	}
 
 	return subnets, nil

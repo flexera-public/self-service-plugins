@@ -25,8 +25,8 @@ var _ = Describe("application", func() {
 	BeforeEach(func() {
 		do = ghttp.NewServer()
 		config.AuthHost = do.URL()
-		config.GraphUrl = do.URL()
-		config.BaseUrl = do.URL()
+		config.GraphURL = do.URL()
+		config.BaseURL = do.URL()
 		client = NewAzureClient()
 	})
 

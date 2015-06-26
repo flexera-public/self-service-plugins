@@ -9,20 +9,24 @@ import (
 )
 
 type (
-	OperationResponseParams struct {
-		OperationId string `json:"operationId"`
+	operationResponseParams struct {
+		OperationID string `json:"operationId"`
 		Status      string `json:"status"`
 		StartTime   string `json:"startTime"`
 		EndTime     string `json:"endTime,omitempty"`
 		Href        string `json:"href,omitempty"`
 	}
+
+	// Operation is base struct for Azure Operation resource to store input create params,
+	// request create params and response params gotten from cloud.
 	Operation struct {
 		Name           string `json:"name,omitempty"`
 		Location       string `json:"location,omitempty"`
-		ResponseParams OperationResponseParams
+		responseParams operationResponseParams
 	}
 )
 
+// SetupOperationRoutes declares routes for Operation resource
 func SetupOperationRoutes(e *echo.Echo) {
 	e.Get("/operations/:id", listOneOperation)
 }
@@ -36,30 +40,35 @@ func listOneOperation(c *echo.Context) error {
 	return Get(c, &operation)
 }
 
+// GetResponseParams is accessor function for getting access to responseParams struct
 func (o *Operation) GetResponseParams() interface{} {
-	return o.ResponseParams
+	return o.responseParams
 }
 
+// GetPath returns full path to the sigle operation
 func (o *Operation) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/operations/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, computePath, o.Location, o.Name, "2015-05-01-preview")
+	return fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/operations/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, o.Location, o.Name, "2015-05-01-preview")
 }
 
+// HandleResponse manage raw cloud response
 func (o *Operation) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &o.ResponseParams)
-	href := o.GetHref(o.ResponseParams.OperationId, o.Location)
-	o.ResponseParams.Href = href
+	json.Unmarshal(body, &o.responseParams)
+	href := o.GetHref(o.responseParams.OperationID, o.Location)
+	o.responseParams.Href = href
 }
 
+// GetContentType returns content type of operation
 func (o *Operation) GetContentType() string {
 	return "vnd.rightscale.operation+json"
 }
 
-func (o *Operation) GetHref(operationId string, location string) string {
-	return fmt.Sprintf("/operations/%s?location=%s", operationId, location)
+// GetHref returns operation href
+func (o *Operation) GetHref(operationID string, location string) string {
+	return fmt.Sprintf("/operations/%s?location=%s", operationID, location)
 }
 
-//fake function to support AzureResource by Operation
+//GetCollectionPath is a fake function to support AzureResource by Operation
 func (o *Operation) GetCollectionPath(groupName string) string { return "" }
 
-//fake function to support AzureResource by Operation
+//GetRequestParams is a fake function to support AzureResource by Operation
 func (o *Operation) GetRequestParams(c *echo.Context) (interface{}, error) { return "", nil }

@@ -14,6 +14,7 @@ import (
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
+// AzureResource is interface which should support every resource in order to use generic functions List/Get/Create/Delete
 type AzureResource interface {
 	GetRequestParams(*echo.Context) (interface{}, error)
 	GetResponseParams() interface{}
@@ -24,6 +25,7 @@ type AzureResource interface {
 	GetHref(string, string) string
 }
 
+// Create new resource
 func Create(c *echo.Context, r AzureResource) error {
 	client, _ := GetAzureClient(c)
 	requestParams, _ := r.GetRequestParams(c)
@@ -57,6 +59,7 @@ func Create(c *echo.Context, r AzureResource) error {
 	return c.NoContent(201)
 }
 
+// Delete resource
 func Delete(c *echo.Context, r AzureResource) error {
 	client, _ := GetAzureClient(c)
 	path := r.GetPath()
@@ -81,6 +84,7 @@ func Delete(c *echo.Context, r AzureResource) error {
 	return c.JSON(204, "")
 }
 
+// Get resource
 func Get(c *echo.Context, r AzureResource) error {
 	client, _ := GetAzureClient(c)
 	path := r.GetPath()
@@ -102,17 +106,18 @@ func Get(c *echo.Context, r AzureResource) error {
 	return Render(c, 200, r.GetResponseParams(), r.GetContentType())
 }
 
+// List gets all resources
 func List(c *echo.Context, r AzureResource) error {
-	group_name := c.Param("group_name")
+	groupName := c.Param("group_name")
 	resources := make([]map[string]interface{}, 0)
 	var parentResources []map[string]interface{}
 	var err error
 
-	if group_name != "" {
+	if groupName != "" {
 		// nested route
-		parentResources = append(parentResources, map[string]interface{}{"name": group_name})
+		parentResources = append(parentResources, map[string]interface{}{"name": groupName})
 	} else {
-		parentPath := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
+		parentPath := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
 		parentResources, err = GetResources(c, parentPath)
 		if err != nil {
 			return err
@@ -135,6 +140,7 @@ func List(c *echo.Context, r AzureResource) error {
 	return Render(c, 200, resources, r.GetContentType()+";type=collection")
 }
 
+// GetResources makes a call to cloud to get all resources
 func GetResources(c *echo.Context, path string) ([]map[string]interface{}, error) {
 	client, _ := GetAzureClient(c)
 	log.Printf("Get Resources request: %s\n", path)
@@ -161,7 +167,7 @@ func GetResources(c *echo.Context, path string) ([]map[string]interface{}, error
 	return resources, nil
 }
 
-// JSON sends an resource specific content type response with status code.
+// Render sends a JSON resource specific content type response with status code.
 func Render(c *echo.Context, code int, resources interface{}, contentType string) error {
 	c.Response.Header().Set(echo.ContentType, contentType)
 	c.Response.WriteHeader(code)

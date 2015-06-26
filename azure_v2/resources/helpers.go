@@ -11,7 +11,7 @@ import (
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
-// Retrieve client initialized by middleware, send error response if not found
+// GetAzureClient retrieves client initialized by middleware, send error response if not found
 // This function should be used by controller actions that need to use the client
 func GetAzureClient(c *echo.Context) (*http.Client, error) {
 	client, _ := c.Get("azure").(*http.Client)
@@ -21,6 +21,7 @@ func GetAzureClient(c *echo.Context) (*http.Client, error) {
 	return client, nil
 }
 
+// GetResource sends requests to the clouds to get resource
 func GetResource(c *echo.Context, path string, href string) (map[string]interface{}, error) {
 	client, _ := GetAzureClient(c)
 	log.Printf("Get Resource request: %s\n", path)

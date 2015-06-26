@@ -1,4 +1,4 @@
-package error_handler
+package errorHandler
 
 import (
 	"fmt"
@@ -7,14 +7,15 @@ import (
 	"net/http"
 )
 
-type GenericError struct {
+type genericError struct {
 	echo.HTTPError
 	StackTrace string `json:"StackTrace,omitempty"`
 }
 
+// AzureErrorHandler is a custom Echo.HTTPErrorHandler
 func AzureErrorHandler(e *echo.Echo) echo.HTTPErrorHandler {
 	return func(err error, c *echo.Context) {
-		ge := new(GenericError)
+		ge := new(genericError)
 		ge.Code = http.StatusInternalServerError //default status code is 500
 		ge.Message = http.StatusText(ge.Code)    // default message is 'Internal Server Error'
 		switch error := err.(type) {
@@ -39,6 +40,7 @@ func AzureErrorHandler(e *echo.Echo) echo.HTTPErrorHandler {
 	}
 }
 
+// GenericException represents error with status code 400
 func GenericException(message string) error {
 	return errors.New(&echo.HTTPError{
 		Message: message,
@@ -46,6 +48,7 @@ func GenericException(message string) error {
 	})
 }
 
+// RecordNotFound represents error with status code 404
 func RecordNotFound(resourceID string) error {
 	message := fmt.Sprintf("Could not find resource with id: %s", resourceID)
 	return errors.New(&echo.HTTPError{

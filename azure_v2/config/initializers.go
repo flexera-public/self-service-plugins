@@ -8,28 +8,42 @@ import (
 )
 
 const (
-	version    = "0.0.1"
-	ApiVersion = "2014-12-01-Preview"
-	MediaType  = "application/json"
-	UserAgent  = "RightScale Self-Service Plugin"
+	version = "0.0.1"
+	// APIVersion is a default Azure API version
+	APIVersion = "2014-12-01-Preview"
+	// MediaType is default media type for requests to the Azure cloud
+	MediaType = "application/json"
+	// UserAgent is a RS request sign
+	UserAgent = "RightScale Self-Service Plugin"
 )
 
 var (
-	app              = kingpin.New("azure_plugin", "Azure V2 RightScale Self-Service plugin.")
-	ListenFlag       = app.Flag("listen", "Hostname and port to listen on, e.g. 'localhost:8080' - hostname is optional.").Default("localhost:8080").String()
-	Env              = app.Flag("env", "Environment name: 'development' (default) or 'production'.").Default("development").String()
-	AppPrefix        = app.Flag("prefix", "URL prefix.").Default("/azure_plugin").String()
-	ClientIdCred     = app.Arg("client", "The client id of the application that is registered in Azure Active Directory.").String()
+	app = kingpin.New("azure_plugin", "Azure V2 RightScale Self-Service plugin.")
+	// ListenFlag is a hostname and port to listen
+	ListenFlag = app.Flag("listen", "Hostname and port to listen on, e.g. 'localhost:8080' - hostname is optional.").Default("localhost:8080").String()
+	// Env is environment name
+	Env = app.Flag("env", "Environment name: 'development' (default) or 'production'.").Default("development").String()
+	// AppPrefix is URL prefix
+	AppPrefix = app.Flag("prefix", "URL prefix.").Default("/azure_plugin").String()
+	// ClientIDCred is the client id of the application that is registered in Azure Active Directory.
+	ClientIDCred = app.Arg("client", "The client id of the application that is registered in Azure Active Directory.").String()
+	// ClientSecretCred is the client key of the application that is registered in Azure Active Directory.
 	ClientSecretCred = app.Arg("secret", "The client key of the application that is registered in Azure Active Directory.").String()
-	//	ResourceCred       = app.Arg("resource", "The App ID URI of the web API (secured resource).").String()
-	SubscriptionIdCred = app.Arg("subscription", "The client subscription id.").String()
-	TenantIdCred       = app.Arg("tenant", "Azure Active Directory indentificator.").String()
-	RefreshTokenCred   = app.Arg("refresh_token", "The token used for refreshing access token.").String()
-	// set base url as variable to be able to modify it in the specs
-	BaseUrl   = "https://management.azure.com"
-	AuthHost  = "https://login.windows.net"
-	GraphUrl  = "https://graph.windows.net"
-	Logger    *log.Logger // Global syslog logger
+	// SubscriptionIDCred is the client subscription id.
+	SubscriptionIDCred = app.Arg("subscription", "The client subscription id.").String()
+	// TenantIDCred is Azure Active Directory indentificator.
+	TenantIDCred = app.Arg("tenant", "Azure Active Directory indentificator.").String()
+	// RefreshTokenCred is the token used for refreshing access token.
+	RefreshTokenCred = app.Arg("refresh_token", "The token used for refreshing access token.").String()
+	// BaseURL is Azure cloud endpoint...set base url as variable to be able to modify it in the specs
+	BaseURL = "https://management.azure.com"
+	// GraphURL is the endpoint to Graph Azure service
+	GraphURL = "https://graph.windows.net"
+	// AuthHost is endpoint to authentication Azure service
+	AuthHost = "https://login.windows.net"
+	// Logger is Global syslog logger
+	Logger *log.Logger
+	// DebugMode is used to manage debug mode
 	DebugMode = false
 )
 

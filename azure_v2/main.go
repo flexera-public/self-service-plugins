@@ -16,14 +16,14 @@ import (
 
 func main() {
 	// Serve
-	s := HttpServer()
+	s := httpServer()
 	log.Printf("Azure plugin - listening on %s under %s environment\n", *config.ListenFlag, *config.Env)
 	s.Run(*config.ListenFlag)
 }
 
 // Factory method for application
 // Makes it possible to do integration testing.
-func HttpServer() *echo.Echo {
+func httpServer() *echo.Echo {
 
 	// Setup middleware
 	e := echo.New()
@@ -48,7 +48,7 @@ func HttpServer() *echo.Echo {
 	resources.SetupProviderRoutes(prefix)
 	resources.SetupNetworkRoutes(prefix)
 	resources.SetupSubnetsRoutes(prefix)
-	resources.SetupIpAddressesRoutes(prefix)
+	resources.SetupIPAddressesRoutes(prefix)
 	resources.SetupAuthRoutes(prefix)
 	resources.SetupNetworkInterfacesRoutes(prefix)
 	resources.SetupImageRoutes(prefix)

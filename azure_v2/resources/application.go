@@ -19,14 +19,15 @@ import (
 
 const (
 	authPath          = "providers/Microsoft.Authorization/roleDefinitions"
-	roleContributorId = "b24988ac-6180-42a0-ab88-20f7382dd24c"
+	roleContributorID = "b24988ac-6180-42a0-ab88-20f7382dd24c"
 )
 
-type ServicePrincipal struct {
+type servicePrincipal struct {
 	// Add more fields if needed
-	ObjectId string `json:"objectId"`
+	ObjectID string `json:"objectId"`
 }
 
+// SetupAuthRoutes declares routes for Application resource
 func SetupAuthRoutes(e *echo.Echo) {
 	e.Post("/application/register", registerApp)
 }
@@ -44,16 +45,16 @@ func registerApp(c *echo.Context) error {
 	}
 	t := &oauth.Transport{Token: &oauth.Token{AccessToken: authResponse.AccessToken}}
 	graphClient := t.Client()
-	principalId, err := getServicePrincipal(graphClient, &creds)
+	principalID, err := getServicePrincipal(graphClient, &creds)
 	if err != nil {
 		return err
 	}
-	return assignRoleToApp(c, principalId, creds.Subscription)
+	return assignRoleToApp(c, principalID, creds.Subscription)
 }
 
 func getServicePrincipal(client *http.Client, creds *am.Credentials) (string, error) {
-	path := fmt.Sprintf("%s/%s/servicePrincipals?api-version=1.5", config.GraphUrl, creds.TenantId)
-	path = path + "&$filter=appId%20eq%20'" + creds.ClientId + "'"
+	path := fmt.Sprintf("%s/%s/servicePrincipals?api-version=1.5", config.GraphURL, creds.TenantID)
+	path = path + "&$filter=appId%20eq%20'" + creds.ClientID + "'"
 	log.Printf("Get Service Principals request: %s\n", path)
 	resp, err := client.Get(path)
 	defer resp.Body.Close()
@@ -65,26 +66,26 @@ func getServicePrincipal(client *http.Client, creds *am.Credentials) (string, er
 	if resp.StatusCode >= 400 {
 		return "", eh.GenericException(fmt.Sprintf("Get Service Principals failed: %s", string(b)))
 	}
-	var response map[string][]*ServicePrincipal
+	var response map[string][]*servicePrincipal
 
 	if err = json.Unmarshal(b, &response); err != nil {
 		return "", eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
 	}
 	principal := response["value"][0]
-	return principal.ObjectId, nil
+	return principal.ObjectID, nil
 }
 
 //Assign RBAC role to Application
-func assignRoleToApp(c *echo.Context, principalId string, subscription string) error {
+func assignRoleToApp(c *echo.Context, principalID string, subscription string) error {
 	name := uuid.New()
 	var properties = map[string]interface{}{
 		"properties": map[string]interface{}{
-			"roleDefinitionId": fmt.Sprintf("/subscriptions/%s/%s/%s", subscription, authPath, roleContributorId),
-			"principalId":      principalId,
+			"roleDefinitionId": fmt.Sprintf("/subscriptions/%s/%s/%s", subscription, authPath, roleContributorID),
+			"principalId":      principalID,
 		},
 	}
 
-	path := fmt.Sprintf("%s/subscriptions/%s/providers/microsoft.authorization/roleassignments/%s?api-version=%s", config.BaseUrl, subscription, name, "2014-10-01-preview")
+	path := fmt.Sprintf("%s/subscriptions/%s/providers/microsoft.authorization/roleassignments/%s?api-version=%s", config.BaseURL, subscription, name, "2014-10-01-preview")
 	log.Printf("Assign RBAC role to Application with params: %s\n", properties)
 	log.Printf("Assign RBAC role to Application path: %s\n", path)
 

@@ -15,23 +15,25 @@ const (
 	subscriptionsPath = "subscriptions"
 )
 
+// Subscription is base struct for Azure Subscription resource
 type Subscription struct {
-	Id             string      `json:"id"`
+	ID             string      `json:"id"`
 	Name           string      `json:"displayName"`
 	State          string      `json:"state"`
-	SubscriptionId string      `json:"subscriptionId"`
+	SubscriptionID string      `json:"subscriptionId"`
 	Policies       interface{} `json:"subscriptionPolicies"`
 }
 
+// SetupSubscriptionRoutes declares routes for Subscription resource
 func SetupSubscriptionRoutes(e *echo.Echo) {
 	// e.Get("/subscriptions", listSubscriptions)
 	// get a current subscription
-	e.Get("/subscription", GetSubscription)
+	e.Get("/subscription", getSubscription)
 }
 
 func listSubscriptions(c *echo.Context) error {
 	client, _ := GetAzureClient(c)
-	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, config.ApiVersion)
+	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseURL, subscriptionsPath, config.APIVersion)
 	log.Printf("Get Subscriptions request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {
@@ -47,9 +49,10 @@ func listSubscriptions(c *echo.Context) error {
 	return c.JSON(resp.StatusCode, dat["value"])
 }
 
-func GetSubscription(c *echo.Context) error {
+// getSubscription return info about subscription provided in creds
+func getSubscription(c *echo.Context) error {
 	client, _ := GetAzureClient(c)
-	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseUrl, subscriptionsPath, *config.SubscriptionIdCred, "2015-01-01")
+	path := fmt.Sprintf("%s/%s/%s?api-version=%s", config.BaseURL, subscriptionsPath, *config.SubscriptionIDCred, "2015-01-01")
 	log.Printf("Get Subscription request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {

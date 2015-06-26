@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	subscriptionIdW            = "test"
 	listInstancesEmptyResponse = `{"value":[]}`
 	listInstancesResponse      = `{"value":[{"href":"/instances/khrvi?group_name=Group-1","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Compute/virtualMachines/khrvi","location":"westus","name":"khrvi","properties":{"hardwareProfile":{"vmSize":"Standard_G1"},"networkProfile":{"networkInterfaces":[{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"}]},"provisioningState":"failed","storageProfile":{"dataDisks":[],"osDisk":{"caching":"ReadWrite","name":"os-asdasdasda-rs","osType":"Linux","vhd":{"uri":"https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"}}}},"type":"Microsoft.Compute/virtualMachines"}]}`
 	listOneInstanceResponse    = `{"href":"/instances/khrvi?group_name=Group-1","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Compute/virtualMachines/khrvi","location":"westus","name":"khrvi","properties":{"hardwareProfile":{"vmSize":"Standard_G1"},"networkProfile":{"networkInterfaces":[{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"}]},"provisioningState":"failed","storageProfile":{"dataDisks":[],"osDisk":{"caching":"ReadWrite","name":"os-asdasdasda-rs","osType":"Linux","vhd":{"uri":"https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"}}}},"type":"Microsoft.Compute/virtualMachines"}`
@@ -29,7 +28,7 @@ var _ = Describe("instances", func() {
 
 	BeforeEach(func() {
 		do = ghttp.NewServer()
-		config.BaseUrl = do.URL()
+		config.BaseURL = do.URL()
 		client = NewAzureClient()
 	})
 
@@ -39,10 +38,9 @@ var _ = Describe("instances", func() {
 
 	Describe("listing", func() {
 		BeforeEach(func() {
-			subscriptionIdW := "test"
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath),
 					ghttp.RespondWith(http.StatusOK, listInstancesResponse),
 				),
 			)
@@ -74,14 +72,14 @@ var _ = Describe("instances", func() {
 
 	Describe("listing via 'flat' route", func() {
 		BeforeEach(func() {
-			subscriptionIdW := "test"
+			subscriptionID := "test"
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups"),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups"),
 					ghttp.RespondWith(http.StatusOK, `{"value": [{"name":"Group-1"}]}`),
 				),
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath),
 					ghttp.RespondWith(http.StatusOK, listInstancesResponse),
 				),
 			)
@@ -115,7 +113,7 @@ var _ = Describe("instances", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath),
 					ghttp.RespondWith(http.StatusOK, listInstancesEmptyResponse),
 				),
 			)
@@ -134,7 +132,7 @@ var _ = Describe("instances", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi"),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi"),
 					ghttp.RespondWith(http.StatusOK, listOneInstanceResponse),
 				),
 			)
@@ -168,7 +166,7 @@ var _ = Describe("instances", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi1"),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi1"),
 					ghttp.RespondWith(http.StatusNotFound, recordNotFound),
 				),
 			)

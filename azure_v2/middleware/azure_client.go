@@ -13,13 +13,12 @@ import (
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
-const (
-	tokenEndpoint = "oauth2/token"
-)
+const tokenEndpoint = "oauth2/token"
 
+// Credentials represents set of creds required for Azure authentication
 type Credentials struct {
-	TenantId     string `json:"tenant"`
-	ClientId     string `json:"client_id"`
+	TenantID     string `json:"tenant"`
+	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	Subscription string `json:"subscription"`
 	GrantType    string
@@ -27,7 +26,8 @@ type Credentials struct {
 	RefreshToken string
 }
 
-type authResponse struct {
+// AuthResponse represents creds gotten from cloud
+type AuthResponse struct {
 	Type         string `json:"token_type"`
 	ExpiresIn    string `json:"expires_in"` // seconds
 	ExpiresOn    string `json:"expires_on"` // seconds
@@ -37,10 +37,10 @@ type authResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	Scope        string `json:scope`
 	Pwd          string `json:pwd_exp`
-	PwdUrl       string `json:pwd_url`
+	PwdURL       string `json:pwd_url`
 }
 
-// Middleware that creates Azure client using credentials in cookie
+// AzureClientInitializer is a middleware that creates Azure client and handles credentials
 func AzureClientInitializer() echo.Middleware {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
@@ -60,16 +60,16 @@ func AzureClientInitializer() echo.Middleware {
 				return eh.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 			}
 
-			subscriptionId, err := GetCookie(c, "SubscriptionId")
+			subscriptionID, err := getCookie(c, "SubscriptionID")
 			if err != nil {
 				if *config.Env == "development" {
-					subscriptionId = *config.SubscriptionIdCred
+					subscriptionID = *config.SubscriptionIDCred
 				}
-				if subscriptionId == "" {
-					return eh.GenericException("The'SubscriptionId' cookie is required.")
+				if subscriptionID == "" {
+					return eh.GenericException("The'SubscriptionID' cookie is required.")
 				}
 			} else {
-				*config.SubscriptionIdCred = subscriptionId
+				*config.SubscriptionIDCred = subscriptionID
 			}
 
 			t := &oauth.Transport{Token: &oauth.Token{AccessToken: accessToken}}
@@ -80,7 +80,7 @@ func AzureClientInitializer() echo.Middleware {
 	}
 }
 
-func GetCookie(c *echo.Context, name string) (string, error) {
+func getCookie(c *echo.Context, name string) (string, error) {
 	cookie, err := c.Request.Cookie(name)
 	if err != nil {
 		return "", eh.GenericException(fmt.Sprintf("cookie '%s' is missing", cookie))
@@ -89,45 +89,44 @@ func GetCookie(c *echo.Context, name string) (string, error) {
 }
 
 func getAccessToken(c *echo.Context) (string, error) {
-	token, err := GetCookie(c, "AccessToken")
+	token, err := getCookie(c, "AccessToken")
 	if err != nil {
 		return refreshAccessToken(c)
-	} else {
-		// get access token from cookies
-		return token, nil
 	}
+	// get access token from cookies
+	return token, nil
 }
 
 func refreshAccessToken(c *echo.Context) (string, error) {
 	creds := new(Credentials)
 	var err error
-	creds.TenantId, err = GetCookie(c, "TenantId")
+	creds.TenantID, err = getCookie(c, "TenantID")
 	if err != nil {
 		if *config.Env == "development" {
-			creds.TenantId = *config.TenantIdCred
+			creds.TenantID = *config.TenantIDCred
 		}
 	}
-	creds.ClientId, err = GetCookie(c, "ClientId")
+	creds.ClientID, err = getCookie(c, "ClientID")
 	if err != nil {
 		if *config.Env == "development" {
-			creds.ClientId = *config.ClientIdCred
+			creds.ClientID = *config.ClientIDCred
 		}
 	}
-	creds.ClientSecret, err = GetCookie(c, "ClientSecret")
+	creds.ClientSecret, err = getCookie(c, "ClientSecret")
 	if err != nil {
 		if *config.Env == "development" {
 			creds.ClientSecret = *config.ClientSecretCred
 		}
 	}
-	creds.RefreshToken, err = GetCookie(c, "RefreshToken")
+	creds.RefreshToken, err = getCookie(c, "RefreshToken")
 	if err != nil {
 		if *config.Env == "development" {
 			creds.RefreshToken = *config.RefreshTokenCred
 		}
 	}
 
-	if creds.TenantId == "" || creds.ClientId == "" || creds.ClientSecret == "" || creds.RefreshToken == "" {
-		return "", eh.GenericException("The credentials are missing in the cookie. Please set 'AccessToken' or combination of 'TenantId', 'ClientId', 'ClientSecret', 'RefreshToken'.")
+	if creds.TenantID == "" || creds.ClientID == "" || creds.ClientSecret == "" || creds.RefreshToken == "" {
+		return "", eh.GenericException("The credentials are missing in the cookie. Please set 'AccessToken' or combination of 'TenantID', 'ClientID', 'ClientSecret', 'RefreshToken'.")
 	}
 	// use client specific access token only while app registration
 	if c.Request.RequestURI == "/application/register" {
@@ -150,10 +149,10 @@ func refreshAccessToken(c *echo.Context) (string, error) {
 	return authResponse.AccessToken, nil
 }
 
-// Build request to redeem authorization code and get access token
-func (c *Credentials) RequestToken() (*authResponse, error) {
+// RequestToken builds request to redeem authorization code and get access token
+func (c *Credentials) RequestToken() (*AuthResponse, error) {
 	data := url.Values{}
-	data.Set("client_id", c.ClientId)
+	data.Set("client_id", c.ClientID)
 	data.Set("client_secret", c.ClientSecret)
 	data.Set("grant_type", c.GrantType)
 	message := c.GrantType
@@ -164,7 +163,7 @@ func (c *Credentials) RequestToken() (*authResponse, error) {
 	if c.RefreshToken != "" {
 		data.Set("refresh_token", c.RefreshToken)
 	}
-	path := fmt.Sprintf("%s/%s/%s", config.AuthHost, c.TenantId, tokenEndpoint)
+	path := fmt.Sprintf("%s/%s/%s", config.AuthHost, c.TenantID, tokenEndpoint)
 	fmt.Printf("Requesting %s: %s\n", message, path)
 	resp, err := http.PostForm(path, data)
 	defer resp.Body.Close()
@@ -179,7 +178,7 @@ func (c *Credentials) RequestToken() (*authResponse, error) {
 	if resp.StatusCode >= 400 {
 		return nil, eh.GenericException(fmt.Sprintf("Access token refreshing failed: %s", string(body)))
 	}
-	var response *authResponse
+	var response *AuthResponse
 
 	if err = json.Unmarshal(body, &response); err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))

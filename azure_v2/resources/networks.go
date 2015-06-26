@@ -14,8 +14,8 @@ const (
 )
 
 type (
-	NetworkResponseParams struct {
-		Id         string      `json:"id,omitempty"`
+	networkResponseParams struct {
+		ID         string      `json:"id,omitempty"`
 		Name       string      `json:"name,omitempty"`
 		Location   string      `json:"location"`
 		Tags       interface{} `json:"tags,omitempty"`
@@ -24,23 +24,26 @@ type (
 		Href       string      `json:"href,omitempty"`
 	}
 
-	NetworkRequestParams struct {
+	networkRequestParams struct {
 		Name       string                 `json:"name,omitempty"`
 		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
-	NetworkCreateParams struct {
+	networkCreateParams struct {
 		Name     string `json:"name,omitempty"`
 		Location string `json:"location,omitempty"`
 		Group    string `json:"group_name,omitempty"`
 	}
+	// Network is base struct for Azure Network resource to store input create params,
+	// request create params and response params gotten from cloud.
 	Network struct {
-		CreateParams   NetworkCreateParams
-		RequestParams  NetworkRequestParams
-		ResponseParams NetworkResponseParams
+		createParams   networkCreateParams
+		requestParams  networkRequestParams
+		responseParams networkResponseParams
 	}
 )
 
+// SetupNetworkRoutes declares routes for IPAddress resource
 func SetupNetworkRoutes(e *echo.Echo) {
 	e.Get("/networks", listNetworks)
 	e.Get("/networks/:id", listOneNetwork)
@@ -61,7 +64,7 @@ func listNetworks(c *echo.Context) error {
 func listOneNetwork(c *echo.Context) error {
 	params := c.Request.Form
 	network := Network{
-		CreateParams: NetworkCreateParams{
+		createParams: networkCreateParams{
 			Name:  c.Param("id"),
 			Group: params.Get("group_name"),
 		},
@@ -77,7 +80,7 @@ func createNetwork(c *echo.Context) error {
 func deleteNetwork(c *echo.Context) error {
 	params := c.Request.Form
 	network := Network{
-		CreateParams: NetworkCreateParams{
+		createParams: networkCreateParams{
 			Name:  c.Param("id"),
 			Group: params.Get("group_name"),
 		},
@@ -85,56 +88,63 @@ func deleteNetwork(c *echo.Context) error {
 	return Delete(c, &network)
 }
 
+// GetRequestParams prepares parameters for create network request to the cloud
 func (n *Network) GetRequestParams(c *echo.Context) (interface{}, error) {
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&n.CreateParams)
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&n.createParams)
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
 	var subnets []map[string]interface{}
-	n.RequestParams.Name = n.CreateParams.Name
-	n.RequestParams.Location = n.CreateParams.Location
-	n.RequestParams.Properties = map[string]interface{}{
+	n.requestParams.Name = n.createParams.Name
+	n.requestParams.Location = n.createParams.Location
+	n.requestParams.Properties = map[string]interface{}{
 		"addressSpace": map[string]interface{}{
 			"addressPrefixes": []string{"10.0.0.0/16"},
 		},
 		"subnets": append(subnets, map[string]interface{}{
-			"name": n.CreateParams.Name,
+			"name": n.createParams.Name,
 			"properties": map[string]interface{}{
 				"addressPrefix": "10.0.0.0/16",
 			},
 		}),
 	}
 
-	return n.RequestParams, nil
+	return n.requestParams, nil
 }
 
+// GetResponseParams is accessor function for getting access to responseParams struct
 func (n *Network) GetResponseParams() interface{} {
-	return n.ResponseParams
+	return n.responseParams
 }
 
+// GetPath returns full path to the sigle network
 func (n *Network) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, n.CreateParams.Group, networkPath, n.CreateParams.Name, config.ApiVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, n.createParams.Group, networkPath, n.createParams.Name, config.APIVersion)
 }
 
+// GetCollectionPath returns full path to the collection of network
 func (n *Network) GetCollectionPath(groupName string) string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, networkPath, config.ApiVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, config.APIVersion)
 }
 
+// HandleResponse manage raw cloud response
 func (n *Network) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &n.ResponseParams)
-	href := n.GetHref(n.CreateParams.Group, n.ResponseParams.Name)
+	json.Unmarshal(body, &n.responseParams)
+	href := n.GetHref(n.createParams.Group, n.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
-		n.ResponseParams.Href = href
+		n.responseParams.Href = href
 	}
 }
 
+// GetContentType returns network content type
 func (n *Network) GetContentType() string {
 	return "vnd.rightscale.network+json"
 }
 
+// GetHref returns network href
 func (n *Network) GetHref(groupName string, networkName string) string {
 	return fmt.Sprintf("/networks/%s?group_name=%s", networkName, groupName)
 }

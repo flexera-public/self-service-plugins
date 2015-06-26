@@ -11,8 +11,9 @@ import (
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
+// Provider is base struct for Azure Provider resource
 type Provider struct {
-	Id                string      `json:"id"`
+	ID                string      `json:"id"`
 	Namespace         string      `json:"namespace"`
 	RegistrationState string      `json:"registrationState"`
 	ResourceTypes     interface{} `json:"resourceTypes"`
@@ -20,9 +21,10 @@ type Provider struct {
 }
 
 const (
-	providerApiVersion = "2015-01-01"
+	providerAPIVersion = "2015-01-01"
 )
 
+// SetupProviderRoutes declares routes for Provider resource
 func SetupProviderRoutes(e *echo.Echo) {
 	e.Get("/providers", listProviders)
 	e.Get("/providers/:provider_name", listOneProvider)
@@ -42,8 +44,8 @@ func listProviders(c *echo.Context) error {
 }
 
 func listOneProvider(c *echo.Context) error {
-	provider_name := c.Param("provider_name")
-	body, err := getProviders(c, provider_name)
+	providerName := c.Param("provider_name")
+	body, err := getProviders(c, providerName)
 	if err != nil {
 		return err
 	}
@@ -55,8 +57,8 @@ func listOneProvider(c *echo.Context) error {
 }
 
 func registerProvider(c *echo.Context) error {
-	provider_name := c.Param("provider_name")
-	body, err := getProviders(c, provider_name)
+	providerName := c.Param("provider_name")
+	body, err := getProviders(c, providerName)
 	if err != nil {
 		return err
 	}
@@ -67,8 +69,8 @@ func registerProvider(c *echo.Context) error {
 	if dat.RegistrationState == "NotRegistered" {
 		log.Printf("Register required: \n")
 		client, _ := GetAzureClient(c)
-		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
-		log.Printf("Registering Provider %s: %s\n", provider_name, path)
+		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerName, providerAPIVersion)
+		log.Printf("Registering Provider %s: %s\n", providerName, path)
 		resp, err := client.PostForm(path, nil)
 		if err != nil {
 			return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
@@ -83,14 +85,14 @@ func registerProvider(c *echo.Context) error {
 	}
 
 	return &echo.HTTPError{
-		Message: fmt.Sprintf("Provider %s already registered.", provider_name),
+		Message: fmt.Sprintf("Provider %s already registered.", providerName),
 		Code:    400,
 	}
 }
 
-func getProviders(c *echo.Context, provider_name string) ([]byte, error) {
+func getProviders(c *echo.Context, providerName string) ([]byte, error) {
 	client, _ := GetAzureClient(c)
-	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, provider_name, providerApiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerName, providerAPIVersion)
 	log.Printf("Get Providers request: %s\n", path)
 	resp, err := client.Get(path)
 	if err != nil {

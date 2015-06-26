@@ -10,28 +10,31 @@ import (
 )
 
 type (
-	ResourceGroupResponseParams struct {
-		Id         string      `json:"id,omitempty"`
+	resourceGroupResponseParams struct {
+		ID         string      `json:"id,omitempty"`
 		Name       string      `json:"name,omitempty,omitempty"`
 		Location   string      `json:"location,omitempty"`
 		Properties interface{} `json:"properties,omitempty"`
 		Href       string      `json:"href,omitempty"`
 	}
 
-	ResourceGroupRequestParams struct {
+	resourceGroupRequestParams struct {
 		Location string `json:"location"`
 	}
-	ResourceGroupCreateParams struct {
+	resourceGroupCreateParams struct {
 		Name     string `json:"name,omitempty"`
 		Location string `json:"location,omitempty"`
 	}
+	// ResourceGroup is base struct for Azure Resource Group resource to store input create params,
+	// request create params and response params gotten from cloud.
 	ResourceGroup struct {
-		CreateParams   ResourceGroupCreateParams
-		RequestParams  ResourceGroupRequestParams
-		ResponseParams ResourceGroupResponseParams
+		createParams   resourceGroupCreateParams
+		requestParams  resourceGroupRequestParams
+		responseParams resourceGroupResponseParams
 	}
 )
 
+// SetupGroupsRoutes declares routes for resource group resource
 func SetupGroupsRoutes(e *echo.Echo) {
 	e.Get("/resource_groups", listResourceGroups)
 	e.Get("/resource_groups/:id", listOneResourceGroup)
@@ -45,7 +48,7 @@ func listResourceGroups(c *echo.Context) error {
 
 func listOneResourceGroup(c *echo.Context) error {
 	group := ResourceGroup{
-		CreateParams: ResourceGroupCreateParams{
+		createParams: resourceGroupCreateParams{
 			Name: c.Param("id"),
 		},
 	}
@@ -59,50 +62,57 @@ func createResourceGroup(c *echo.Context) error {
 
 func deleteResourceGroup(c *echo.Context) error {
 	group := ResourceGroup{
-		CreateParams: ResourceGroupCreateParams{
+		createParams: resourceGroupCreateParams{
 			Name: c.Param("id"),
 		},
 	}
 	return Delete(c, &group)
 }
 
+// GetRequestParams prepares parameters for create resource group request to the cloud
 func (rg *ResourceGroup) GetRequestParams(c *echo.Context) (interface{}, error) {
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&rg.CreateParams)
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&rg.createParams)
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
-	rg.RequestParams.Location = rg.CreateParams.Location
+	rg.requestParams.Location = rg.createParams.Location
 
-	return rg.RequestParams, nil
+	return rg.requestParams, nil
 }
 
+// GetResponseParams is accessor function for getting access to responseParams struct
 func (rg *ResourceGroup) GetResponseParams() interface{} {
-	return rg.ResponseParams
+	return rg.responseParams
 }
 
+// GetPath returns full path to the sigle resource group
 func (rg *ResourceGroup) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, rg.CreateParams.Name, "2015-01-01")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, rg.createParams.Name, "2015-01-01")
 }
 
+// GetCollectionPath returns full path to the collection of resource groups
 func (rg *ResourceGroup) GetCollectionPath(_ string) string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, "2015-01-01")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
 }
 
+// HandleResponse manage raw cloud response
 func (rg *ResourceGroup) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &rg.ResponseParams)
-	href := rg.GetHref(rg.ResponseParams.Name, "")
+	json.Unmarshal(body, &rg.responseParams)
+	href := rg.GetHref(rg.responseParams.Name, "")
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
-		rg.ResponseParams.Href = href
+		rg.responseParams.Href = href
 	}
 }
 
+// GetContentType returns resource group content type
 func (rg *ResourceGroup) GetContentType() string {
 	return "vnd.rightscale.resource_group+json"
 }
 
+// GetHref returns resource group href
 func (rg *ResourceGroup) GetHref(groupName string, _ string) string {
 	return fmt.Sprintf("/resource_groups/%s", groupName)
 }

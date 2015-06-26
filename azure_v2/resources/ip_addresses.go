@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	IpAddressPath = "providers/Microsoft.Network/publicIPAddresses"
+	ipAddressPath = "providers/Microsoft.Network/publicIPAddresses"
 )
 
 type (
-	IpAddressResponseParams struct {
-		Id         string      `json:"id,omitempty"`
+	ipAddressResponseParams struct {
+		ID         string      `json:"id,omitempty"`
 		Name       string      `json:"name,omitempty"`
 		Location   string      `json:"location"`
 		Tags       interface{} `json:"tags,omitempty"`
@@ -24,108 +24,118 @@ type (
 		Href       string      `json:"href,omitempty"`
 	}
 
-	IpAddressRequestParams struct {
+	ipAddressRequestParams struct {
 		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
-	IpAddressCreateParams struct {
+	ipAddressCreateParams struct {
 		Name     string `json:"name,omitempty"`
 		Location string `json:"location,omitempty"`
 		Group    string `json:"group_name,omitempty"`
 	}
-	IpAddress struct {
-		CreateParams   IpAddressCreateParams
-		RequestParams  IpAddressRequestParams
-		ResponseParams IpAddressResponseParams
+	// IPAddress is base struct for Azure Public IP Address resource to store input create params,
+	// request create params and response params gotten from cloud.
+	IPAddress struct {
+		createParams   ipAddressCreateParams
+		requestParams  ipAddressRequestParams
+		responseParams ipAddressResponseParams
 	}
 )
 
-func SetupIpAddressesRoutes(e *echo.Echo) {
-	e.Get("/ip_addresses", listIpAddresses)
-	e.Get("/ip_addresses/:id", listOneIpAddress)
-	e.Post("/ip_addresses", createIpAddress)
-	e.Delete("/ip_addresses/:id", deleteIpAddress)
+// SetupIPAddressesRoutes declares routes for IPAddress resource
+func SetupIPAddressesRoutes(e *echo.Echo) {
+	e.Get("/ip_addresses", listIPAddresses)
+	e.Get("/ip_addresses/:id", listOneIPAddress)
+	e.Post("/ip_addresses", createIPAddress)
+	e.Delete("/ip_addresses/:id", deleteIPAddress)
 
 	//nested routes
 	//group := e.Group("/resource_groups/:group_name/ip_addresses")
-	//group.Get("", listIpAddresses)
-	//group.Post("", createIpAddress)
-	//group.Delete("/:id", deleteIpAddress)
+	//group.Get("", listIPAddresses)
+	//group.Post("", createIPAddress)
+	//group.Delete("/:id", deleteIPAddress)
 }
 
-func listIpAddresses(c *echo.Context) error {
-	return List(c, new(IpAddress))
+func listIPAddresses(c *echo.Context) error {
+	return List(c, new(IPAddress))
 }
 
-func listOneIpAddress(c *echo.Context) error {
+func listOneIPAddress(c *echo.Context) error {
 	params := c.Request.Form
-	ip_address := IpAddress{
-		CreateParams: IpAddressCreateParams{
+	ipAddress := IPAddress{
+		createParams: ipAddressCreateParams{
 			Name:  c.Param("id"),
 			Group: params.Get("group_name"),
 		},
 	}
-	return Get(c, &ip_address)
+	return Get(c, &ipAddress)
 }
 
-func createIpAddress(c *echo.Context) error {
-	ip_address := new(IpAddress)
-	return Create(c, ip_address)
+func createIPAddress(c *echo.Context) error {
+	ipAddress := new(IPAddress)
+	return Create(c, ipAddress)
 }
 
-func deleteIpAddress(c *echo.Context) error {
+func deleteIPAddress(c *echo.Context) error {
 	params := c.Request.Form
-	ip_address := IpAddress{
-		CreateParams: IpAddressCreateParams{
+	ipAddress := IPAddress{
+		createParams: ipAddressCreateParams{
 			Name:  c.Param("id"),
 			Group: params.Get("group_name"),
 		},
 	}
-	return Delete(c, &ip_address)
+	return Delete(c, &ipAddress)
 }
 
-func (ip *IpAddress) GetRequestParams(c *echo.Context) (interface{}, error) {
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&ip.CreateParams)
+// GetRequestParams prepares parameters for create ip adderss request to the cloud
+func (ip *IPAddress) GetRequestParams(c *echo.Context) (interface{}, error) {
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&ip.createParams)
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
-	ip.RequestParams.Location = ip.CreateParams.Location
-	ip.RequestParams.Properties = map[string]interface{}{
+	ip.requestParams.Location = ip.createParams.Location
+	ip.requestParams.Properties = map[string]interface{}{
 		"publicIPAllocationMethod": "Dynamic",
 		//"dnsSettings":   map[string]interface{}{
 		//	"domainNameLabel": postParams.Get("domain_name")
 		//}
 	}
-	return ip.RequestParams, nil
+	return ip.requestParams, nil
 }
 
-func (ip *IpAddress) GetResponseParams() interface{} {
-	return ip.ResponseParams
+// GetResponseParams is accessor function for getting access to responseParams struct
+func (ip *IPAddress) GetResponseParams() interface{} {
+	return ip.responseParams
 }
 
-func (ip *IpAddress) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, ip.CreateParams.Group, IpAddressPath, ip.CreateParams.Name, config.ApiVersion)
+// GetPath returns full path to the sigle ip address
+func (ip *IPAddress) GetPath() string {
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ip.createParams.Group, ipAddressPath, ip.createParams.Name, config.APIVersion)
 }
 
-func (ip *IpAddress) GetCollectionPath(groupName string) string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, IpAddressPath, config.ApiVersion)
+// GetCollectionPath returns full path to the collection of ip addresses
+func (ip *IPAddress) GetCollectionPath(groupName string) string {
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, ipAddressPath, config.APIVersion)
 }
 
-func (ip *IpAddress) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &ip.ResponseParams)
-	href := ip.GetHref(ip.CreateParams.Group, ip.ResponseParams.Name)
+// HandleResponse manage raw cloud response
+func (ip *IPAddress) HandleResponse(c *echo.Context, body []byte, actionName string) {
+	json.Unmarshal(body, &ip.responseParams)
+	href := ip.GetHref(ip.createParams.Group, ip.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
-		ip.ResponseParams.Href = href
+		ip.responseParams.Href = href
 	}
 }
 
-func (ip *IpAddress) GetContentType() string {
+// GetContentType returns ip address content type
+func (ip *IPAddress) GetContentType() string {
 	return "vnd.rightscale.ip_address+json"
 }
 
-func (ip *IpAddress) GetHref(groupName string, ipAddressName string) string {
+// GetHref returns ip address href
+func (ip *IPAddress) GetHref(groupName string, ipAddressName string) string {
 	return fmt.Sprintf("/ip_addresses/%s?group_name=%s", ipAddressName, groupName)
 }

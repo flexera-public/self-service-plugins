@@ -24,7 +24,7 @@ var _ = Describe("operations", func() {
 
 	BeforeEach(func() {
 		do = ghttp.NewServer()
-		config.BaseUrl = do.URL()
+		config.BaseURL = do.URL()
 		client = NewAzureClient()
 	})
 
@@ -36,7 +36,7 @@ var _ = Describe("operations", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/providers/Microsoft.Compute/locations/westus/operations/khrvi"),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/providers/Microsoft.Compute/locations/westus/operations/khrvi"),
 					ghttp.RespondWith(http.StatusOK, listOneOperationResponse),
 				),
 			)
@@ -70,7 +70,7 @@ var _ = Describe("operations", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionIdW+"/providers/Microsoft.Compute/locations/westus/operations/khrvi1"),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/providers/Microsoft.Compute/locations/westus/operations/khrvi1"),
 					ghttp.RespondWith(http.StatusNotFound, recordNotFound),
 				),
 			)

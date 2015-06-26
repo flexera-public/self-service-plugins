@@ -14,8 +14,8 @@ const (
 )
 
 type (
-	ResponseParams struct {
-		Id                string                 `json:"id,omitempty"`
+	responseParams struct {
+		ID                string                 `json:"id,omitempty"`
 		Type              string                 `json:"type,omitempty"`
 		Name              string                 `json:"name"`
 		Location          string                 `json:"location"`
@@ -28,24 +28,28 @@ type (
 		Href              string                 `json:"href,omitempty"`
 	}
 
-	RequestParams struct {
+	requestParams struct {
 		Name       string                 `json:"name"`
 		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
-	CreateParams struct {
+	createParams struct {
 		Name     string `json:"name,omitempty"`
 		Location string `json:"location,omitempty"`
 		Size     string `json:"instance_type_uid,omitempty"`
 		Group    string `json:"group_name,omitempty"`
 	}
+
+	// Instance is base struct for Azure VM resource to store input create params,
+	// request create params and response params gotten from cloud.
 	Instance struct {
-		CreateParams
-		RequestParams
-		ResponseParams
+		createParams
+		requestParams
+		responseParams
 	}
 )
 
+// SetupInstanceRoutes declares routes for Instance resource
 func SetupInstanceRoutes(e *echo.Echo) {
 	//get all instances from all groups
 	e.Get("/instances", listInstances)
@@ -66,7 +70,7 @@ func listInstances(c *echo.Context) error {
 func listOneInstance(c *echo.Context) error {
 	params := c.Request.Form
 	instance := Instance{
-		CreateParams: CreateParams{
+		createParams: createParams{
 			Name:  c.Param("id"),
 			Group: params.Get("group_name"),
 		},
@@ -84,7 +88,7 @@ func createInstance(c *echo.Context) error {
 func deleteInstance(c *echo.Context) error {
 	params := c.Request.Form
 	instance := Instance{
-		CreateParams: CreateParams{
+		createParams: createParams{
 			Name:  c.Param("id"),
 			Group: params.Get("group_name"),
 		},
@@ -92,16 +96,17 @@ func deleteInstance(c *echo.Context) error {
 	return Delete(c, &instance)
 }
 
+// GetRequestParams prepares parameters for create instance request to the cloud
 func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
-	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&i.CreateParams)
+	err := c.Get("bodyDecoder").(*json.Decoder).Decode(&i.createParams)
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 	var networkInterfaces []map[string]interface{}
-	i.RequestParams.Name = i.CreateParams.Name
-	i.RequestParams.Location = i.CreateParams.Location
-	i.RequestParams.Properties = map[string]interface{}{
-		"hardwareProfile": map[string]interface{}{"vmSize": i.CreateParams.Size},
+	i.requestParams.Name = i.createParams.Name
+	i.requestParams.Location = i.createParams.Location
+	i.requestParams.Properties = map[string]interface{}{
+		"hardwareProfile": map[string]interface{}{"vmSize": i.createParams.Size},
 		//"storageProfile":{"imageReference":{"publisher":"CoreOS","offer":"CoreOS","sku":"Alpha","version":"660.0.0"},"osDisk":{"name":"cli64174115e3045f57-os-1434041634239","vhd":{"uri":"https://cli64174115e3045f5714340.blob.core.windows.net/vhds/cli64174115e3045f57-os-1434041634239.vhd"},"caching":"ReadWrite","createOption":"FromImage"}}
 		"storageProfile": map[string]interface{}{
 			"imageReference": map[string]interface{}{
@@ -115,9 +120,9 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 				"caching":      "ReadWrite",
 				"createOption": "FromImage",
 				"vhd": map[string]interface{}{
-					"uri": "https://khrvitestgo1.blob.core.windows.net/vhds/cli64174115e3045f57-os-" + i.CreateParams.Name + ".vhd",
+					"uri": "https://khrvitestgo1.blob.core.windows.net/vhds/cli64174115e3045f57-os-" + i.createParams.Name + ".vhd",
 				},
-				"name": "cli64174115e3045f57-os-" + i.CreateParams.Name,
+				"name": "cli64174115e3045f57-os-" + i.createParams.Name,
 				//"osType": "Windows",
 			},
 		},
@@ -133,35 +138,41 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 			}),
 		},
 	}
-	return i.RequestParams, nil
+	return i.requestParams, nil
 }
 
+// GetResponseParams is accessor function for getting access to responseParams struct
 func (i *Instance) GetResponseParams() interface{} {
-	return i.ResponseParams
+	return i.responseParams
 }
 
+// GetPath returns full path to the sigle instance
 func (i *Instance) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, i.CreateParams.Group, virtualMachinesPath, i.CreateParams.Name, "2015-05-01-preview")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, i.createParams.Group, virtualMachinesPath, i.createParams.Name, "2015-05-01-preview")
 }
 
+// GetCollectionPath returns full path to the collection of instances
 func (i *Instance) GetCollectionPath(groupName string) string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseUrl, *config.SubscriptionIdCred, groupName, virtualMachinesPath, "2015-05-01-preview")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, virtualMachinesPath, "2015-05-01-preview")
 }
 
+// HandleResponse manage raw cloud response
 func (i *Instance) HandleResponse(c *echo.Context, body []byte, actionName string) {
-	json.Unmarshal(body, &i.ResponseParams)
-	href := i.GetHref(i.CreateParams.Group, i.ResponseParams.Name)
+	json.Unmarshal(body, &i.responseParams)
+	href := i.GetHref(i.createParams.Group, i.responseParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
-		i.ResponseParams.Href = href
+		i.responseParams.Href = href
 	}
 }
 
+// GetContentType returns instance content type
 func (i *Instance) GetContentType() string {
 	return "vnd.rightscale.instance+json"
 }
 
+// GetHref returns instance href
 func (i *Instance) GetHref(groupName string, instanceName string) string {
 	return fmt.Sprintf("/instances/%s?group_name=%s", instanceName, groupName)
 }
