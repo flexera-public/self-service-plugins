@@ -55,3 +55,12 @@ func RecordNotFound(resourceID string) error {
 		Code:    404,
 	})
 }
+
+// InvalidParamException returns generic error massage for invalid value of paramName
+func InvalidParamException(paramName string) error {
+	message := fmt.Sprintf("You have specified an invalid '%s' parameter.", paramName)
+	return errors.New(&echo.HTTPError{
+		Message: message,
+		Code:    400,
+	})
+}

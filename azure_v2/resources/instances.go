@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -10,7 +11,9 @@ import (
 )
 
 const (
-	virtualMachinesPath = "providers/Microsoft.Compute/virtualMachines"
+	virtualMachinesPath  = "providers/Microsoft.Compute/virtualMachines"
+	defaultAdminUserName = "rsadministrator"
+	defaultAdminPassword = "Pass1234@"
 )
 
 type (
@@ -34,10 +37,16 @@ type (
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	createParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
-		Size     string `json:"instance_type_uid,omitempty"`
-		Group    string `json:"group_name,omitempty"`
+		Name               string `json:"name,omitempty"`
+		Location           string `json:"location,omitempty"`
+		Size               string `json:"instance_type_uid,omitempty"`
+		Group              string `json:"group_name,omitempty"`
+		NetworkInterfaceID string `json:"network_interface_id,omitempty"`
+		ImageID            string `json:"image_id,omitempty"`
+		StorageAccountID   string `json:"storage_account_id,omitempty"`
+		HostName           string `json:"host_name,omitempty"`
+		AdminUserName      string `json:"admin_user_name,omitempty"`
+		AdminPassword      string `json:"admin_password,omitempty"`
 	}
 
 	// Instance is base struct for Azure VM resource to store input create params,
@@ -102,6 +111,55 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 	i.createParams.Group = c.Param("group_name")
+
+	//TODO: make a func for validating createParams and return all errors at once
+	if i.createParams.Name == "" {
+		return nil, eh.InvalidParamException("name")
+	}
+
+	if i.createParams.Location == "" {
+		return nil, eh.InvalidParamException("location")
+	}
+
+	if i.createParams.ImageID == "" {
+		return nil, eh.InvalidParamException("image_id")
+	}
+
+	array := strings.Split(i.createParams.ImageID, "/")
+	if len(array) != 16 {
+		return nil, eh.InvalidParamException("image_id")
+	}
+
+	publisher := array[7]
+	offer := array[11]
+	sku := array[13]
+	version := array[15]
+
+	if i.createParams.StorageAccountID == "" {
+		return nil, eh.InvalidParamException("storage_account_id")
+	}
+
+	if i.createParams.Size == "" {
+		return nil, eh.InvalidParamException("instance_type_id")
+	}
+
+	array = strings.Split(i.createParams.StorageAccountID, "/")
+	storageName := array[len(array)-1]
+
+	hostName := i.createParams.HostName
+	if hostName == "" {
+		hostName = i.createParams.Name
+	}
+
+	adminName := i.createParams.AdminUserName
+	if adminName == "" {
+		adminName = defaultAdminUserName
+	}
+	adminPassword := i.createParams.AdminPassword
+	if adminPassword == "" {
+		adminPassword = defaultAdminPassword
+	}
+
 	var networkInterfaces []map[string]interface{}
 	i.requestParams.Name = i.createParams.Name
 	i.requestParams.Location = i.createParams.Location
@@ -110,31 +168,31 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		//"storageProfile":{"imageReference":{"publisher":"CoreOS","offer":"CoreOS","sku":"Alpha","version":"660.0.0"},"osDisk":{"name":"cli64174115e3045f57-os-1434041634239","vhd":{"uri":"https://cli64174115e3045f5714340.blob.core.windows.net/vhds/cli64174115e3045f57-os-1434041634239.vhd"},"caching":"ReadWrite","createOption":"FromImage"}}
 		"storageProfile": map[string]interface{}{
 			"imageReference": map[string]interface{}{
-				"publisher": "Canonical",         //publisher,
-				"offer":     "Ubuntu15.04Snappy", //offer,
-				"sku":       "15.04-Snappy",      //sku,
-				"version":   "15.04.201505060",   //version,
+				"publisher": publisher, //"Canonical",
+				"offer":     offer,     //"Ubuntu15.04Snappy",
+				"sku":       sku,       //"15.04-Snappy",
+				"version":   version,   //"15.04.201505060",
 			},
 
 			"osDisk": map[string]interface{}{
 				"caching":      "ReadWrite",
 				"createOption": "FromImage",
 				"vhd": map[string]interface{}{
-					"uri": "https://khrvitestgo1.blob.core.windows.net/vhds/cli64174115e3045f57-os-" + i.createParams.Name + ".vhd",
+					"uri": "https://" + storageName + ".blob.core.windows.net/vhds/os-" + i.createParams.Name + "-rs.vhd",
 				},
-				"name": "cli64174115e3045f57-os-" + i.createParams.Name,
+				"name": "os-" + i.createParams.Name + "-rs",
 				//"osType": "Windows",
 			},
 		},
 		"osProfile": map[string]interface{}{
-			"computerName":  "khrvi",
-			"adminUsername": "azureuser",
-			"adminPassword": "Pass1234@",
+			"computerName":  hostName,
+			"adminUsername": adminName,
+			"adminPassword": adminPassword,
 			//"linuxConfiguration":{"disablePasswordAuthentication":false}
 		},
 		"networkProfile": map[string]interface{}{
 			"networkInterfaces": append(networkInterfaces, map[string]interface{}{
-				"id": "/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni",
+				"id": i.createParams.NetworkInterfaceID,
 			}),
 		},
 	}
