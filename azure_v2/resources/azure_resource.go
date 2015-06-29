@@ -16,12 +16,23 @@ import (
 
 // AzureResource is interface which should support every resource in order to use generic functions List/Get/Create/Delete
 type AzureResource interface {
+	// GetRequestParams should return params for sending to the cloud.
+	// Decodes body params and populate requestParams struct
 	GetRequestParams(*echo.Context) (interface{}, error)
+	// GetResponseParams should return response params prepared usually by HandleResponse func.
 	GetResponseParams() interface{}
+	// GetPath should return path to single resource.
+	// Builds path from createParams
 	GetPath() string
+	// GetCollectionPath should return path to collection of resource.
+	// Input parameter is a parent id (ex: group_name)
 	GetCollectionPath(string) string
+	// HandleResponse could contain varyity of handlers for different actions if needed but the main aim of it
+	// is to get raw response (second param), handle it (ex: unmarshal) and modify response params (responseParams) or response header.
 	HandleResponse(*echo.Context, []byte, string) error
+	// GetContentType should return content type of the resource
 	GetContentType() string
+	// GetHref should return href of the resource. Two input params usually parent id and resource id.
 	GetHref(string, string) string
 }
 
