@@ -46,15 +46,16 @@ type (
 // SetupNetworkRoutes declares routes for IPAddress resource
 func SetupNetworkRoutes(e *echo.Echo) {
 	e.Get("/networks", listNetworks)
-	e.Get("/networks/:id", listOneNetwork)
-	e.Post("/networks", createNetwork)
-	e.Delete("/networks/:id", deleteNetwork)
+	// e.Get("/networks/:id", listOneNetwork)
+	// e.Post("/networks", createNetwork)
+	// e.Delete("/networks/:id", deleteNetwork)
 
 	//nested routes
-	// group := e.Group("/resource_groups/:group_name/networks")
-	// group.Get("", listNetworks)
-	// group.Post("", createNetwork)
-	// group.Delete("/:id", deleteNetwork)
+	group := e.Group("/resource_groups/:group_name/networks")
+	group.Get("", listNetworks)
+	group.Get("/:id", listOneNetwork)
+	group.Post("", createNetwork)
+	group.Delete("/:id", deleteNetwork)
 }
 
 func listNetworks(c *echo.Context) error {
@@ -62,11 +63,10 @@ func listNetworks(c *echo.Context) error {
 }
 
 func listOneNetwork(c *echo.Context) error {
-	params := c.Request.Form
 	network := Network{
 		createParams: networkCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Get(c, &network)
@@ -78,11 +78,10 @@ func createNetwork(c *echo.Context) error {
 }
 
 func deleteNetwork(c *echo.Context) error {
-	params := c.Request.Form
 	network := Network{
 		createParams: networkCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Delete(c, &network)
@@ -94,6 +93,7 @@ func (n *Network) GetRequestParams(c *echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
+	n.createParams.Group = c.Param("group_name")
 
 	var subnets []map[string]interface{}
 	n.requestParams.Name = n.createParams.Name
@@ -149,5 +149,5 @@ func (n *Network) GetContentType() string {
 
 // GetHref returns network href
 func (n *Network) GetHref(groupName string, networkName string) string {
-	return fmt.Sprintf("/networks/%s?group_name=%s", networkName, groupName)
+	return fmt.Sprintf("/resource_groups/%s/networks/%s?group_name=%s", groupName, networkName)
 }

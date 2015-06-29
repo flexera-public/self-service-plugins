@@ -29,14 +29,13 @@ type (
 
 // SetupOperationRoutes declares routes for Operation resource
 func SetupOperationRoutes(e *echo.Echo) {
-	e.Get("/operations/:id", listOneOperation)
+	e.Get("/locations/:location/operations/:id", listOneOperation)
 }
 
 func listOneOperation(c *echo.Context) error {
-	params := c.Request.Form
 	operation := Operation{
 		Name:     c.Param("id"),
-		Location: params.Get("location"),
+		Location: c.Param("location"),
 	}
 	return Get(c, &operation)
 }
@@ -56,8 +55,7 @@ func (o *Operation) HandleResponse(c *echo.Context, body []byte, actionName stri
 	if err := json.Unmarshal(body, &o.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := o.GetHref(o.responseParams.OperationID, o.Location)
-	o.responseParams.Href = href
+	o.responseParams.Href = o.GetHref(o.responseParams.OperationID, o.Location)
 	return nil
 }
 
@@ -68,7 +66,7 @@ func (o *Operation) GetContentType() string {
 
 // GetHref returns operation href
 func (o *Operation) GetHref(operationID string, location string) string {
-	return fmt.Sprintf("/operations/%s?location=%s", operationID, location)
+	return fmt.Sprintf("/locations/%s/operations/%s", location, operationID)
 }
 
 //GetCollectionPath is a fake function to support AzureResource by Operation

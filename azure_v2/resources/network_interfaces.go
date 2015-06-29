@@ -46,15 +46,16 @@ type (
 // SetupNetworkInterfacesRoutes declares routes for IPAddress resource
 func SetupNetworkInterfacesRoutes(e *echo.Echo) {
 	e.Get("/network_interfaces", listNetworkInterfaces)
-	e.Get("/network_interfaces/:id", listOneNetworkInterface)
-	e.Post("/network_interfaces", createNetworkInterface)
-	e.Delete("/network_interfaces/:id", deleteNetworkInterface)
+	// e.Get("/network_interfaces/:id", listOneNetworkInterface)
+	// e.Post("/network_interfaces", createNetworkInterface)
+	// e.Delete("/network_interfaces/:id", deleteNetworkInterface)
 
 	//nested routes
-	// group := e.Group("/resource_groups/:group_name/network_interfaces")
-	// group.Get("", listNetworkInterfaces)
-	//group.Post("", createNetworkInterface)
-	//group.Delete("/:id", deleteNetworkInterface)
+	group := e.Group("/resource_groups/:group_name/network_interfaces")
+	group.Get("", listNetworkInterfaces)
+	group.Get("/:id", listOneNetworkInterface)
+	group.Post("", createNetworkInterface)
+	group.Delete("/:id", deleteNetworkInterface)
 }
 
 func listNetworkInterfaces(c *echo.Context) error {
@@ -62,11 +63,10 @@ func listNetworkInterfaces(c *echo.Context) error {
 }
 
 func listOneNetworkInterface(c *echo.Context) error {
-	params := c.Request.Form
 	networkInterface := NetworkInterface{
 		createParams: networkInterfaceCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Get(c, &networkInterface)
@@ -78,11 +78,10 @@ func createNetworkInterface(c *echo.Context) error {
 }
 
 func deleteNetworkInterface(c *echo.Context) error {
-	params := c.Request.Form
 	networkInterface := NetworkInterface{
 		createParams: networkInterfaceCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Delete(c, &networkInterface)
@@ -94,6 +93,7 @@ func (ni *NetworkInterface) GetRequestParams(c *echo.Context) (interface{}, erro
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
+	ni.createParams.Group = c.Param("group_name")
 
 	var configs []map[string]interface{}
 	ni.requestParams.Location = ni.createParams.Location
@@ -155,5 +155,5 @@ func (ni *NetworkInterface) GetContentType() string {
 
 // GetHref returns network interface href
 func (ni *NetworkInterface) GetHref(groupName string, interfaceName string) string {
-	return fmt.Sprintf("/network_interfa/%s?group_name=%s", interfaceName, groupName)
+	return fmt.Sprintf("/resource_groups/%s/network_interfaces/%s", groupName, interfaceName)
 }

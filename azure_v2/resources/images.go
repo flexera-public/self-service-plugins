@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
-	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
 const (
@@ -15,16 +14,17 @@ const (
 // SetupImageRoutes declares routes for Image resource
 func SetupImageRoutes(e *echo.Echo) {
 	e.Get("/locations", listLocations)
-	e.Get("/publishers", listPublishers)
-	e.Get("/offers", listOffers)
-	e.Get("/skus", listSkus)
-	e.Get("/versions", listVersions)
-	e.Get("/images", listImages)
+	e.Get("/locations/:location/images", listImages)
+
+	//temporal routes
+	e.Get("/locations/:location/publishers", listPublishers)
+	e.Get("/locations/:location/publishers/:publisher/offers", listOffers)
+	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus", listSkus)
+	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus/:sku/versions", listVersions)
 }
 
 func listImages(c *echo.Context) error {
-	params := c.Request.Form
-	location := params.Get("location")
+	location := c.Param("location")
 	publishers, err := getPublishers(c, location)
 	if err != nil {
 		return err
@@ -63,8 +63,7 @@ func getLocations(c *echo.Context) ([]map[string]interface{}, error) {
 }
 
 func listPublishers(c *echo.Context) error {
-	params := c.Request.Form
-	location := params.Get("location")
+	location := c.Param("location")
 	var locations []map[string]interface{}
 	var err error
 	if location == "" {
@@ -100,12 +99,8 @@ func getPublishers(c *echo.Context, locationName string) ([]map[string]interface
 	return publishers, nil
 }
 func listOffers(c *echo.Context) error {
-	params := c.Request.Form
-	location := params.Get("location")
-	publisher := params.Get("publisher")
-	if location == "" || publisher == "" {
-		return eh.GenericException("Please specify both params 'location' and 'publisher'.")
-	}
+	location := c.Param("location")
+	publisher := c.Param("publisher")
 	offers, err := getOffers(c, location, publisher)
 	if err != nil {
 		return err
@@ -123,13 +118,9 @@ func getOffers(c *echo.Context, locationName string, publisherName string) ([]ma
 }
 
 func listSkus(c *echo.Context) error {
-	params := c.Request.Form
-	location := params.Get("location")
-	publisher := params.Get("publisher")
-	offer := params.Get("offer")
-	if location == "" || publisher == "" || offer == "" {
-		return eh.GenericException("Please specify the follwing params: 'location', 'publisher' and 'offer'.")
-	}
+	location := c.Param("location")
+	publisher := c.Param("publisher")
+	offer := c.Param("offer")
 	skus, err := getSkus(c, location, publisher, offer)
 	if err != nil {
 		return err
@@ -147,14 +138,10 @@ func getSkus(c *echo.Context, locationName string, publisherName string, offerNa
 }
 
 func listVersions(c *echo.Context) error {
-	params := c.Request.Form
-	location := params.Get("location")
-	publisher := params.Get("publisher")
-	offer := params.Get("offer")
-	sku := params.Get("sku")
-	if location == "" || publisher == "" || offer == "" || sku == "" {
-		return eh.GenericException("Please specify the follwing params: 'location', 'publisher', 'offer' and 'sku'.")
-	}
+	location := c.Param("location")
+	publisher := c.Param("publisher")
+	offer := c.Param("offer")
+	sku := c.Param("sku")
 	versions, err := getVersions(c, location, publisher, offer, sku)
 	if err != nil {
 		return err

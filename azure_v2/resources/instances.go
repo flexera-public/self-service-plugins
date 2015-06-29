@@ -53,26 +53,26 @@ type (
 func SetupInstanceRoutes(e *echo.Echo) {
 	//get all instances from all groups
 	e.Get("/instances", listInstances)
-	e.Get("/instances/:id", listOneInstance)
-	e.Post("/instances", createInstance)
-	e.Delete("/instances/:id", deleteInstance)
+	// e.Get("/instances/:id", listOneInstance)
+	// e.Post("/instances", createInstance)
+	// e.Delete("/instances/:id", deleteInstance)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/instances")
 	group.Get("", listInstances)
-	//group.Post("", createInstance)
-	//group.Delete("/:id", deleteInstance)
+	group.Get("/:id", listOneInstance)
+	group.Post("", createInstance)
+	group.Delete("/:id", deleteInstance)
 }
 
 func listInstances(c *echo.Context) error {
 	return List(c, new(Instance))
 }
 func listOneInstance(c *echo.Context) error {
-	params := c.Request.Form
 	instance := Instance{
 		createParams: createParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Get(c, &instance)
@@ -86,11 +86,10 @@ func createInstance(c *echo.Context) error {
 }
 
 func deleteInstance(c *echo.Context) error {
-	params := c.Request.Form
 	instance := Instance{
 		createParams: createParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Delete(c, &instance)
@@ -102,6 +101,7 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
+	i.createParams.Group = c.Param("group_name")
 	var networkInterfaces []map[string]interface{}
 	i.requestParams.Name = i.createParams.Name
 	i.requestParams.Location = i.createParams.Location
@@ -177,5 +177,5 @@ func (i *Instance) GetContentType() string {
 
 // GetHref returns instance href
 func (i *Instance) GetHref(groupName string, instanceName string) string {
-	return fmt.Sprintf("/instances/%s?group_name=%s", instanceName, groupName)
+	return fmt.Sprintf("/resource_groups/%s/instances/%s", groupName, instanceName)
 }

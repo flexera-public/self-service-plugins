@@ -45,15 +45,16 @@ type (
 // SetupIPAddressesRoutes declares routes for IPAddress resource
 func SetupIPAddressesRoutes(e *echo.Echo) {
 	e.Get("/ip_addresses", listIPAddresses)
-	e.Get("/ip_addresses/:id", listOneIPAddress)
-	e.Post("/ip_addresses", createIPAddress)
-	e.Delete("/ip_addresses/:id", deleteIPAddress)
+	// e.Get("/ip_addresses/:id", listOneIPAddress)
+	// e.Post("/ip_addresses", createIPAddress)
+	// e.Delete("/ip_addresses/:id", deleteIPAddress)
 
 	//nested routes
-	//group := e.Group("/resource_groups/:group_name/ip_addresses")
-	//group.Get("", listIPAddresses)
-	//group.Post("", createIPAddress)
-	//group.Delete("/:id", deleteIPAddress)
+	group := e.Group("/resource_groups/:group_name/ip_addresses")
+	group.Get("", listIPAddresses)
+	group.Get("/:id", listOneIPAddress)
+	group.Post("", createIPAddress)
+	group.Delete("/:id", deleteIPAddress)
 }
 
 func listIPAddresses(c *echo.Context) error {
@@ -61,11 +62,10 @@ func listIPAddresses(c *echo.Context) error {
 }
 
 func listOneIPAddress(c *echo.Context) error {
-	params := c.Request.Form
 	ipAddress := IPAddress{
 		createParams: ipAddressCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Get(c, &ipAddress)
@@ -77,11 +77,10 @@ func createIPAddress(c *echo.Context) error {
 }
 
 func deleteIPAddress(c *echo.Context) error {
-	params := c.Request.Form
 	ipAddress := IPAddress{
 		createParams: ipAddressCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Delete(c, &ipAddress)
@@ -93,7 +92,7 @@ func (ip *IPAddress) GetRequestParams(c *echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
-
+	ip.createParams.Group = c.Param("group_name")
 	ip.requestParams.Location = ip.createParams.Location
 	ip.requestParams.Properties = map[string]interface{}{
 		"publicIPAllocationMethod": "Dynamic",
@@ -140,5 +139,5 @@ func (ip *IPAddress) GetContentType() string {
 
 // GetHref returns ip address href
 func (ip *IPAddress) GetHref(groupName string, ipAddressName string) string {
-	return fmt.Sprintf("/ip_addresses/%s?group_name=%s", ipAddressName, groupName)
+	return fmt.Sprintf("/resource_groups/%s/ip_addresses/%s", groupName, ipAddressName)
 }

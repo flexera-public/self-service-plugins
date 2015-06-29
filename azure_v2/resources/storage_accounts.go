@@ -43,15 +43,16 @@ type (
 // SetupStorageAccountsRoutes declares routes for Storage account resource
 func SetupStorageAccountsRoutes(e *echo.Echo) {
 	e.Get("/storage_accounts", listStorageAccounts)
-	e.Get("/storage_accounts/:id", listOneStorageAccount)
-	e.Post("/storage_accounts", createStorageAccount)
-	e.Delete("/storage_accounts/:id", deleteStorageAccount)
+	// e.Get("/storage_accounts/:id", listOneStorageAccount)
+	// e.Post("/storage_accounts", createStorageAccount)
+	// e.Delete("/storage_accounts/:id", deleteStorageAccount)
 
 	//nested routes
-	// group := e.Group("/resource_groups/:group_name/storage_accounts")
-	// group.Get("", listStorageAccounts)
-	// group.Post("", createStorageAccount)
-	// group.Delete("/:id", deleteStorageAccount)
+	group := e.Group("/resource_groups/:group_name/storage_accounts")
+	group.Get("", listStorageAccounts)
+	group.Get("/:id", listOneStorageAccount)
+	group.Post("", createStorageAccount)
+	group.Delete("/:id", deleteStorageAccount)
 }
 
 func listStorageAccounts(c *echo.Context) error {
@@ -59,11 +60,10 @@ func listStorageAccounts(c *echo.Context) error {
 }
 
 func listOneStorageAccount(c *echo.Context) error {
-	params := c.Request.Form
 	storageAccount := StorageAccount{
 		createParams: storageAccountCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Get(c, &storageAccount)
@@ -75,11 +75,10 @@ func createStorageAccount(c *echo.Context) error {
 }
 
 func deleteStorageAccount(c *echo.Context) error {
-	params := c.Request.Form
 	storageAccount := StorageAccount{
 		createParams: storageAccountCreateParams{
 			Name:  c.Param("id"),
-			Group: params.Get("group_name"),
+			Group: c.Param("group_name"),
 		},
 	}
 	return Delete(c, &storageAccount)
@@ -91,6 +90,7 @@ func (s *StorageAccount) GetRequestParams(c *echo.Context) (interface{}, error) 
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
+	s.createParams.Group = c.Param("group_name")
 
 	s.requestParams.Location = s.createParams.Location
 	s.requestParams.Properties = map[string]interface{}{"accountType": "Standard_GRS"}
@@ -134,5 +134,5 @@ func (s *StorageAccount) GetContentType() string {
 
 // GetHref returns storage account href
 func (s *StorageAccount) GetHref(groupName string, networkName string) string {
-	return fmt.Sprintf("/storage_accounts/%s?group_name=%s", networkName, groupName)
+	return fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", groupName, networkName)
 }

@@ -42,32 +42,32 @@ type (
 
 // SetupSubnetsRoutes declares routes for Subnet resource
 func SetupSubnetsRoutes(e *echo.Echo) {
-	e.Get("/subnets", listSubnets)
-	e.Post("/subnets", createSubnet)
-	e.Delete("/subnets/:id", deleteSubnet)
+	e.Get("/subnets", listAllSubnets)
+	// e.Post("/subnets", createSubnet)
+	// e.Delete("/subnets/:id", deleteSubnet)
 
 	//nested routes
-	// group := e.Group("/resource_groups/:group_name/networks/:network_id/subnets")
-	// group.Get("", listSubnets)
-	// group.Post("", createSubnet)
-	// group.Delete("/:id", deleteSubnet)
+	group := e.Group("/resource_groups/:group_name/networks/:network_id/subnets")
+	group.Get("", listSubnets)
+	group.Post("", createSubnet)
+	group.Delete("/:id", deleteSubnet)
 }
 
 func listSubnets(c *echo.Context) error {
 	groupName := c.Param("group_name")
-	if groupName != "" {
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, c.Param("network_id"), config.APIVersion)
-		subnets, err := GetResources(c, path)
-		if err != nil {
-			return err
-		}
-		//add href for each subnet
-		for _, subnet := range subnets {
-			subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, c.Param("network_id"), subnet["name"])
-		}
-		return c.JSON(200, subnets)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, c.Param("network_id"), config.APIVersion)
+	subnets, err := GetResources(c, path)
+	if err != nil {
+		return err
 	}
+	//add href for each subnet
+	for _, subnet := range subnets {
+		subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, c.Param("network_id"), subnet["name"])
+	}
+	return c.JSON(200, subnets)
+}
 
+func listAllSubnets(c *echo.Context) error {
 	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
 	resp, err := GetResources(c, path)
 	if err != nil {
@@ -82,7 +82,6 @@ func listSubnets(c *echo.Context) error {
 			return err
 		}
 		for _, network := range networks {
-			network := network //.(map[string]interface{})
 			resp, err := getSubnets(c, groupName, network["name"].(string))
 			if err != nil {
 				return err
@@ -100,12 +99,11 @@ func createSubnet(c *echo.Context) error {
 }
 
 func deleteSubnet(c *echo.Context) error {
-	params := c.Request.Form
 	subnet := Subnet{
 		createParams: subnetCreateParams{
 			Name:      c.Param("id"),
-			Group:     params.Get("group_name"),
-			NetworkID: params.Get("network_id"),
+			Group:     c.Param("group_name"),
+			NetworkID: c.Param("network_id"),
 		},
 	}
 	return Delete(c, &subnet)
@@ -117,6 +115,8 @@ func (s *Subnet) GetRequestParams(c *echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
+	s.createParams.Group = c.Param("group_name")
+	s.createParams.NetworkID = c.Param("network_id")
 
 	s.requestParams.Properties = map[string]interface{}{
 		"addressPrefix": s.createParams.AddressPrefix,
@@ -160,7 +160,7 @@ func (s *Subnet) GetContentType() string {
 
 // GetHref returns subnet href
 func (s *Subnet) GetHref(groupName string, subnetName string) string {
-	return fmt.Sprintf("/subnets/%s?group_name=%s&network=%s", subnetName, groupName, s.createParams.NetworkID)
+	return fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, s.createParams.NetworkID, subnetName)
 }
 
 //TODO: generify ListSubnets and getSubnets

@@ -26,33 +26,8 @@ type Subscription struct {
 
 // SetupSubscriptionRoutes declares routes for Subscription resource
 func SetupSubscriptionRoutes(e *echo.Echo) {
-	// e.Get("/subscriptions", listSubscriptions)
 	// get a current subscription
 	e.Get("/subscription", getSubscription)
-}
-
-func listSubscriptions(c *echo.Context) error {
-	client, err := GetAzureClient(c)
-	if err != err {
-		return err
-	}
-	path := fmt.Sprintf("%s/%s?api-version=%s", config.BaseURL, subscriptionsPath, config.APIVersion)
-	log.Printf("Get Subscriptions request: %s\n", path)
-	resp, err := client.Get(path)
-	if err != nil {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while getting subscriptions: %v", err))
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-	}
-	var dat map[string][]*Subscription
-	if err := json.Unmarshal(body, &dat); err != nil {
-		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
-	}
-
-	return c.JSON(resp.StatusCode, dat["value"])
 }
 
 // getSubscription return info about subscription provided in creds

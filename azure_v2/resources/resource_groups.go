@@ -36,10 +36,11 @@ type (
 
 // SetupGroupsRoutes declares routes for resource group resource
 func SetupGroupsRoutes(e *echo.Echo) {
-	e.Get("/resource_groups", listResourceGroups)
-	e.Get("/resource_groups/:id", listOneResourceGroup)
-	e.Post("/resource_groups", createResourceGroup)
-	e.Delete("/resource_groups/:id", deleteResourceGroup)
+	group := e.Group("/resource_groups")
+	group.Get("", listResourceGroups)
+	group.Get("/:id", listOneResourceGroup)
+	group.Post("", createResourceGroup)
+	group.Delete("/:id", deleteResourceGroup)
 }
 
 func listResourceGroups(c *echo.Context) error {

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"encoding/json"
-	//"fmt"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
@@ -14,8 +13,8 @@ import (
 
 const (
 	listInstancesEmptyResponse = `{"value":[]}`
-	listInstancesResponse      = `{"value":[{"href":"/instances/khrvi?group_name=Group-1","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Compute/virtualMachines/khrvi","location":"westus","name":"khrvi","properties":{"hardwareProfile":{"vmSize":"Standard_G1"},"networkProfile":{"networkInterfaces":[{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"}]},"provisioningState":"failed","storageProfile":{"dataDisks":[],"osDisk":{"caching":"ReadWrite","name":"os-asdasdasda-rs","osType":"Linux","vhd":{"uri":"https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"}}}},"type":"Microsoft.Compute/virtualMachines"}]}`
-	listOneInstanceResponse    = `{"href":"/instances/khrvi?group_name=Group-1","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Compute/virtualMachines/khrvi","location":"westus","name":"khrvi","properties":{"hardwareProfile":{"vmSize":"Standard_G1"},"networkProfile":{"networkInterfaces":[{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"}]},"provisioningState":"failed","storageProfile":{"dataDisks":[],"osDisk":{"caching":"ReadWrite","name":"os-asdasdasda-rs","osType":"Linux","vhd":{"uri":"https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"}}}},"type":"Microsoft.Compute/virtualMachines"}`
+	listInstancesResponse      = `{"value":[{"href":"/resource_groups/Group-1/instances/khrvi","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Compute/virtualMachines/khrvi","location":"westus","name":"khrvi","properties":{"hardwareProfile":{"vmSize":"Standard_G1"},"networkProfile":{"networkInterfaces":[{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"}]},"provisioningState":"failed","storageProfile":{"dataDisks":[],"osDisk":{"caching":"ReadWrite","name":"os-asdasdasda-rs","osType":"Linux","vhd":{"uri":"https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"}}}},"type":"Microsoft.Compute/virtualMachines"}]}`
+	listOneInstanceResponse    = `{"href":"/resource_groups/Group-1/instances/khrvi","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Compute/virtualMachines/khrvi","location":"westus","name":"khrvi","properties":{"hardwareProfile":{"vmSize":"Standard_G1"},"networkProfile":{"networkInterfaces":[{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"}]},"provisioningState":"failed","storageProfile":{"dataDisks":[],"osDisk":{"caching":"ReadWrite","name":"os-asdasdasda-rs","osType":"Linux","vhd":{"uri":"https://khrvitestgo.blob.core.windows.net/vhds/khrvi_image-os-2015-05-18.vhd"}}}},"type":"Microsoft.Compute/virtualMachines"}`
 	recordNotFound             = `{"error":{"code":"ResourceNotFound","message":"Resource not found."}}`
 )
 
@@ -128,7 +127,7 @@ var _ = Describe("instances", func() {
 		})
 	})
 
-	Describe("retrieving via 'flat' route", func() {
+	Describe("list one instance", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
@@ -136,7 +135,7 @@ var _ = Describe("instances", func() {
 					ghttp.RespondWith(http.StatusOK, listOneInstanceResponse),
 				),
 			)
-			response, err = client.Get("/instances/khrvi?group_name=Group-1")
+			response, err = client.Get("/resource_groups/Group-1/instances/khrvi")
 		})
 
 		It("no error occured", func() {
@@ -173,7 +172,7 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns 404", func() {
-			response, err = client.Get("/instances/khrvi1?group_name=Group-1")
+			response, err = client.Get("/resource_groups/Group-1/instances/khrvi1")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(do.ReceivedRequests()).Should(HaveLen(1))
 			Ω(response.Status).Should(Equal(404))
