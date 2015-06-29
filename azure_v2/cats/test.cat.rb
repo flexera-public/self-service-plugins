@@ -13,7 +13,7 @@ namespace "azure" do
   type "instance" do                           # defines resource of type "pod"
     provision "provision_instance"             # name of RCL definition to use to provision the resource
     delete "delete_instance"                   # name of RCL definition to use to delete the resource
-    path "/instances"
+    path "/resource_groups/Group-1/instances"  # hard coded group_name for now
     fields do
       field "name" do
         type "string"
@@ -24,10 +24,6 @@ namespace "azure" do
         required true
       end
       field "instance_type_uid" do
-        type "string"
-        required true
-      end
-      field "group_name" do
         type "string"
         required true
       end
@@ -57,17 +53,10 @@ parameter "location" do
   allowed_values "West US", "East US", "Central US"
 end
 
-parameter "group" do
-  type "string"
-  label "Resource Group"
-  description "Resource group where instance will be launched"
-end
-
 resource "base_server", type: "azure.instance" do
   name                  $instance_name
   instance_type_uid     $instance_size
   location              $location
-  group_name            $group
 end
 
 # Define the RCL definitions to create and destroy the resource
