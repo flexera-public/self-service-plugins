@@ -42,7 +42,7 @@ type (
 
 // SetupStorageAccountsRoutes declares routes for Storage account resource
 func SetupStorageAccountsRoutes(e *echo.Echo) {
-	e.Get("/storage_accounts", listStorageAccounts)
+	e.Get("/storage_accounts", listAllStorageAccounts)
 	// e.Get("/storage_accounts/:id", listOneStorageAccount)
 	// e.Post("/storage_accounts", createStorageAccount)
 	// e.Delete("/storage_accounts/:id", deleteStorageAccount)
@@ -53,6 +53,21 @@ func SetupStorageAccountsRoutes(e *echo.Echo) {
 	group.Get("/:id", listOneStorageAccount)
 	group.Post("", createStorageAccount)
 	group.Delete("/:id", deleteStorageAccount)
+	//group.Delete("/:id/keys", getStorageAccountKeys)
+}
+
+// List Storage Accounts for Subscription
+// https://msdn.microsoft.com/en-us/library/azure/mt163559.aspx
+func listAllStorageAccounts(c *echo.Context) error {
+	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, config.APIVersion)
+	accounts, err := GetResources(c, path)
+	if err != nil {
+		return err
+	}
+	sa := new(StorageAccount)
+	//TODO: add href to resources
+	//TODO: add helper func to fetch resource group name from resource id
+	return Render(c, 200, accounts, sa.GetContentType()+";type=collection")
 }
 
 func listStorageAccounts(c *echo.Context) error {
