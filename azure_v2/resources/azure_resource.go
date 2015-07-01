@@ -115,29 +115,13 @@ func Delete(c *echo.Context, r AzureResource) error {
 
 // Get resource
 func Get(c *echo.Context, r AzureResource) error {
-	client, err := GetAzureClient(c)
+	path := r.GetPath()
+	body, err := GetResource(c, path)
 	if err != nil {
 		return err
 	}
-	path := r.GetPath()
-	log.Printf("Get Resource request: %s\n", path)
-	resp, err := client.Get(path)
-	defer resp.Body.Close()
-	if err != nil {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
-	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-	}
-	if resp.StatusCode == 404 {
-		return eh.RecordNotFound(c.Param("id"))
-	}
-	if resp.StatusCode >= 400 {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(b)))
-	}
 
-	if err := r.HandleResponse(c, b, "get"); err != nil {
+	if err := r.HandleResponse(c, body, "get"); err != nil {
 		return err
 	}
 	return Render(c, 200, r.GetResponseParams(), r.GetContentType())
@@ -207,6 +191,32 @@ func GetResources(c *echo.Context, path string) ([]map[string]interface{}, error
 		return nil, eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
 	}
 	return m["value"], nil
+}
+
+// GetResource sends requests to the clouds to get resource
+func GetResource(c *echo.Context, path string) ([]byte, error) {
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Get Resource request: %s\n", path)
+	resp, err := client.Get(path)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
+	if resp.StatusCode == 404 {
+		return nil, eh.RecordNotFound(c.Param("id"))
+	}
+	if resp.StatusCode >= 400 {
+		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(body)))
+	}
+
+	return body, nil
 }
 
 // Render sends a JSON resource specific content type response with status code.
