@@ -31,6 +31,14 @@ type (
 		Href              string                 `json:"href,omitempty"`
 	}
 
+	instanceViewResponseParams struct {
+		PlatformUpdateDomain int
+		PlatformFaultDomain  int
+		VmAgent              map[string]interface{}
+		Disks                []interface{}
+		Statuses             []interface{}
+	}
+
 	requestParams struct {
 		Name       string                 `json:"name"`
 		Location   string                 `json:"location"`
@@ -52,9 +60,11 @@ type (
 	// Instance is base struct for Azure VM resource to store input create params,
 	// request create params and response params gotten from cloud.
 	Instance struct {
+		action string
 		createParams
 		requestParams
 		responseParams
+		instanceViewResponseParams
 	}
 )
 
@@ -70,6 +80,7 @@ func SetupInstanceRoutes(e *echo.Echo) {
 	group := e.Group("/resource_groups/:group_name/instances")
 	group.Get("", listInstances)
 	group.Get("/:id", listOneInstance)
+	group.Get("/:id/instance_view", listOneInstanceView)
 	group.Post("", createInstance)
 	group.Delete("/:id", deleteInstance)
 }
@@ -79,6 +90,17 @@ func listInstances(c *echo.Context) error {
 }
 func listOneInstance(c *echo.Context) error {
 	instance := Instance{
+		createParams: createParams{
+			Name:  c.Param("id"),
+			Group: c.Param("group_name"),
+		},
+	}
+	return Get(c, &instance)
+}
+
+func listOneInstanceView(c *echo.Context) error {
+	instance := Instance{
+		action: "getInstanceView",
 		createParams: createParams{
 			Name:  c.Param("id"),
 			Group: c.Param("group_name"),
@@ -201,11 +223,17 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 
 // GetResponseParams is accessor function for getting access to responseParams struct
 func (i *Instance) GetResponseParams() interface{} {
+	if i.action == "getInstanceView" {
+		return i.instanceViewResponseParams
+	}
 	return i.responseParams
 }
 
 // GetPath returns full path to the sigle instance
 func (i *Instance) GetPath() string {
+	if i.action == "getInstanceView" {
+		return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/InstanceView?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, i.createParams.Group, virtualMachinesPath, i.createParams.Name, "2015-05-01-preview")
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, i.createParams.Group, virtualMachinesPath, i.createParams.Name, "2015-05-01-preview")
 }
 
@@ -216,10 +244,17 @@ func (i *Instance) GetCollectionPath(groupName string) string {
 
 // HandleResponse manage raw cloud response
 func (i *Instance) HandleResponse(c *echo.Context, body []byte, actionName string) error {
-	if err := json.Unmarshal(body, &i.responseParams); err != nil {
+	var err error
+	if i.action == "getInstanceView" {
+		err = json.Unmarshal(body, &i.instanceViewResponseParams)
+	} else {
+		err = json.Unmarshal(body, &i.responseParams)
+	}
+	if err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := i.GetHref(i.createParams.Group, i.responseParams.Name)
+
+	href := i.GetHref(i.createParams.Group, i.createParams.Name)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
