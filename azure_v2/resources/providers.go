@@ -11,14 +11,22 @@ import (
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
-// Provider is base struct for Azure Provider resource
-type Provider struct {
-	ID                string      `json:"id"`
-	Namespace         string      `json:"namespace"`
-	RegistrationState string      `json:"registrationState"`
-	ResourceTypes     interface{} `json:"resourceTypes"`
-	ApplicationID     string      `json:"applicationID,omitempty"`
-}
+type (
+	providerResponseParams struct {
+		ID                string      `json:"id"`
+		Namespace         string      `json:"namespace"`
+		RegistrationState string      `json:"registrationState"`
+		ResourceTypes     interface{} `json:"resourceTypes"`
+		ApplicationID     string      `json:"applicationID,omitempty"`
+		Href              string      `json:"href,omitempty"`
+	}
+
+	// Provider is base struct for Azure Provider resource
+	Provider struct {
+		Name           string `json:"name,omitempty"`
+		responseParams providerResponseParams
+	}
+)
 
 const (
 	providerAPIVersion = "2015-01-01"
@@ -32,48 +40,70 @@ func SetupProviderRoutes(e *echo.Echo) {
 }
 
 func listProviders(c *echo.Context) error {
-	body, err := getProviders(c, "")
-	if err != nil {
-		return err
-	}
-	var dat map[string][]*Provider
-	if err := json.Unmarshal(body, &dat); err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-	}
-	return c.JSON(200, dat["value"])
+	return List(c, new(Provider))
 }
 
 func listOneProvider(c *echo.Context) error {
-	providerName := c.Param("provider_name")
-	body, err := getProviders(c, providerName)
-	if err != nil {
-		return err
+	provider := Provider{
+		Name: c.Param("provider_name"),
 	}
-	var dat *Provider
-	if err := json.Unmarshal(body, &dat); err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	return Get(c, &provider)
+}
+
+// GetRequestParams is a fake function to support AzureResource by Provider
+func (p *Provider) GetRequestParams(c *echo.Context) (interface{}, error) { return nil, nil }
+
+// GetResponseParams is accessor function for getting access to responseParams struct
+func (p *Provider) GetResponseParams() interface{} {
+	return p.responseParams
+}
+
+// GetPath returns full path to the sigle provider
+func (p *Provider) GetPath() string {
+	return fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, p.Name, providerAPIVersion)
+}
+
+// GetCollectionPath returns full path to the collection of providers
+func (p *Provider) GetCollectionPath(_ string) string {
+	return fmt.Sprintf("%s/subscriptions/%s/providers?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerAPIVersion)
+}
+
+// HandleResponse manage raw cloud response
+func (p *Provider) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	if err := json.Unmarshal(body, &p.responseParams); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	return c.JSON(200, dat)
+	p.responseParams.Href = p.GetHref(p.responseParams.Namespace)
+	return nil
+}
+
+// GetContentType returns provider content type
+func (p *Provider) GetContentType() string {
+	return "vnd.rightscale.provider+json"
+}
+
+// GetHref returns provider href
+func (p *Provider) GetHref(namespace string) string {
+	return fmt.Sprintf("/providers/%s", namespace)
 }
 
 func registerProvider(c *echo.Context) error {
-	providerName := c.Param("provider_name")
-	body, err := getProviders(c, providerName)
+	provider := new(Provider)
+	provider.Name = c.Param("provider_name")
+	body, err := GetResource(c, provider.GetPath())
 	if err != nil {
 		return err
 	}
-	var dat *Provider
-	if err := json.Unmarshal(body, &dat); err != nil {
-		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-	}
-	if dat.RegistrationState == "NotRegistered" {
+	provider.HandleResponse(c, body, "")
+
+	if provider.responseParams.RegistrationState == "NotRegistered" {
 		log.Printf("Register required: \n")
 		client, err := GetAzureClient(c)
 		if err != nil {
 			return err
 		}
-		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerName, providerAPIVersion)
-		log.Printf("Registering Provider %s: %s\n", providerName, path)
+		path := fmt.Sprintf("%s/subscriptions/%s/providers/%s/register?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, provider.Name, providerAPIVersion)
+		log.Printf("Registering Provider %s: %s\n", provider.Name, path)
 		resp, err := client.PostForm(path, nil)
 		if err != nil {
 			return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
@@ -84,32 +114,9 @@ func registerProvider(c *echo.Context) error {
 			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 		}
 
-		var dat *Provider
-		if err := json.Unmarshal(body, &dat); err != nil {
-			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-		}
-		return c.JSON(resp.StatusCode, dat)
+		provider.HandleResponse(c, body, "")
+		return Render(c, 200, provider.GetResponseParams(), provider.GetContentType())
 	}
 
-	return eh.GenericException(fmt.Sprintf("Provider %s already registered.", providerName))
-}
-
-func getProviders(c *echo.Context, providerName string) ([]byte, error) {
-	client, err := GetAzureClient(c)
-	if err != nil {
-		return nil, err
-	}
-	path := fmt.Sprintf("%s/subscriptions/%s/providers/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, providerName, providerAPIVersion)
-	log.Printf("Get Providers request: %s\n", path)
-	resp, err := client.Get(path)
-	if err != nil {
-		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting provider: %v", err))
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-	}
-	// TODO: handle 400+ statuses
-	return body, nil
+	return eh.GenericException(fmt.Sprintf("Provider %s already registered.", provider.Name))
 }

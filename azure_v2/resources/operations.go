@@ -18,8 +18,7 @@ type (
 		Href        string `json:"href,omitempty"`
 	}
 
-	// Operation is base struct for Azure Operation resource to store input create params,
-	// request create params and response params gotten from cloud.
+	// Operation is base struct for Azure Operation resource to store input params and response params gotten from cloud.
 	Operation struct {
 		Name           string `json:"name,omitempty"`
 		Location       string `json:"location,omitempty"`
