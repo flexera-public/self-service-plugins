@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -102,7 +103,7 @@ func (rg *ResourceGroup) HandleResponse(c *echo.Context, body []byte, actionName
 	if err := json.Unmarshal(body, &rg.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := rg.GetHref(rg.responseParams.Name, "")
+	href := rg.GetHref(rg.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -117,6 +118,7 @@ func (rg *ResourceGroup) GetContentType() string {
 }
 
 // GetHref returns resource group href
-func (rg *ResourceGroup) GetHref(groupName string, _ string) string {
-	return fmt.Sprintf("/resource_groups/%s", groupName)
+func (rg *ResourceGroup) GetHref(groupId string) string {
+	array := strings.Split(groupId, "/")
+	return fmt.Sprintf("/resource_groups/%s", array[len(array)-1])
 }

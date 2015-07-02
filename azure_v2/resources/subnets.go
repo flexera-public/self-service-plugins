@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -144,7 +145,7 @@ func (s *Subnet) HandleResponse(c *echo.Context, body []byte, actionName string)
 	if err := json.Unmarshal(body, &s.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := s.GetHref(s.createParams.Group, s.responseParams.Name)
+	href := s.GetHref(s.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -159,8 +160,9 @@ func (s *Subnet) GetContentType() string {
 }
 
 // GetHref returns subnet href
-func (s *Subnet) GetHref(groupName string, subnetName string) string {
-	return fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, s.createParams.NetworkID, subnetName)
+func (s *Subnet) GetHref(subnetId string) string {
+	array := strings.Split(subnetId, "/")
+	return fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", array[len(array)-7], array[len(array)-3], array[len(array)-1])
 }
 
 //TODO: generify ListSubnets and getSubnets

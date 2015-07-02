@@ -32,8 +32,8 @@ type AzureResource interface {
 	HandleResponse(*echo.Context, []byte, string) error
 	// GetContentType should return content type of the resource
 	GetContentType() string
-	// GetHref should return href of the resource. Two input params usually parent id and resource id.
-	GetHref(string, string) string
+	// GetHref should return href of the resource. Input param is a resource id
+	GetHref(string) string
 }
 
 // Create new resource
@@ -127,37 +127,18 @@ func Get(c *echo.Context, r AzureResource) error {
 	return Render(c, 200, r.GetResponseParams(), r.GetContentType())
 }
 
-// List gets all resources
+// List gets all resources in scope of subscription or in scope of resource group if "group_name" provided
 func List(c *echo.Context, r AzureResource) error {
 	groupName := c.Param("group_name")
-	resources := make([]map[string]interface{}, 0)
-	var parentResources []map[string]interface{}
-	var err error
-
-	if groupName != "" {
-		// nested route
-		parentResources = append(parentResources, map[string]interface{}{"name": groupName})
-	} else {
-		parentPath := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
-		parentResources, err = GetResources(c, parentPath)
-		if err != nil {
-			return err
-		}
+	resourcePath := r.GetCollectionPath(groupName)
+	resources, err := GetResources(c, resourcePath)
+	if err != nil {
+		return err
 	}
-
-	for _, parent := range parentResources {
-		resourcePath := r.GetCollectionPath(parent["name"].(string))
-		resp, err := GetResources(c, resourcePath)
-		if err != nil {
-			return err
-		}
-		//add href for each resource
-		for _, resource := range resp {
-			resource["href"] = r.GetHref(parent["name"].(string), resource["name"].(string))
-		}
-		resources = append(resources, resp...)
+	//add href for each resource
+	for _, resource := range resources {
+		resource["href"] = r.GetHref(resource["id"].(string))
 	}
-
 	return Render(c, 200, resources, r.GetContentType()+";type=collection")
 }
 

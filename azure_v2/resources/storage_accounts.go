@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -42,7 +43,7 @@ type (
 
 // SetupStorageAccountsRoutes declares routes for Storage account resource
 func SetupStorageAccountsRoutes(e *echo.Echo) {
-	e.Get("/storage_accounts", listAllStorageAccounts)
+	e.Get("/storage_accounts", listStorageAccounts)
 	// e.Get("/storage_accounts/:id", listOneStorageAccount)
 	// e.Post("/storage_accounts", createStorageAccount)
 	// e.Delete("/storage_accounts/:id", deleteStorageAccount)
@@ -54,20 +55,6 @@ func SetupStorageAccountsRoutes(e *echo.Echo) {
 	group.Post("", createStorageAccount)
 	group.Delete("/:id", deleteStorageAccount)
 	//group.Delete("/:id/keys", getStorageAccountKeys)
-}
-
-// List Storage Accounts for Subscription
-// https://msdn.microsoft.com/en-us/library/azure/mt163559.aspx
-func listAllStorageAccounts(c *echo.Context) error {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, config.APIVersion)
-	accounts, err := GetResources(c, path)
-	if err != nil {
-		return err
-	}
-	sa := new(StorageAccount)
-	//TODO: add href to resources
-	//TODO: add helper func to fetch resource group name from resource id
-	return Render(c, 200, accounts, sa.GetContentType()+";type=collection")
 }
 
 func listStorageAccounts(c *echo.Context) error {
@@ -125,6 +112,9 @@ func (s *StorageAccount) GetPath() string {
 
 // GetCollectionPath returns full path to the collection of storage accounts
 func (s *StorageAccount) GetCollectionPath(groupName string) string {
+	if groupName == "" {
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, config.APIVersion)
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, storageAccountPath, config.APIVersion)
 }
 
@@ -133,7 +123,7 @@ func (s *StorageAccount) HandleResponse(c *echo.Context, body []byte, actionName
 	if err := json.Unmarshal(body, &s.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := s.GetHref(s.createParams.Group, s.responseParams.Name)
+	href := s.GetHref(s.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -148,6 +138,7 @@ func (s *StorageAccount) GetContentType() string {
 }
 
 // GetHref returns storage account href
-func (s *StorageAccount) GetHref(groupName string, networkName string) string {
-	return fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", groupName, networkName)
+func (s *StorageAccount) GetHref(accountId string) string {
+	array := strings.Split(accountId, "/")
+	return fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", array[len(array)-5], array[len(array)-1])
 }

@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -46,9 +47,6 @@ type (
 // SetupNetworkRoutes declares routes for IPAddress resource
 func SetupNetworkRoutes(e *echo.Echo) {
 	e.Get("/networks", listNetworks)
-	// e.Get("/networks/:id", listOneNetwork)
-	// e.Post("/networks", createNetwork)
-	// e.Delete("/networks/:id", deleteNetwork)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/networks")
@@ -58,6 +56,7 @@ func SetupNetworkRoutes(e *echo.Echo) {
 	group.Delete("/:id", deleteNetwork)
 }
 
+// List virtual networks within a resource group
 func listNetworks(c *echo.Context) error {
 	return List(c, new(Network))
 }
@@ -125,6 +124,9 @@ func (n *Network) GetPath() string {
 
 // GetCollectionPath returns full path to the collection of network
 func (n *Network) GetCollectionPath(groupName string) string {
+	if groupName == "" {
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, config.APIVersion)
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, config.APIVersion)
 }
 
@@ -133,7 +135,7 @@ func (n *Network) HandleResponse(c *echo.Context, body []byte, actionName string
 	if err := json.Unmarshal(body, &n.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := n.GetHref(n.createParams.Group, n.responseParams.Name)
+	href := n.GetHref(n.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -148,6 +150,7 @@ func (n *Network) GetContentType() string {
 }
 
 // GetHref returns network href
-func (n *Network) GetHref(groupName string, networkName string) string {
-	return fmt.Sprintf("/resource_groups/%s/networks/%s?group_name=%s", groupName, networkName)
+func (n *Network) GetHref(networkId string) string {
+	array := strings.Split(networkId, "/")
+	return fmt.Sprintf("/resource_groups/%s/networks/%s", array[len(array)-5], array[len(array)-1])
 }

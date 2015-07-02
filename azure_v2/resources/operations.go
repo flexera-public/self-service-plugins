@@ -55,7 +55,7 @@ func (o *Operation) HandleResponse(c *echo.Context, body []byte, actionName stri
 	if err := json.Unmarshal(body, &o.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	o.responseParams.Href = o.GetHref(o.responseParams.OperationID, o.Location)
+	o.responseParams.Href = o.GetHref(o.responseParams.OperationID)
 	return nil
 }
 
@@ -65,8 +65,9 @@ func (o *Operation) GetContentType() string {
 }
 
 // GetHref returns operation href
-func (o *Operation) GetHref(operationID string, location string) string {
-	return fmt.Sprintf("/locations/%s/operations/%s", location, operationID)
+func (o *Operation) GetHref(operationID string) string {
+	// operationID doesn't contain location so that get it from params
+	return fmt.Sprintf("/locations/%s/operations/%s", o.Location, o.Name)
 }
 
 //GetCollectionPath is a fake function to support AzureResource by Operation

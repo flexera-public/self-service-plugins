@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -15,12 +16,12 @@ const (
 
 type (
 	availabilitySetResponseParams struct {
-		Name       string      `json:"name,omitempty"`
-		Location   string      `json:"location"`
-		Tags       interface{} `json:"tags,omitempty"`
-		Etag       string      `json:"etag,omitempty"`
-		Properties interface{} `json:"properties,omitempty"`
-		Href       string      `json:"href,omitempty"`
+		Name       string                 `json:"name,omitempty"`
+		Location   string                 `json:"location"`
+		Tags       interface{}            `json:"tags,omitempty"`
+		Etag       string                 `json:"etag,omitempty"`
+		Properties map[string]interface{} `json:"properties,omitempty"`
+		Href       string                 `json:"href,omitempty"`
 	}
 
 	availabilitySetRequestParams struct {
@@ -106,6 +107,9 @@ func (as *AvailabilitySet) GetPath() string {
 
 // GetCollectionPath returns full path to the collection of availability sets
 func (as *AvailabilitySet) GetCollectionPath(groupName string) string {
+	if groupName == "" {
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, availabilitySetPath, config.APIVersion)
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, availabilitySetPath, config.APIVersion)
 }
 
@@ -114,7 +118,7 @@ func (as *AvailabilitySet) HandleResponse(c *echo.Context, body []byte, actionNa
 	if err := json.Unmarshal(body, &as.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := as.GetHref(as.createParams.Group, as.responseParams.Name)
+	href := as.GetHref(as.responseParams.Properties["id"].(string))
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -129,6 +133,7 @@ func (as *AvailabilitySet) GetContentType() string {
 }
 
 // GetHref returns availability set href
-func (as *AvailabilitySet) GetHref(groupName string, availabilitySetName string) string {
-	return fmt.Sprintf("/resource_groups/%s/availability_sets/%s", groupName, availabilitySetName)
+func (as *AvailabilitySet) GetHref(availabilitySetId string) string {
+	array := strings.Split(availabilitySetId, "/")
+	return fmt.Sprintf("/resource_groups/%s/availability_sets/%s", array[len(array)-5], array[len(array)-1])
 }

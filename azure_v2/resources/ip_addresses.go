@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -115,6 +116,9 @@ func (ip *IPAddress) GetPath() string {
 
 // GetCollectionPath returns full path to the collection of ip addresses
 func (ip *IPAddress) GetCollectionPath(groupName string) string {
+	if groupName == "" {
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ipAddressPath, config.APIVersion)
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, ipAddressPath, config.APIVersion)
 }
 
@@ -123,7 +127,7 @@ func (ip *IPAddress) HandleResponse(c *echo.Context, body []byte, actionName str
 	if err := json.Unmarshal(body, &ip.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := ip.GetHref(ip.createParams.Group, ip.responseParams.Name)
+	href := ip.GetHref(ip.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -138,6 +142,7 @@ func (ip *IPAddress) GetContentType() string {
 }
 
 // GetHref returns ip address href
-func (ip *IPAddress) GetHref(groupName string, ipAddressName string) string {
-	return fmt.Sprintf("/resource_groups/%s/ip_addresses/%s", groupName, ipAddressName)
+func (ip *IPAddress) GetHref(ipAddressId string) string {
+	array := strings.Split(ipAddressId, "/")
+	return fmt.Sprintf("/resource_groups/%s/ip_addresses/%s", array[len(array)-5], array[len(array)-1])
 }

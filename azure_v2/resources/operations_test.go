@@ -36,11 +36,11 @@ var _ = Describe("operations", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/providers/Microsoft.Compute/locations/westus/operations/khrvi"),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/providers/Microsoft.Compute/locations/westus/operations/896da082-4e65-4d00-a1bc-8d86591949fc"),
 					ghttp.RespondWith(http.StatusOK, listOneOperationResponse),
 				),
 			)
-			response, err = client.Get("/locations/westus/operations/khrvi")
+			response, err = client.Get("/locations/westus/operations/896da082-4e65-4d00-a1bc-8d86591949fc")
 		})
 
 		It("no error occured", func() {

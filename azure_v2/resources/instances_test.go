@@ -74,11 +74,7 @@ var _ = Describe("instances", func() {
 			subscriptionID := "test"
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups"),
-					ghttp.RespondWith(http.StatusOK, `{"value": [{"name":"Group-1"}]}`),
-				),
-				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath),
+					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/"+virtualMachinesPath),
 					ghttp.RespondWith(http.StatusOK, listInstancesResponse),
 				),
 			)
@@ -90,7 +86,7 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns 200 status code", func() {
-			Ω(do.ReceivedRequests()).Should(HaveLen(2))
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
 			Ω(response.Status).Should(Equal(200))
 		})
 

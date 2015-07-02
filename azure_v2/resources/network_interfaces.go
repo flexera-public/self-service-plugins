@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -131,6 +132,9 @@ func (ni *NetworkInterface) GetPath() string {
 
 // GetCollectionPath returns full path to the collection of network interfaces
 func (ni *NetworkInterface) GetCollectionPath(groupName string) string {
+	if groupName == "" {
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkInterfacePath, config.APIVersion)
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkInterfacePath, config.APIVersion)
 }
 
@@ -139,7 +143,7 @@ func (ni *NetworkInterface) HandleResponse(c *echo.Context, body []byte, actionN
 	if err := json.Unmarshal(body, &ni.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := ni.GetHref(ni.createParams.Group, ni.responseParams.Name)
+	href := ni.GetHref(ni.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -154,6 +158,7 @@ func (ni *NetworkInterface) GetContentType() string {
 }
 
 // GetHref returns network interface href
-func (ni *NetworkInterface) GetHref(groupName string, interfaceName string) string {
-	return fmt.Sprintf("/resource_groups/%s/network_interfaces/%s", groupName, interfaceName)
+func (ni *NetworkInterface) GetHref(networkInterfaceId string) string {
+	array := strings.Split(networkInterfaceId, "/")
+	return fmt.Sprintf("/resource_groups/%s/network_interfaces/%s", array[len(array)-5], array[len(array)-1])
 }

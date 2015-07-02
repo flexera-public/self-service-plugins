@@ -239,6 +239,9 @@ func (i *Instance) GetPath() string {
 
 // GetCollectionPath returns full path to the collection of instances
 func (i *Instance) GetCollectionPath(groupName string) string {
+	if groupName == "" {
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, virtualMachinesPath, "2015-05-01-preview")
+	}
 	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, virtualMachinesPath, "2015-05-01-preview")
 }
 
@@ -254,7 +257,7 @@ func (i *Instance) HandleResponse(c *echo.Context, body []byte, actionName strin
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
 
-	href := i.GetHref(i.createParams.Group, i.createParams.Name)
+	href := i.GetHref(i.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
@@ -269,6 +272,7 @@ func (i *Instance) GetContentType() string {
 }
 
 // GetHref returns instance href
-func (i *Instance) GetHref(groupName string, instanceName string) string {
-	return fmt.Sprintf("/resource_groups/%s/instances/%s", groupName, instanceName)
+func (i *Instance) GetHref(instanceId string) string {
+	array := strings.Split(instanceId, "/")
+	return fmt.Sprintf("/resource_groups/%s/instances/%s", array[len(array)-5], array[len(array)-1])
 }
