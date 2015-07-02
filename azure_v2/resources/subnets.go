@@ -3,8 +3,6 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -56,42 +54,41 @@ func SetupSubnetsRoutes(e *echo.Echo) {
 
 func listSubnets(c *echo.Context) error {
 	groupName := c.Param("group_name")
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, c.Param("network_id"), config.APIVersion)
+	networkID := c.Param("network_id")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, config.APIVersion)
 	subnets, err := GetResources(c, path)
 	if err != nil {
 		return err
 	}
 	//add href for each subnet
 	for _, subnet := range subnets {
-		subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, c.Param("network_id"), subnet["name"])
+		subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, networkID, subnet["name"])
 	}
-	return c.JSON(200, subnets)
+	return Render(c, 200, subnets, "vnd.rightscale.subnet+json;type=collection")
 }
 
 func listAllSubnets(c *echo.Context) error {
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
-	resp, err := GetResources(c, path)
+	var subnets []map[string]interface{}
+	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, config.APIVersion)
+	networks, err := GetResources(c, path)
 	if err != nil {
 		return err
 	}
-	var subnets []*subnetResponseParams
-	for _, resourceGroup := range resp {
-		groupName := resourceGroup["name"].(string)
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, config.APIVersion)
-		networks, err := GetResources(c, path)
+	for _, network := range networks {
+		array := strings.Split(network["id"].(string), "/")
+		groupName := array[len(array)-5]
+		networkID := network["name"].(string)
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, config.APIVersion)
+		resp, err := GetResources(c, path)
 		if err != nil {
 			return err
 		}
-		for _, network := range networks {
-			resp, err := getSubnets(c, groupName, network["name"].(string))
-			if err != nil {
-				return err
-			}
-			subnets = append(subnets, resp...)
+		for _, subnet := range resp {
+			subnet["href"] = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, networkID, subnet["name"])
 		}
+		subnets = append(subnets, resp...)
 	}
-
-	return c.JSON(200, subnets)
+	return Render(c, 200, subnets, "vnd.rightscale.subnet+json;type=collection")
 }
 
 func createSubnet(c *echo.Context) error {
@@ -163,37 +160,4 @@ func (s *Subnet) GetContentType() string {
 func (s *Subnet) GetHref(subnetId string) string {
 	array := strings.Split(subnetId, "/")
 	return fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", array[len(array)-7], array[len(array)-3], array[len(array)-1])
-}
-
-//TODO: generify ListSubnets and getSubnets
-func getSubnets(c *echo.Context, groupName string, networkName string) ([]*subnetResponseParams, error) {
-	client, err := GetAzureClient(c)
-	if err != nil {
-		return nil, err
-	}
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkName, config.APIVersion)
-	log.Printf("Get Subents request: %s\n", path)
-	resp, err := client.Get(path)
-	if err != nil {
-		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while getting subnet: %v", err))
-	}
-	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
-	}
-	var m struct {
-		Value    []*subnetResponseParams
-		NextLink string
-	}
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
-	}
-
-	subnets := m.Value
-	for _, subnet := range subnets {
-		subnet.Href = fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", groupName, networkName, subnet.Name)
-	}
-
-	return subnets, nil
 }

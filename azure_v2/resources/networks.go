@@ -56,7 +56,7 @@ func SetupNetworkRoutes(e *echo.Echo) {
 	group.Delete("/:id", deleteNetwork)
 }
 
-// List virtual networks within a resource group
+// List virtual networks within a resource group or subscription
 func listNetworks(c *echo.Context) error {
 	return List(c, new(Network))
 }
