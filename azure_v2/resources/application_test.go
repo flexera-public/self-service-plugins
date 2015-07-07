@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	authRsponse              = `{"access_token": "test_access_token"}`
+	authRsponse              = `{"access_token": "test_access_token", "expires_on": "123456789"}`
 	servicePrincipalResponse = `{"value":[{ "objectType":"ServicePrincipal","objectId":"7f06b355-4136-4d8b-a3c8-7028f59869ae"}]}`
 	listRoleAssignments      = `{"value":[{"properties":{"roleDefinitionId":"/subscriptions/test/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c","principalId":"7f06b355-4136-4d8b-a3c8-7028f59869ae","scope":"/subscriptions/test"},"id":"/subscriptions/test/providers/Microsoft.Authorization/roleAssignments/4f87261d-2816-465d-8311-70a27558df4c","type":"Microsoft.Authorization/roleAssignments","name":"4f87261d-2816-465d-8311-70a27558df4c"}]}`
 	deleteRoleAssignment     = "{\"properties\":{\"roleDefinitionId\":\"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c\",\"principalId\":\"7f06b355-4136-4d8b-a3c8-7028f59869ae\",\"scope\":\"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a\"},\"id\":\"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/providers/Microsoft.Authorization/roleAssignments/4f87261d-2816-465d-8311-70a27558df4c\",\"type\":\"Microsoft.Authorization/roleAssignments\",\"name\":\"4f87261d-2816-465d-8311-70a27558df4c\"}"
@@ -89,6 +89,14 @@ var _ = Describe("application", func() {
 
 		It("returns empty response in case of 201", func() {
 			Ω(response.Body).Should(BeEmpty())
+		})
+		It("returns Access Token in the cookie", func() {
+			Ω(response.Cookies[0].Name).Should(Equal("AccessToken"))
+			Ω(response.Cookies[0].Value).Should(Equal("test_access_token"))
+		})
+		It("returns ExpiresOn in the cookie", func() {
+			Ω(response.Cookies[1].Name).Should(Equal("ExpiresOn"))
+			Ω(response.Cookies[1].Value).Should(Equal("123456789"))
 		})
 	})
 

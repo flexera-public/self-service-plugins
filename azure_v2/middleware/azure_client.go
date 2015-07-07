@@ -145,12 +145,16 @@ func refreshAccessToken(c *echo.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cookie := &http.Cookie{
+	// set Access Token in the cookie
+	http.SetCookie(c.Response.Writer(), &http.Cookie{
 		Name:  "AccessToken",
 		Value: authResponse.AccessToken,
-	}
-	// set Access Token in the cookie
-	http.SetCookie(c.Response.Writer(), cookie)
+	})
+	// set ExpiresOn in the cookie
+	http.SetCookie(c.Response.Writer(), &http.Cookie{
+		Name:  "ExpiresOn",
+		Value: authResponse.ExpiresOn,
+	})
 	return authResponse.AccessToken, nil
 }
 

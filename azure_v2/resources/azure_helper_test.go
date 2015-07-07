@@ -51,6 +51,7 @@ type Response struct {
 	Body    string
 	Status  int
 	Headers http.Header
+	Cookies []*http.Cookie
 }
 
 // Instantiate new azure client
@@ -108,6 +109,7 @@ func (c *AzureClient) do(verb, url, body string) (*Response, error) {
 		Body:    string(respBody),
 		Status:  resp.StatusCode,
 		Headers: resp.Header,
+		Cookies: resp.Cookies(),
 	}, nil
 }
 
