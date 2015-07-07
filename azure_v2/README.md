@@ -39,6 +39,10 @@ in order to get ability to use application specific access token.
 curl -v 'http://localhost:8080/application/register'
 Note: don't forget about creds in the cookies (see below)
 
+##Unregister application - "Disconnect" Subscription from Application
+From Azure docs: "Just as you enabled users to connect their subscriptions to your application, you must allow then to disconnect subscriptions too. From an access management point of view, disconnect means removing the role assignment that the applications service principal has on the subscription."
+curl -v -b ... 'http://localhost:8080/application/unregister'
+
 ##Make requests
 With no access token passed in the cookies
 curl -v -b "TenantID=...;ClientID=...;ClientSecret=...;SubscriptionID=..."'http://localhost:8080/instances'

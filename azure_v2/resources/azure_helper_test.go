@@ -29,6 +29,9 @@ const (
 	subscriptionID = "test"
 )
 
+var AccessTokenTest = "fake"
+var CredsTest = am.Credentials{}
+
 // Run once for all tests
 // Can't shutdown http servers just yet https://github.com/golang/go/issues/4674
 var _ = BeforeSuite(func() {
@@ -68,6 +71,11 @@ func (c *AzureClient) Post(url, body string) (*Response, error) {
 	return c.do("POST", url, body)
 }
 
+// Send DELETE request to cloud
+func (c *AzureClient) Delete(url string) (*Response, error) {
+	return c.do("DELETE", url, "")
+}
+
 // Helper generic send request method
 func (c *AzureClient) do(verb, url, body string) (*Response, error) {
 	var reader io.Reader
@@ -78,7 +86,15 @@ func (c *AzureClient) do(verb, url, body string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.AddCookie(&http.Cookie{Name: "AccessToken", Value: "fake"})
+	if AccessTokenTest != "" {
+		req.AddCookie(&http.Cookie{Name: "AccessToken", Value: AccessTokenTest})
+	} else {
+		req.AddCookie(&http.Cookie{Name: "TenantID", Value: CredsTest.TenantID})
+		req.AddCookie(&http.Cookie{Name: "ClientID", Value: CredsTest.ClientID})
+		req.AddCookie(&http.Cookie{Name: "ClientSecret", Value: CredsTest.ClientSecret})
+		req.AddCookie(&http.Cookie{Name: "RefreshToken", Value: CredsTest.RefreshToken})
+		req.AddCookie(&http.Cookie{Name: "SubscriptionID", Value: CredsTest.Subscription})
+	}
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := c.client.Do(req)
 	if err != nil {

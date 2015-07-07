@@ -110,7 +110,7 @@ func Delete(c *echo.Context, r AzureResource) error {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
 	}
 
-	return c.JSON(204, "")
+	return c.NoContent(204)
 }
 
 // Get resource
