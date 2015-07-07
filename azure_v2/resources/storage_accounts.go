@@ -138,7 +138,7 @@ func (s *StorageAccount) GetContentType() string {
 }
 
 // GetHref returns storage account href
-func (s *StorageAccount) GetHref(accountId string) string {
-	array := strings.Split(accountId, "/")
+func (s *StorageAccount) GetHref(accountID string) string {
+	array := strings.Split(accountID, "/")
 	return fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", array[len(array)-5], array[len(array)-1])
 }

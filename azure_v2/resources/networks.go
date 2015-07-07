@@ -150,7 +150,7 @@ func (n *Network) GetContentType() string {
 }
 
 // GetHref returns network href
-func (n *Network) GetHref(networkId string) string {
-	array := strings.Split(networkId, "/")
+func (n *Network) GetHref(networkID string) string {
+	array := strings.Split(networkID, "/")
 	return fmt.Sprintf("/resource_groups/%s/networks/%s", array[len(array)-5], array[len(array)-1])
 }

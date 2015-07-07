@@ -133,7 +133,7 @@ func (as *AvailabilitySet) GetContentType() string {
 }
 
 // GetHref returns availability set href
-func (as *AvailabilitySet) GetHref(availabilitySetId string) string {
-	array := strings.Split(availabilitySetId, "/")
+func (as *AvailabilitySet) GetHref(availabilitySetID string) string {
+	array := strings.Split(availabilitySetID, "/")
 	return fmt.Sprintf("/resource_groups/%s/availability_sets/%s", array[len(array)-5], array[len(array)-1])
 }

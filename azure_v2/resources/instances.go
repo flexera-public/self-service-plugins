@@ -34,7 +34,7 @@ type (
 	instanceViewResponseParams struct {
 		PlatformUpdateDomain int
 		PlatformFaultDomain  int
-		VmAgent              map[string]interface{}
+		VMAgent              map[string]interface{}
 		Disks                []interface{}
 		Statuses             []interface{}
 	}
@@ -272,7 +272,7 @@ func (i *Instance) GetContentType() string {
 }
 
 // GetHref returns instance href
-func (i *Instance) GetHref(instanceId string) string {
-	array := strings.Split(instanceId, "/")
+func (i *Instance) GetHref(instanceID string) string {
+	array := strings.Split(instanceID, "/")
 	return fmt.Sprintf("/resource_groups/%s/instances/%s", array[len(array)-5], array[len(array)-1])
 }
