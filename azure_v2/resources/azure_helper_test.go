@@ -137,6 +137,7 @@ func httpServer() *echo.Echo {
 	SetupAuthRoutes(e)
 	SetupNetworkInterfacesRoutes(e)
 	SetupOperationRoutes(e)
+	SetupAvailabilitySetRoutes(e)
 
 	return e
 }

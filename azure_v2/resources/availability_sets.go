@@ -16,6 +16,7 @@ const (
 
 type (
 	availabilitySetResponseParams struct {
+		ID         string                 `json:"id,omitempty"`
 		Name       string                 `json:"name,omitempty"`
 		Location   string                 `json:"location"`
 		Tags       interface{}            `json:"tags,omitempty"`
@@ -44,7 +45,7 @@ type (
 
 // SetupAvailabilitySetRoutes declares routes for AvailabilitySet resource
 func SetupAvailabilitySetRoutes(e *echo.Echo) {
-	e.Get("/availability_sets", listAvailabilitySets)
+	e.Get("/availability_sets", listAllAvailabilitySets)
 
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/availability_sets")
@@ -56,6 +57,33 @@ func SetupAvailabilitySetRoutes(e *echo.Echo) {
 
 func listAvailabilitySets(c *echo.Context) error {
 	return List(c, new(AvailabilitySet))
+}
+
+func listAllAvailabilitySets(c *echo.Context) error {
+	var sets []map[string]interface{}
+	as := new(AvailabilitySet)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
+	resourceGroups, err := GetResources(c, path)
+	if err != nil {
+		return err
+	}
+	for _, group := range resourceGroups {
+		groupName := group["name"].(string)
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, availabilitySetPath, config.APIVersion)
+		resp, err := GetResources(c, path)
+		if err != nil {
+			return err
+		}
+
+		//add href for each resource
+		for _, resource := range resp {
+			resource["href"] = as.GetHref(resource["id"].(string))
+		}
+
+		sets = append(sets, resp...)
+	}
+
+	return Render(c, 200, sets, as.GetContentType()+";type=collection")
 }
 
 func listOneAvailabilitySet(c *echo.Context) error {
@@ -90,6 +118,7 @@ func (as *AvailabilitySet) GetRequestParams(c *echo.Context) (interface{}, error
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 	as.createParams.Group = c.Param("group_name")
+	as.requestParams.Name = as.createParams.Name
 	as.requestParams.Location = as.createParams.Location
 
 	return as.requestParams, nil
@@ -118,7 +147,7 @@ func (as *AvailabilitySet) HandleResponse(c *echo.Context, body []byte, actionNa
 	if err := json.Unmarshal(body, &as.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := as.GetHref(as.responseParams.Properties["id"].(string))
+	href := as.GetHref(as.responseParams.ID)
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
