@@ -31,9 +31,12 @@ type (
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	networkCreateParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
-		Group    string `json:"group_name,omitempty"`
+		Name            string                   `json:"name,omitempty"`
+		Location        string                   `json:"location,omitempty"`
+		Group           string                   `json:"group_name,omitempty"`
+		AddressPrefixes []string                 `json:"address_prefixes,omitempty"`
+		Subnets         []map[string]interface{} `json:"subnets,omitempty"`      //\"subnets\": [{\"name\": \"test\", \"address_prefix\": \"10.0.0.0/16\"}]
+		DHCPOptions     map[string]interface{}   `json:"dhcp_options,omitempty"` //\"dhcp_options\": {\"dnsServers\": [\"10.1.0.5\", \"10.1.0.6\"]}
 	}
 	// Network is base struct for Azure Network resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -94,19 +97,27 @@ func (n *Network) GetRequestParams(c *echo.Context) (interface{}, error) {
 	}
 	n.createParams.Group = c.Param("group_name")
 
-	var subnets []map[string]interface{}
 	n.requestParams.Name = n.createParams.Name
 	n.requestParams.Location = n.createParams.Location
 	n.requestParams.Properties = map[string]interface{}{
 		"addressSpace": map[string]interface{}{
-			"addressPrefixes": []string{"10.0.0.0/16"},
+			"addressPrefixes": n.createParams.AddressPrefixes, //[]string{"10.0.0.0/16"}
 		},
-		"subnets": append(subnets, map[string]interface{}{
-			"name": n.createParams.Name,
+	}
+	var subnets []map[string]interface{}
+	//TODO: add networkSecurityGroup when this resource will be supported
+	for _, subnet := range n.createParams.Subnets {
+		subnets = append(subnets, map[string]interface{}{
+			"name": subnet["name"],
 			"properties": map[string]interface{}{
-				"addressPrefix": "10.0.0.0/16",
+				"addressPrefix": subnet["address_prefix"],
 			},
-		}),
+		})
+	}
+	n.requestParams.Properties["subnets"] = subnets
+
+	if n.createParams.DHCPOptions != nil {
+		n.requestParams.Properties["dhcpOptions"] = n.createParams.DHCPOptions
 	}
 
 	return n.requestParams, nil

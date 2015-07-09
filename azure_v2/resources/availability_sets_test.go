@@ -2,7 +2,6 @@ package resources
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
@@ -13,9 +12,9 @@ import (
 )
 
 const (
-	listASsEmptyResponse = `{"value":[]}`
-	listASsResponse      = `{"value":[{"href":"/resource_groups/Group-3/availability_sets/khrvi1","id":"/subscriptions/test/resourceGroups/Group-3/providers/Microsoft.Compute/availabilitySets/khrvi1","location":"eastus","name":"khrvi1","properties":{"platformFaultDomainCount":3,"platformUpdateDomainCount":5,"virtualMachines":[]},"type":"Microsoft.Compute/availabilitySets"}]}`
-	listOneASResponse    = `{"id":"/subscriptions/test/resourceGroups/Group-3/providers/Microsoft.Compute/availabilitySets/khrvi1","name":"khrvi1","location":"eastus","properties":{"platformFaultDomainCount":3,"platformUpdateDomainCount":5,"virtualMachines":[]},"href":"/resource_groups/Group-3/availability_sets/khrvi1"}`
+	listEmptyResponse = `{"value":[]}`
+	listASsResponse   = `{"value":[{"href":"/resource_groups/Group-3/availability_sets/khrvi1","id":"/subscriptions/test/resourceGroups/Group-3/providers/Microsoft.Compute/availabilitySets/khrvi1","location":"eastus","name":"khrvi1","properties":{"platformFaultDomainCount":3,"platformUpdateDomainCount":5,"virtualMachines":[]},"type":"Microsoft.Compute/availabilitySets"}]}`
+	listOneASResponse = `{"id":"/subscriptions/test/resourceGroups/Group-3/providers/Microsoft.Compute/availabilitySets/khrvi1","name":"khrvi1","location":"eastus","properties":{"platformFaultDomainCount":3,"platformUpdateDomainCount":5,"virtualMachines":[]},"href":"/resource_groups/Group-3/availability_sets/khrvi1"}`
 )
 
 var _ = Describe("availability_sets", func() {
@@ -79,13 +78,10 @@ var _ = Describe("availability_sets", func() {
 				),
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-3/"+availabilitySetPath),
-					// ghttp.CombineHandlers(
-					// 	ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/"+availabilitySetPath),
 					ghttp.RespondWith(http.StatusOK, listASsResponse),
 				),
 			)
 			response, err = client.Get("/availability_sets")
-			fmt.Printf("%s!!!!", response)
 		})
 
 		It("no error occured", func() {
@@ -116,7 +112,7 @@ var _ = Describe("availability_sets", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-3/"+availabilitySetPath),
-					ghttp.RespondWith(http.StatusOK, listASsEmptyResponse),
+					ghttp.RespondWith(http.StatusOK, listEmptyResponse),
 				),
 			)
 		})
