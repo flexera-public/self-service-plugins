@@ -55,6 +55,7 @@ type (
 		HostName           string `json:"host_name,omitempty"`
 		AdminUserName      string `json:"admin_user_name,omitempty"`
 		AdminPassword      string `json:"admin_password,omitempty"`
+		AvailabilitySet    string `json:"availability_set,omitempty"`
 	}
 
 	// Instance is base struct for Azure VM resource to store input create params,
@@ -148,14 +149,14 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 	}
 
 	array := strings.Split(i.createParams.ImageID, "/")
-	if len(array) != 16 {
+	if len(array) != 17 {
 		return nil, eh.InvalidParamException("image_id")
 	}
 
-	publisher := array[7]
-	offer := array[11]
-	sku := array[13]
-	version := array[15]
+	publisher := array[8]
+	offer := array[12]
+	sku := array[14]
+	version := array[16]
 
 	if i.createParams.StorageAccountID == "" {
 		return nil, eh.InvalidParamException("storage_account_id")
@@ -217,6 +218,12 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 				"id": i.createParams.NetworkInterfaceID,
 			}),
 		},
+	}
+
+	if i.createParams.AvailabilitySet != "" {
+		i.requestParams.Properties["availabilitySet"] = map[string]string{
+			"id": i.createParams.AvailabilitySet,
+		}
 	}
 	return i.requestParams, nil
 }

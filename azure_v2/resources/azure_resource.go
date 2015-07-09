@@ -169,6 +169,12 @@ func GetResources(c *echo.Context, path string) ([]map[string]interface{}, error
 			// error occurs if value of the hash is not a []map[string]interface{}
 			return m["value"], nil
 		}
+		var array []map[string]interface{}
+		if err := json.Unmarshal(b, &array); err == nil {
+			// return resources if unmarshaling is success for array struct
+			// error occurs if body contains array of resources "[]map[string]interface{}"
+			return array, nil
+		}
 		return nil, eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(b)))
 	}
 	return m["value"], nil

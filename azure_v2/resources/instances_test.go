@@ -184,7 +184,7 @@ var _ = Describe("instances", func() {
 					ghttp.RespondWith(201, listOneInstanceResponse),
 				),
 			)
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"instance_type_uid\": \"Standard_G1\", \"location\": \"westus\", \"network_interface_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"image_id\": \"Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"instance_type_uid\": \"Standard_G1\", \"location\": \"westus\", \"network_interface_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"image_id\": \"/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
 		})
 
 		It("no error occured", func() {
@@ -214,7 +214,7 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns validation error about missing 'location'", func() {
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"instance_type_uid\": \"Standard_G1\", \"network_interface_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"image_id\": \"Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"instance_type_uid\": \"Standard_G1\", \"network_interface_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"image_id\": \"/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
 			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'location' parameter.\"}\n"))
@@ -228,21 +228,21 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns validation error about wrong 'image_id'", func() {
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"image_id\": \"Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"image_id\": \"/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps\"}")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
 			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'image_id' parameter.\"}\n"))
 		})
 
 		It("returns validation error about missing 'storage_account_id'", func() {
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"instance_type_uid\": \"Standard_G1\", \"image_id\": \"Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"instance_type_uid\": \"Standard_G1\", \"image_id\": \"/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\"}")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
 			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'storage_account_id' parameter.\"}\n"))
 		})
 
 		It("returns validation error about missing 'instance_type_id'", func() {
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"image_id\": \"Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"image_id\": \"/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
 			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'instance_type_id' parameter.\"}\n"))
