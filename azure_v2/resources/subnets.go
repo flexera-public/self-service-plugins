@@ -20,8 +20,6 @@ type (
 	}
 
 	subnetRequestParams struct {
-		Name       string                 `json:"name,omitempty"`
-		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	subnetCreateParams struct {
@@ -48,6 +46,7 @@ func SetupSubnetsRoutes(e *echo.Echo) {
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/networks/:network_id/subnets")
 	group.Get("", listSubnets)
+	group.Get("/:id", listOneSubnet)
 	group.Post("", createSubnet)
 	group.Delete("/:id", deleteSubnet)
 }
@@ -67,6 +66,7 @@ func listSubnets(c *echo.Context) error {
 	return Render(c, 200, subnets, "vnd.rightscale.subnet+json;type=collection")
 }
 
+// To get all subnets faster could be used Network resource since each network contains set of subnets
 func listAllSubnets(c *echo.Context) error {
 	var subnets []map[string]interface{}
 	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, config.APIVersion)
@@ -89,6 +89,20 @@ func listAllSubnets(c *echo.Context) error {
 		subnets = append(subnets, resp...)
 	}
 	return Render(c, 200, subnets, "vnd.rightscale.subnet+json;type=collection")
+}
+
+func listOneSubnet(c *echo.Context) error {
+	subnet := new(Subnet)
+	groupName := c.Param("group_name")
+	networkID := c.Param("network_id")
+	subnetID := c.Param("id")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, subnetID, config.APIVersion)
+	body, err := GetResource(c, path)
+	if err != nil {
+		return err
+	}
+	subnet.HandleResponse(c, body, "")
+	return Render(c, 200, subnet.GetResponseParams(), subnet.GetContentType())
 }
 
 func createSubnet(c *echo.Context) error {
@@ -116,9 +130,9 @@ func (s *Subnet) GetRequestParams(c *echo.Context) (interface{}, error) {
 	s.createParams.Group = c.Param("group_name")
 	s.createParams.NetworkID = c.Param("network_id")
 
+	//TODO: add networkSecurityGroup when this resource will be supported
 	s.requestParams.Properties = map[string]interface{}{
 		"addressPrefix": s.createParams.AddressPrefix,
-		//"dhcpOptions":   postParams.Get("dhcp_options"),
 	}
 
 	return s.requestParams, nil

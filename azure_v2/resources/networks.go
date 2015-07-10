@@ -97,6 +97,7 @@ func (n *Network) GetRequestParams(c *echo.Context) (interface{}, error) {
 	}
 	n.createParams.Group = c.Param("group_name")
 
+	//TODO: add validation
 	n.requestParams.Name = n.createParams.Name
 	n.requestParams.Location = n.createParams.Location
 	n.requestParams.Properties = map[string]interface{}{
