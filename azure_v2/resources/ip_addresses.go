@@ -30,9 +30,11 @@ type (
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	ipAddressCreateParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
-		Group    string `json:"group_name,omitempty"`
+		Name             string `json:"name,omitempty"`
+		Location         string `json:"location,omitempty"`
+		Group            string `json:"group_name,omitempty"`
+		AllocationMethod string `json:"allocation_method,omitempty"` //*Mandatory: Defines whether the IP address is stable or dynamic. Options are Static or Dynamic
+		IdleTimeout      int    `json:"timeout,omitempty"`           //Specifies the timeout for the TCP idle connection. The value can be set between 4 and 30 minutes
 	}
 	// IPAddress is base struct for Azure Public IP Address resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -96,11 +98,13 @@ func (ip *IPAddress) GetRequestParams(c *echo.Context) (interface{}, error) {
 	ip.createParams.Group = c.Param("group_name")
 	ip.requestParams.Location = ip.createParams.Location
 	ip.requestParams.Properties = map[string]interface{}{
-		"publicIPAllocationMethod": "Dynamic",
-		//"dnsSettings":   map[string]interface{}{
-		//	"domainNameLabel": postParams.Get("domain_name")
-		//}
+		"publicIPAllocationMethod": ip.createParams.AllocationMethod,
+		//Note: dnsSettings could be added if needed
 	}
+	if ip.createParams.IdleTimeout != 0 {
+		ip.requestParams.Properties["idleTimeoutInMinutes"] = ip.createParams.IdleTimeout
+	}
+
 	return ip.requestParams, nil
 }
 
