@@ -80,7 +80,7 @@ func assignRoleToApp(c *echo.Context) error {
 		return eh.GenericException(fmt.Sprintf("Assign RBAC role to Application failed: %s", string(b)))
 	}
 	if response.StatusCode != 201 {
-		return eh.GenericException(fmt.Sprintf("Assign RBAC role to Application returned status %s with body: %s", response.StatusCode, string(b)))
+		return eh.GenericException(fmt.Sprintf("Assign RBAC role to Application returned status %d with body: %s", response.StatusCode, string(b)))
 	}
 	return c.NoContent(201)
 }

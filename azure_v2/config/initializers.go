@@ -1,10 +1,11 @@
 package config
 
 import (
-	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
 	"log/syslog"
 	"os"
+
+	"gopkg.in/alecthomas/kingpin.v1"
 )
 
 const (

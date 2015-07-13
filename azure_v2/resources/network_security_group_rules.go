@@ -38,7 +38,7 @@ type (
 		Priority                 int    `json:"priority,omitempty"`                   // *Mandatory. Specifies the priority of the rule. The value can be between 100 and 4096. The priority number must be unique for each rule in the collection. The lower the priority number, the higher the priority of the rule.
 		Direction                string `json:"direction,omitempty"`                  // *Mandatory. The direction specifies if rule will be evaluated on incoming or outgoing traffic. Possible values are “Inbound” and “Outbound”.
 	}
-	// networkSecurityGroupRule is base struct for Azure Network Security Group Rule resource to store input create params,
+	// NetworkSecurityGroupRule is base struct for Azure Network Security Group Rule resource to store input create params,
 	// request create params and response params gotten from cloud.
 	NetworkSecurityGroupRule struct {
 		createParams   networkSecurityGroupRuleCreateParams

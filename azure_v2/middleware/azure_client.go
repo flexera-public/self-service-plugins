@@ -32,12 +32,12 @@ type AuthResponse struct {
 	ExpiresIn    string `json:"expires_in"` // seconds
 	ExpiresOn    string `json:"expires_on"` // seconds
 	NotBefore    string `json:"not_before"` // seconds
-	Resource     string `json:resource`
+	Resource     string `json:"resource"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-	Scope        string `json:scope`
-	Pwd          string `json:pwd_exp`
-	PwdURL       string `json:pwd_url`
+	Scope        string `json:"scope"`
+	Pwd          string `json:"pwd_exp"`
+	PwdURL       string `json:"pwd_url"`
 }
 
 // AzureClientInitializer is a middleware that creates Azure client and handles credentials

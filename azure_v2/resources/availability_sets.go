@@ -26,7 +26,7 @@ type (
 	}
 
 	availabilitySetRequestParams struct {
-		Name     string `json:"name`
+		Name     string `json:"name"`
 		Location string `json:"location"`
 	}
 	availabilitySetCreateParams struct {

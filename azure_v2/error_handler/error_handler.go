@@ -2,9 +2,10 @@ package errorHandler
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/go-errors/errors"
 	"github.com/labstack/echo"
-	"net/http"
 )
 
 type genericError struct {
