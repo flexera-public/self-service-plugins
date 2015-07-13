@@ -23,10 +23,11 @@ type (
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	subnetCreateParams struct {
-		Name          string `json:"name,omitempty"`
-		Group         string `json:"group_name,omitempty"`
-		NetworkID     string `json:"network_id,omitempty"`
-		AddressPrefix string `json:"address_prefix,omitempty"`
+		Name                   string `json:"name,omitempty"`
+		Group                  string `json:"group_name,omitempty"`
+		NetworkID              string `json:"network_id,omitempty"`
+		AddressPrefix          string `json:"address_prefix,omitempty"`
+		NetworkSecurityGroupID string `json:"network_security_group_id,omitempty"`
 	}
 	// Subnet is base struct for Azure Subnet resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -127,9 +128,14 @@ func (s *Subnet) GetRequestParams(c *echo.Context) (interface{}, error) {
 	s.createParams.Group = c.Param("group_name")
 	s.createParams.NetworkID = c.Param("network_id")
 
-	//TODO: add networkSecurityGroup when this resource will be supported
 	s.requestParams.Properties = map[string]interface{}{
 		"addressPrefix": s.createParams.AddressPrefix,
+	}
+
+	if s.createParams.NetworkSecurityGroupID != "" {
+		s.requestParams.Properties["networkSecurityGroup"] = map[string]interface{}{
+			"id": s.createParams.NetworkSecurityGroupID,
+		}
 	}
 
 	return s.requestParams, nil

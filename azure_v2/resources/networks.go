@@ -106,14 +106,19 @@ func (n *Network) GetRequestParams(c *echo.Context) (interface{}, error) {
 		},
 	}
 	var subnets []map[string]interface{}
-	//TODO: add networkSecurityGroup when this resource will be supported
 	for _, subnet := range n.createParams.Subnets {
-		subnets = append(subnets, map[string]interface{}{
+		resource := map[string]interface{}{
 			"name": subnet["name"],
 			"properties": map[string]interface{}{
 				"addressPrefix": subnet["address_prefix"],
 			},
-		})
+		}
+		if subnet["network_security_group_id"] != nil {
+			resource["properties"].(map[string]interface{})["networkSecurityGroup"] = map[string]interface{}{
+				"id": subnet["network_security_group_id"],
+			}
+		}
+		subnets = append(subnets, resource)
 	}
 	n.requestParams.Properties["subnets"] = subnets
 
