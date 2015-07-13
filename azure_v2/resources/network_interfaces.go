@@ -30,10 +30,14 @@ type (
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	networkInterfaceCreateParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
-		SubnetID string `json:"subnet_id,omitempty"`
-		Group    string `json:"group_name,omitempty"`
+		Name                   string   `json:"name,omitempty"`
+		Location               string   `json:"location,omitempty"`
+		SubnetID               string   `json:"subnet_id,omitempty"`
+		Group                  string   `json:"group_name,omitempty"`
+		DNSServers             []string `json:"dns_servers,omitempty"`
+		NetworkSecurityGroupID string   `json:"network_security_group_id,omitempty"`
+		PrivateIPAddress       string   `json:"private_ip_address,omitempty"`   // Static IP Address
+		PublicIPAddressID      string   `json:"public_ip_address_id,omitempty"` // Reference to a Public IP Address to associate with this NIC
 	}
 	// NetworkInterface is base struct for Azure Network Interface resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -98,23 +102,42 @@ func (ni *NetworkInterface) GetRequestParams(c *echo.Context) (interface{}, erro
 
 	var configs []map[string]interface{}
 	ni.requestParams.Location = ni.createParams.Location
+
+	configProperties := map[string]interface{}{
+		"subnet": map[string]interface{}{
+			"id": ni.createParams.SubnetID,
+		},
+		"privateIPAllocationMethod": "Dynamic",
+	}
+
+	if ni.createParams.PrivateIPAddress != "" {
+		configProperties["privateIPAddress"] = ni.createParams.PrivateIPAddress
+		configProperties["privateIPAllocationMethod"] = "Static"
+	}
+
+	if ni.createParams.PublicIPAddressID != "" {
+		configProperties["publicIPAddress"] = map[string]interface{}{
+			"id": ni.createParams.PublicIPAddressID,
+		}
+	}
+
 	ni.requestParams.Properties = map[string]interface{}{
 		"ipConfigurations": append(configs, map[string]interface{}{
-			"name": ni.createParams.Name + "_ip",
-			"properties": map[string]interface{}{
-				"subnet": map[string]interface{}{
-					"id": ni.createParams.SubnetID,
-				},
-				//"privateIPAddress": "10.0.0.8",
-				"privateIPAllocationMethod": "Dynamic",
-				// "publicIPAddress": map[string]interface{}{
-				// 	"id": ""
-				// }
-			},
+			"name":       ni.createParams.Name + "_ip",
+			"properties": configProperties,
 		}),
-		// "dnsSettings": map[string]interface{}{
-		// 	"dnsServers": postParams.Get("dns_servers")
-		// }
+	}
+
+	if ni.createParams.NetworkSecurityGroupID != "" {
+		ni.requestParams.Properties["networkSecurityGroup"] = map[string]interface{}{
+			"id": ni.createParams.NetworkSecurityGroupID,
+		}
+	}
+
+	if ni.createParams.DNSServers != nil {
+		ni.requestParams.Properties["dnsSettings"] = map[string]interface{}{
+			"dnsServers": ni.createParams.DNSServers,
+		}
 	}
 
 	return ni.requestParams, nil

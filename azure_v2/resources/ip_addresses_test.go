@@ -202,4 +202,29 @@ var _ = Describe("ip addresses", func() {
 			Ω(response.Body).Should(BeEmpty())
 		})
 	})
+
+	Describe("deleting", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("DELETE", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+ipAddressPath+"/khrvi_test_static"),
+					ghttp.RespondWith(200, ""),
+				),
+			)
+			response, err = client.Delete("/resource_groups/Group-1/ip_addresses/khrvi_test_static")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 204 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(204))
+		})
+
+		It("return empty body", func() {
+			Ω(response.Body).Should(BeEmpty())
+		})
+	})
 })
