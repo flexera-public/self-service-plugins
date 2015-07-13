@@ -13,7 +13,7 @@ import (
 
 const (
 	listSubnetsResponse   = `{"value":[{"etag":"W/\"bfa01c55-48e2-41fc-8f0b-2189de29e495\"","href":"/resource_groups/Group-3/networks/khrvi-3/subnets/sub1","id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-3/providers/Microsoft.Network/virtualNetworks/khrvi-3/subnets/sub1","name":"sub1","properties":{"addressPrefix":"10.0.0.0/16","provisioningState":"Succeeded"}}]}`
-	listOneSubnetResponse = `{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-3/providers/Microsoft.Network/virtualNetworks/khrvi-3/subnets/sub1","name":"sub1","etag":"W/\"bfa01c55-48e2-41fc-8f0b-2189de29e495\"","properties":{"addressPrefix":"10.0.0.0/16","provisioningState":"Succeeded"}}`
+	listOneSubnetResponse = `{"id":"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-3/providers/Microsoft.Network/virtualNetworks/khrvi-3/subnets/sub1","name":"sub1","etag":"W/\"bfa01c55-48e2-41fc-8f0b-2189de29e495\"","properties":{"addressPrefix":"10.0.0.0/16","provisioningState":"Succeeded"}, "href": "/resource_groups/Group-3/networks/khrvi-3/subnets/sub1"}`
 )
 
 var _ = Describe("subnets", func() {
@@ -153,7 +153,7 @@ var _ = Describe("subnets", func() {
 		})
 
 		It("retrieves an existing subnet", func() {
-			var subnet map[string]interface{}
+			subnet := new(subnetResponseParams)
 			err := json.Unmarshal([]byte(listOneSubnetResponse), &subnet)
 			Expect(err).NotTo(HaveOccurred())
 			expected, err := json.Marshal(subnet)

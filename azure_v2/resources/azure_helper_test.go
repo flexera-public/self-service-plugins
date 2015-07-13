@@ -138,6 +138,8 @@ func httpServer() *echo.Echo {
 	SetupNetworkInterfacesRoutes(e)
 	SetupOperationRoutes(e)
 	SetupAvailabilitySetRoutes(e)
+	SetupNetworkSecurityGroupRoutes(e)
+	SetupNetworkSecurityGroupRuleRoutes(e)
 
 	return e
 }

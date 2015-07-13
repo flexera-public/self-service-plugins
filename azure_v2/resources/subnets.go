@@ -68,7 +68,7 @@ func listSubnets(c *echo.Context) error {
 
 // To get all subnets faster could be used Network resource since each network contains set of subnets
 func listAllSubnets(c *echo.Context) error {
-	var subnets []map[string]interface{}
+	subnets := make([]map[string]interface{}, 0)
 	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, config.APIVersion)
 	networks, err := GetResources(c, path)
 	if err != nil {
@@ -92,17 +92,14 @@ func listAllSubnets(c *echo.Context) error {
 }
 
 func listOneSubnet(c *echo.Context) error {
-	subnet := new(Subnet)
-	groupName := c.Param("group_name")
-	networkID := c.Param("network_id")
-	subnetID := c.Param("id")
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, subnetID, config.APIVersion)
-	body, err := GetResource(c, path)
-	if err != nil {
-		return err
+	subnet := Subnet{
+		createParams: subnetCreateParams{
+			Name:      c.Param("id"),
+			Group:     c.Param("group_name"),
+			NetworkID: c.Param("network_id"),
+		},
 	}
-	subnet.HandleResponse(c, body, "")
-	return Render(c, 200, subnet.GetResponseParams(), subnet.GetContentType())
+	return Get(c, &subnet)
 }
 
 func createSubnet(c *echo.Context) error {

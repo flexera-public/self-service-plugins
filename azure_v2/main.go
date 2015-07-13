@@ -54,6 +54,8 @@ func httpServer() *echo.Echo {
 	resources.SetupImageRoutes(prefix)
 	resources.SetupOperationRoutes(prefix)
 	resources.SetupAvailabilitySetRoutes(prefix)
+	resources.SetupNetworkSecurityGroupRoutes(prefix)
+	resources.SetupNetworkSecurityGroupRuleRoutes(prefix)
 
 	return e
 }
