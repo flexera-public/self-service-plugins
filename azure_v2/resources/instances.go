@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -45,17 +46,22 @@ type (
 		Properties map[string]interface{} `json:"properties,omitempty"`
 	}
 	createParams struct {
-		Name               string `json:"name,omitempty"`
-		Location           string `json:"location,omitempty"`
-		Size               string `json:"instance_type_uid,omitempty"`
-		Group              string `json:"group_name,omitempty"`
-		NetworkInterfaceID string `json:"network_interface_id,omitempty"`
-		ImageID            string `json:"image_id,omitempty"`
-		StorageAccountID   string `json:"storage_account_id,omitempty"`
-		HostName           string `json:"host_name,omitempty"`
-		AdminUserName      string `json:"admin_user_name,omitempty"`
-		AdminPassword      string `json:"admin_password,omitempty"`
-		AvailabilitySet    string `json:"availability_set,omitempty"`
+		Name               string                 `json:"name,omitempty"`
+		Location           string                 `json:"location,omitempty"`
+		Size               string                 `json:"instance_type_uid,omitempty"`
+		Group              string                 `json:"group_name,omitempty"`
+		NetworkInterfaceID string                 `json:"network_interface_id,omitempty"`
+		ImageID            string                 `json:"image_id,omitempty"`
+		PrivateImageID     string                 `json:"private_image_id,omitempty"`
+		StorageAccountID   string                 `json:"storage_account_id,omitempty"`
+		HostName           string                 `json:"host_name,omitempty"`
+		AdminUserName      string                 `json:"admin_user_name,omitempty"`
+		AdminPassword      string                 `json:"admin_password,omitempty"`
+		AvailabilitySet    string                 `json:"availability_set,omitempty"`
+		Disks              []interface{}          `json:"disks,omitempty"`     // [{ "name" : "datadisk1", "diskSizeGB" : "1", "lun" : 0, "vhd":{ "uri" : "http://mystore1.blob.core.windows.net/vhds/dd1.vhd" }, "createOption":"Empty"}]},
+		UserData           string                 `json:"user_data,omitempty"` // Specifies a base-64 encoded string of custom data. The base-64 encoded string is decoded to a binary array that is saved as a file on the Virtual Machine. The maximum length of the binary array is 65535 bytes.
+		WindowsConfig      map[string]interface{} `json:"windows_config,omitempty"`
+		LinuxConfig        map[string]interface{} `json:"linux_config,omitempty"`
 	}
 
 	// Instance is base struct for Azure VM resource to store input create params,
@@ -144,20 +150,6 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		return nil, eh.InvalidParamException("location")
 	}
 
-	if i.createParams.ImageID == "" {
-		return nil, eh.InvalidParamException("image_id")
-	}
-
-	array := strings.Split(i.createParams.ImageID, "/")
-	if len(array) != 17 {
-		return nil, eh.InvalidParamException("image_id")
-	}
-
-	publisher := array[8]
-	offer := array[12]
-	sku := array[14]
-	version := array[16]
-
 	if i.createParams.StorageAccountID == "" {
 		return nil, eh.InvalidParamException("storage_account_id")
 	}
@@ -166,9 +158,34 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		return nil, eh.InvalidParamException("instance_type_id")
 	}
 
-	array = strings.Split(i.createParams.StorageAccountID, "/")
-	storageName := array[len(array)-1]
+	var networkInterfaces []map[string]interface{}
+	i.requestParams.Name = i.createParams.Name
+	i.requestParams.Location = i.createParams.Location
 
+	osProfile, err := i.prepareStorageProfile()
+	if err != nil {
+		return nil, err
+	}
+	i.requestParams.Properties = map[string]interface{}{
+		"hardwareProfile": map[string]interface{}{"vmSize": i.createParams.Size},
+		"storageProfile":  osProfile,
+		"osProfile":       i.prepareOSProfile(),
+		"networkProfile": map[string]interface{}{
+			"networkInterfaces": append(networkInterfaces, map[string]interface{}{
+				"id": i.createParams.NetworkInterfaceID,
+			}),
+		},
+	}
+
+	if i.createParams.AvailabilitySet != "" {
+		i.requestParams.Properties["availabilitySet"] = map[string]string{
+			"id": i.createParams.AvailabilitySet,
+		}
+	}
+	return i.requestParams, nil
+}
+
+func (i *Instance) prepareOSProfile() map[string]interface{} {
 	hostName := i.createParams.HostName
 	if hostName == "" {
 		hostName = i.createParams.Name
@@ -183,49 +200,75 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		adminPassword = defaultAdminPassword
 	}
 
-	var networkInterfaces []map[string]interface{}
-	i.requestParams.Name = i.createParams.Name
-	i.requestParams.Location = i.createParams.Location
-	i.requestParams.Properties = map[string]interface{}{
-		"hardwareProfile": map[string]interface{}{"vmSize": i.createParams.Size},
-		//"storageProfile":{"imageReference":{"publisher":"CoreOS","offer":"CoreOS","sku":"Alpha","version":"660.0.0"},"osDisk":{"name":"cli64174115e3045f57-os-1434041634239","vhd":{"uri":"https://cli64174115e3045f5714340.blob.core.windows.net/vhds/cli64174115e3045f57-os-1434041634239.vhd"},"caching":"ReadWrite","createOption":"FromImage"}}
-		"storageProfile": map[string]interface{}{
-			"imageReference": map[string]interface{}{
-				"publisher": publisher, //"Canonical",
-				"offer":     offer,     //"Ubuntu15.04Snappy",
-				"sku":       sku,       //"15.04-Snappy",
-				"version":   version,   //"15.04.201505060",
-			},
-
-			"osDisk": map[string]interface{}{
-				"caching":      "ReadWrite",
-				"createOption": "FromImage",
-				"vhd": map[string]interface{}{
-					"uri": "https://" + storageName + ".blob.core.windows.net/vhds/os-" + i.createParams.Name + "-rs.vhd",
-				},
-				"name": "os-" + i.createParams.Name + "-rs",
-				//"osType": "Windows",
-			},
-		},
-		"osProfile": map[string]interface{}{
-			"computerName":  hostName,
-			"adminUsername": adminName,
-			"adminPassword": adminPassword,
-			//"linuxConfiguration":{"disablePasswordAuthentication":false}
-		},
-		"networkProfile": map[string]interface{}{
-			"networkInterfaces": append(networkInterfaces, map[string]interface{}{
-				"id": i.createParams.NetworkInterfaceID,
-			}),
-		},
+	osProfile := map[string]interface{}{
+		"computerName":  hostName,
+		"adminUsername": adminName,
+		"adminPassword": adminPassword,
 	}
 
-	if i.createParams.AvailabilitySet != "" {
-		i.requestParams.Properties["availabilitySet"] = map[string]string{
-			"id": i.createParams.AvailabilitySet,
+	if i.createParams.WindowsConfig != nil {
+		// "windowsConfiguration":{ "provisionVMAgent":true,
+		// 		"winRM": { "listeners":[{ "protocol": "https", "certificateUrl": "[parameters('certificateUrl')]"}]},
+		//         "additionalUnattendContent":{ "pass":"oobesystem", "component":"Microsoft-Windows-Shell-Setup", "settingName":"FirstLogonCommands|AutoLogon", "content":"<XML unattend content>",},
+		//         "enableAutomaticUpdates":true,}
+		osProfile["windowsConfiguration"] = i.createParams.WindowsConfig
+	}
+
+	if i.createParams.LinuxConfig != nil {
+		//"linuxConfiguration":{ "disablePasswordAuthentication":"true|false", "ssh":{ "publicKeys":[{ "path":"Path-Where-To-Place-Public-Key-On-VM", "keyData":"Base64Encoded-public-key-file"}]}}
+		osProfile["linuxConfiguration"] = i.createParams.LinuxConfig
+	}
+
+	if i.createParams.UserData != "" {
+		osProfile["customData"] = base64.StdEncoding.EncodeToString([]byte(i.createParams.UserData))
+	}
+	return osProfile
+}
+
+func (i *Instance) prepareStorageProfile() (map[string]interface{}, error) {
+	if i.createParams.ImageID == "" && i.createParams.PrivateImageID == "" {
+		return nil, eh.GenericException("One of these two params should be passed: 'image_id' or 'private_image_id'.")
+	}
+	array := strings.Split(i.createParams.StorageAccountID, "/")
+	storageName := array[len(array)-1]
+
+	storageProfile := map[string]interface{}{
+		"osDisk": map[string]interface{}{
+			"name":         "os-" + i.createParams.Name + "-rs",
+			"caching":      "ReadWrite",
+			"createOption": "FromImage",
+			"vhd": map[string]interface{}{
+				"uri": "https://" + storageName + ".blob.core.windows.net/vhds/os-" + i.createParams.Name + "-rs.vhd",
+			},
+		},
+	}
+	if i.createParams.ImageID != "" {
+		array := strings.Split(i.createParams.ImageID, "/")
+		if len(array) != 17 {
+			return nil, eh.InvalidParamException("image_id")
+		}
+		publisher := array[8]
+		offer := array[12]
+		sku := array[14]
+		version := array[16]
+
+		storageProfile["imageReference"] = map[string]interface{}{
+			"publisher": publisher, //"Canonical",
+			"offer":     offer,     //"Ubuntu15.04Snappy",
+			"sku":       sku,       //"15.04-Snappy",
+			"version":   version,   //"15.04.201505060",
+		}
+	} else {
+		storageProfile["osDisk"].(map[string]interface{})["osType"] = "Linux" // or Windows
+		storageProfile["osDisk"].(map[string]interface{})["image"] = map[string]interface{}{
+			"uri": i.createParams.PrivateImageID,
 		}
 	}
-	return i.requestParams, nil
+
+	if i.createParams.Disks != nil {
+		storageProfile["dataDisks"] = i.createParams.Disks
+	}
+	return storageProfile, nil
 }
 
 // GetResponseParams is accessor function for getting access to responseParams struct
@@ -264,7 +307,10 @@ func (i *Instance) HandleResponse(c *echo.Context, body []byte, actionName strin
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
 
-	href := i.GetHref(i.responseParams.ID)
+	var href string
+	if i.action != "getInstanceView" {
+		href = i.GetHref(i.responseParams.ID)
+	}
 	if actionName == "create" {
 		c.Response.Header().Add("Location", href)
 	} else if actionName == "get" {
