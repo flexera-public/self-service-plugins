@@ -173,15 +173,73 @@ var _ = Describe("networks", func() {
 		})
 	})
 
-	Describe("creating", func() {
+	Describe("creating with no subnets", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-3/"+networkPath+"/net2"),
+					ghttp.VerifyJSONRepresenting(networkRequestParams{
+						Name:     "net2",
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"addressSpace": map[string]interface{}{
+								"addressPrefixes": []string{"10.0.0.0/16"},
+							},
+							"subnets": nil,
+						},
+					}),
 					ghttp.RespondWith(201, listOneNetworkResponse),
 				),
 			)
-			response, err = client.Post("/resource_groups/Group-3/networks", "{\"name\": \"net2\", \"location\": \"westus\"}")
+			response, err = client.Post("/resource_groups/Group-3/networks", "{\"name\": \"net2\", \"location\": \"westus\", \"address_prefixes\": [\"10.0.0.0/16\"]}")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 201 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(201))
+		})
+
+		It("returns a resource network href in the 'Location' header", func() {
+			Ω(response.Headers["Location"][0]).Should(Equal("/resource_groups/Group-3/networks/net2"))
+		})
+
+		It("return empty body", func() {
+			Ω(response.Body).Should(BeEmpty())
+		})
+	})
+
+	Describe("creating with one subnet", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-3/"+networkPath+"/net2"),
+					ghttp.VerifyJSONRepresenting(networkRequestParams{
+						Name:     "net2",
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"addressSpace": map[string]interface{}{
+								"addressPrefixes": []string{"10.0.0.0/16"},
+							},
+							"subnets": []map[string]interface{}{
+								{"name": "subnet_name",
+									"properties": map[string]interface{}{
+										"addressPrefix": "10.0.0.0/16",
+									},
+								},
+							},
+							"dhcpOptions": map[string]interface{}{
+								"dnsServers": []string{"10.1.0.5", "10.1.0.6"},
+							},
+						},
+					}),
+					ghttp.RespondWith(201, listOneNetworkResponse),
+				),
+			)
+			response, err = client.Post("/resource_groups/Group-3/networks", "{\"name\": \"net2\", \"location\": \"westus\", \"address_prefixes\": [\"10.0.0.0/16\"], \"subnets\": [{\"name\": \"subnet_name\", \"address_prefix\": \"10.0.0.0/16\"}], \"dhcp_options\": {\"dnsServers\": [\"10.1.0.5\", \"10.1.0.6\"]}}")
 		})
 
 		It("no error occured", func() {

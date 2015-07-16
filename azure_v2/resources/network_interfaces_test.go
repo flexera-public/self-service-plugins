@@ -179,10 +179,82 @@ var _ = Describe("network interfaces", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+networkInterfacePath+"/1_khrvi"),
+					ghttp.VerifyJSONRepresenting(networkInterfaceRequestParams{
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"ipConfigurations": []map[string]interface{}{
+								{"name": "1_khrvi_ip",
+									"properties": map[string]interface{}{
+										"subnet": map[string]interface{}{
+											"id": "subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/virtualNetworks/khrvi/subnets/khrvi",
+										},
+										"privateIPAllocationMethod": "Static",
+										"privateIPAddress":          "10.0.0.130",
+										"publicIPAddress": map[string]interface{}{
+											"id": "/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/publicIPAddresses/khrvi-3",
+										},
+									},
+								},
+							},
+							"networkSecurityGroup": map[string]interface{}{
+								"id": "/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkSecurityGroups/khrvi1",
+							},
+						}}),
+
 					ghttp.RespondWith(201, listOneNIResponse),
 				),
 			)
 			response, err = client.Post("/resource_groups/Group-1/network_interfaces", "{\"name\": \"1_khrvi\", \"location\": \"westus\", \"subnet_id\": \"subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/virtualNetworks/khrvi/subnets/khrvi\", \"network_security_group_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkSecurityGroups/khrvi1\", \"public_ip_address_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/publicIPAddresses/khrvi-3\", \"private_ip_address\": \"10.0.0.130\"}")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 201 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(201))
+		})
+
+		It("returns a resource network interface href in the 'Location' header", func() {
+			Ω(response.Headers["Location"][0]).Should(Equal("/resource_groups/Group-1/network_interfaces/1_khrvi"))
+		})
+
+		It("return empty body", func() {
+			Ω(response.Body).Should(BeEmpty())
+		})
+	})
+
+	Describe("creating interface with public ip and dns settions", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+networkInterfacePath+"/khrvi"),
+					ghttp.VerifyJSONRepresenting(networkInterfaceRequestParams{
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"ipConfigurations": []map[string]interface{}{
+								{"name": "khrvi_ip",
+									"properties": map[string]interface{}{
+										"subnet": map[string]interface{}{
+											"id": "subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/virtualNetworks/khrvi/subnets/khrvi",
+										},
+										"privateIPAllocationMethod": "Dynamic",
+										"publicIPAddress": map[string]interface{}{
+											"id": "/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/publicIPAddresses/khrvi-3",
+										},
+									},
+								},
+							},
+							"dnsSettings": map[string]interface{}{
+								"dnsServers": []string{"10.0.0.130"},
+							},
+						}}),
+
+					ghttp.RespondWith(201, listOneNIResponse),
+				),
+			)
+			response, err = client.Post("/resource_groups/Group-1/network_interfaces", "{\"name\": \"khrvi\", \"location\": \"westus\", \"subnet_id\": \"subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/virtualNetworks/khrvi/subnets/khrvi\", \"public_ip_address_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/publicIPAddresses/khrvi-3\", \"dns_servers\": [\"10.0.0.130\"]}")
 		})
 
 		It("no error occured", func() {

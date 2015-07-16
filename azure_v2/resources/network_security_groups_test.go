@@ -174,15 +174,69 @@ var _ = Describe("network_security_groups", func() {
 		})
 	})
 
-	Describe("creating", func() {
+	Describe("creating empty group", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+networkSecurityGroupPath+"/khrvi1"),
+					ghttp.VerifyJSONRepresenting(networkSecurityGroupRequestParams{
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"securityRules": nil,
+						},
+					}),
 					ghttp.RespondWith(201, listOneNSGResponse),
 				),
 			)
 			response, err = client.Post("/resource_groups/Group-1/network_security_groups", "{\"name\": \"khrvi1\", \"location\": \"westus\"}")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 201 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(201))
+		})
+
+		It("returns a resource network security group href in the 'Location' header", func() {
+			Ω(response.Headers["Location"][0]).Should(Equal("/resource_groups/Group-1/network_security_groups/khrvi1"))
+		})
+
+		It("return empty body", func() {
+			Ω(response.Body).Should(BeEmpty())
+		})
+	})
+
+	Describe("creating group with rules", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+networkSecurityGroupPath+"/khrvi1"),
+					ghttp.VerifyJSONRepresenting(networkSecurityGroupRequestParams{
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"securityRules": []map[string]interface{}{
+								{
+									"description":              "test",
+									"protocol":                 "Tcp",
+									"sourcePortRange":          "801",
+									"destinationPortRange":     "801",
+									"sourceAddressPrefix":      "*",
+									"destinationAddressPrefix": "*",
+									"access":                   "Allow",
+									"priority":                 200,
+									"direction":                "Inbound",
+								},
+							},
+						},
+					}),
+					ghttp.RespondWith(201, listOneNSGResponse),
+				),
+			)
+			rule := "{\"description\": \"test\", \"protocol\": \"Tcp\", \"sourcePortRange\": \"801\", \"destinationPortRange\": \"801\", \"sourceAddressPrefix\": \"*\", \"destinationAddressPrefix\": \"*\", \"access\": \"Allow\", \"priority\": 200, \"direction\": \"Inbound\"}"
+			response, err = client.Post("/resource_groups/Group-1/network_security_groups", "{\"name\": \"khrvi1\", \"location\": \"westus\", \"security_rules\": ["+rule+"]}")
 		})
 
 		It("no error occured", func() {

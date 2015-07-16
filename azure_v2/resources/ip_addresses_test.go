@@ -179,6 +179,13 @@ var _ = Describe("ip addresses", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+ipAddressPath+"/khrvi_test_static"),
+					ghttp.VerifyJSONRepresenting(ipAddressRequestParams{
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"publicIPAllocationMethod": "Static",
+							"idleTimeoutInMinutes":     10,
+						},
+					}),
 					ghttp.RespondWith(201, listOneIPResponse),
 				),
 			)

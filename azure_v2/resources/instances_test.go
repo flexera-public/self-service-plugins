@@ -176,15 +176,107 @@ var _ = Describe("instances", func() {
 		})
 	})
 
-	Describe("creating", func() {
+	Describe("creating with public image", func() {
 		BeforeEach(func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi"),
+					ghttp.VerifyJSONRepresenting(requestParams{
+						Name:     "khrvi",
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"hardwareProfile": map[string]interface{}{"vmSize": "Standard_G1"},
+							"storageProfile": map[string]interface{}{
+								"imageReference": map[string]interface{}{
+									"publisher": "a10networks",
+									"offer":     "a10-vthunder-adc",
+									"sku":       "vthunder_100mbps",
+									"version":   "1.0.0",
+								},
+								"osDisk": map[string]interface{}{
+									"name":         "os-khrvi-rs",
+									"caching":      "ReadWrite",
+									"createOption": "FromImage",
+									"vhd": map[string]interface{}{
+										"uri": "https://khrvitestgo1.blob.core.windows.net/vhds/os-khrvi-rs.vhd",
+									},
+								},
+							},
+							"osProfile": map[string]interface{}{
+								"computerName":  "khrvi",
+								"adminUsername": "rsadministrator",
+								"adminPassword": "Pass1234@",
+							},
+							"networkProfile": map[string]interface{}{
+								"networkInterfaces": []map[string]interface{}{
+									{"id": "/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"},
+								},
+							},
+						}}),
 					ghttp.RespondWith(201, listOneInstanceResponse),
 				),
 			)
 			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"instance_type_uid\": \"Standard_G1\", \"location\": \"westus\", \"network_interface_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"image_id\": \"/Subscriptions/test/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps/Versions/1.0.0\", \"storage_account_id\": \"/subscriptions/test/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 201 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(201))
+		})
+
+		It("returns a resource instance href in the 'Location' header", func() {
+			Ω(response.Headers["Location"][0]).Should(Equal("/resource_groups/Group-1/instances/khrvi"))
+		})
+
+		It("return empty body", func() {
+			Ω(response.Body).Should(BeEmpty())
+		})
+	})
+
+	Describe("creating with user image and user_data", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi"),
+					ghttp.VerifyJSONRepresenting(requestParams{
+						Name:     "khrvi",
+						Location: "westus",
+						Properties: map[string]interface{}{
+							"hardwareProfile": map[string]interface{}{"vmSize": "Standard_G1"},
+							"storageProfile": map[string]interface{}{
+								"osDisk": map[string]interface{}{
+									"name":         "os-khrvi-rs",
+									"caching":      "ReadWrite",
+									"createOption": "FromImage",
+									"vhd": map[string]interface{}{
+										"uri": "https://khrvitestgo1.blob.core.windows.net/vhds/os-khrvi-rs.vhd",
+									},
+									"osType": "Linux",
+									"image": map[string]interface{}{
+										"uri": "https://khrvitesttest1.blob.core.windows.net/vhds/os-khrvi-rs.vhd",
+									},
+								},
+							},
+							"osProfile": map[string]interface{}{
+								"computerName":  "khrvi",
+								"adminUsername": "rsadministrator",
+								"adminPassword": "Pass1234@",
+								"customData":    "dGVzdF91c2VyX2RhdGE=",
+							},
+							"networkProfile": map[string]interface{}{
+								"networkInterfaces": []map[string]interface{}{
+									{"id": "/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni"},
+								},
+							},
+						}}),
+					ghttp.RespondWith(201, listOneInstanceResponse),
+				),
+			)
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"user_data\":\"test_user_data\", \"instance_type_uid\": \"Standard_G1\", \"location\": \"westus\", \"network_interface_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"private_image_id\": \"https://khrvitesttest1.blob.core.windows.net/vhds/os-khrvi-rs.vhd\", \"storage_account_id\": \"/subscriptions/test/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
 		})
 
 		It("no error occured", func() {

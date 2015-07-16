@@ -35,8 +35,8 @@ type (
 		Location        string                   `json:"location,omitempty"`
 		Group           string                   `json:"group_name,omitempty"`
 		AddressPrefixes []string                 `json:"address_prefixes,omitempty"`
-		Subnets         []map[string]interface{} `json:"subnets,omitempty"`      //\"subnets\": [{\"name\": \"test\", \"address_prefix\": \"10.0.0.0/16\"}]
-		DHCPOptions     map[string]interface{}   `json:"dhcp_options,omitempty"` //\"dhcp_options\": {\"dnsServers\": [\"10.1.0.5\", \"10.1.0.6\"]}
+		Subnets         []map[string]interface{} `json:"subnets,omitempty"`
+		DHCPOptions     map[string]interface{}   `json:"dhcp_options,omitempty"`
 	}
 	// Network is base struct for Azure Network resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -102,7 +102,7 @@ func (n *Network) GetRequestParams(c *echo.Context) (interface{}, error) {
 	n.requestParams.Location = n.createParams.Location
 	n.requestParams.Properties = map[string]interface{}{
 		"addressSpace": map[string]interface{}{
-			"addressPrefixes": n.createParams.AddressPrefixes, //[]string{"10.0.0.0/16"}
+			"addressPrefixes": n.createParams.AddressPrefixes,
 		},
 	}
 	var subnets []map[string]interface{}

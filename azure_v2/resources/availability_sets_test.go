@@ -184,6 +184,10 @@ var _ = Describe("availability_sets", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-3/"+availabilitySetPath+"/khrvi1"),
+					ghttp.VerifyJSONRepresenting(availabilitySetRequestParams{
+						Name:     "khrvi1",
+						Location: "westus",
+					}),
 					ghttp.RespondWith(201, listOneASResponse),
 				),
 			)

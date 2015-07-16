@@ -187,6 +187,18 @@ var _ = Describe("network security group rules", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+networkSecurityGroupPath+"/khrvi2/securityRules/khrvi2_1"),
+					ghttp.VerifyJSONRepresenting(networkSecurityGroupRuleRequestParams{
+						Properties: map[string]interface{}{
+							"description":              "test",
+							"protocol":                 "Tcp",
+							"sourcePortRange":          "801",
+							"destinationPortRange":     "801",
+							"sourceAddressPrefix":      "*",
+							"destinationAddressPrefix": "*",
+							"access":                   "Allow",
+							"priority":                 200,
+							"direction":                "Inbound",
+						}}),
 					ghttp.RespondWith(201, listOneNSGRResponse),
 				),
 			)

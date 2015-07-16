@@ -186,10 +186,18 @@ var _ = Describe("subnets", func() {
 			do.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-3/"+networkPath+"/khrvi-3/subnets/sub1"),
+					ghttp.VerifyJSONRepresenting(subnetRequestParams{
+						Properties: map[string]interface{}{
+							"addressPrefix": "10.0.0.0/16",
+							"networkSecurityGroup": map[string]interface{}{
+								"id": "/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-3/providers/Microsoft.Network/networkSecurityGroups/khrvi1",
+							},
+						},
+					}),
 					ghttp.RespondWith(201, listOneSubnetResponse),
 				),
 			)
-			response, err = client.Post("/resource_groups/Group-3/networks/khrvi-3/subnets", "{\"name\": \"sub1\", \"address_prefix\": \"10.0.0.0/16\"}")
+			response, err = client.Post("/resource_groups/Group-3/networks/khrvi-3/subnets", "{\"name\": \"sub1\", \"address_prefix\": \"10.0.0.0/16\", \"network_security_group_id\": \"/subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/resourceGroups/Group-3/providers/Microsoft.Network/networkSecurityGroups/khrvi1\"}")
 		})
 
 		It("no error occured", func() {
