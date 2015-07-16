@@ -123,11 +123,10 @@ func (s *StorageAccount) HandleResponse(c *echo.Context, body []byte, actionName
 	if err := json.Unmarshal(body, &s.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
-	href := s.GetHref(s.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response.Header().Add("Location", fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", s.createParams.Group, s.createParams.Name))
 	} else if actionName == "get" {
-		s.responseParams.Href = href
+		s.responseParams.Href = s.GetHref(s.responseParams.ID)
 	}
 	return nil
 }
