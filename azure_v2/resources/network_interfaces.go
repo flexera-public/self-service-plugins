@@ -100,9 +100,7 @@ func (ni *NetworkInterface) GetRequestParams(c *echo.Context) (interface{}, erro
 	}
 	ni.createParams.Group = c.Param("group_name")
 
-	var configs []map[string]interface{}
 	ni.requestParams.Location = ni.createParams.Location
-
 	configProperties := map[string]interface{}{
 		"subnet": map[string]interface{}{
 			"id": ni.createParams.SubnetID,
@@ -122,10 +120,10 @@ func (ni *NetworkInterface) GetRequestParams(c *echo.Context) (interface{}, erro
 	}
 
 	ni.requestParams.Properties = map[string]interface{}{
-		"ipConfigurations": append(configs, map[string]interface{}{
-			"name":       ni.createParams.Name + "_ip",
-			"properties": configProperties,
-		}),
+		"ipConfigurations": []map[string]interface{}{
+			{"name": ni.createParams.Name + "_ip",
+				"properties": configProperties},
+		},
 	}
 
 	if ni.createParams.NetworkSecurityGroupID != "" {

@@ -72,7 +72,7 @@ func listPublishers(c *echo.Context) error {
 			return err
 		}
 	} else {
-		locations = append(locations, map[string]interface{}{"name": location})
+		locations = []map[string]interface{}{{"name": location}}
 	}
 
 	var results []map[string]interface{}

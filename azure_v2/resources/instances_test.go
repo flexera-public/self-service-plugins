@@ -221,14 +221,14 @@ var _ = Describe("instances", func() {
 		})
 
 		It("returns validation error about missing 'image_id'", func() {
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"instance_type_uid\": \"Standard_G1\", \"network_interface_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"storage_account_id\": \"/subscriptions/test/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
-			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'image_id' parameter.\"}\n"))
+			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"One of these two params should be passed: 'image_id' or 'private_image_id'.\"}\n"))
 		})
 
 		It("returns validation error about wrong 'image_id'", func() {
-			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"image_id\": \"/Subscriptions/test/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps\"}")
+			response, err = client.Post("/resource_groups/Group-1/instances", "{\"name\": \"khrvi\", \"location\": \"westus\", \"image_id\": \"/Subscriptions/test/Providers/Microsoft.Compute/Locations/westus/Publishers/a10networks/ArtifactTypes/VMImage/Offers/a10-vthunder-adc/Skus/vthunder_100mbps\", \"instance_type_uid\": \"Standard_G1\", \"network_interface_id\": \"/subscriptions/test/resourceGroups/Group-1/providers/Microsoft.Network/networkInterfaces/khrvi_ni\", \"storage_account_id\": \"/subscriptions/test/resourceGroups/group-1/providers/Microsoft.Storage/storageAccounts/khrvitestgo1\"}")
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
 			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'image_id' parameter.\"}\n"))
@@ -246,6 +246,31 @@ var _ = Describe("instances", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Ω(response.Status).Should(Equal(400))
 			Ω(response.Body).Should(Equal("{\"Code\":400,\"Message\":\"You have specified an invalid 'instance_type_id' parameter.\"}\n"))
+		})
+	})
+
+	Describe("deleting", func() {
+		BeforeEach(func() {
+			do.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("DELETE", "/subscriptions/"+subscriptionID+"/resourceGroups/Group-1/"+virtualMachinesPath+"/khrvi"),
+					ghttp.RespondWith(200, ""),
+				),
+			)
+			response, err = client.Delete("/resource_groups/Group-1/instances/khrvi")
+		})
+
+		It("no error occured", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns 204 status code", func() {
+			Ω(do.ReceivedRequests()).Should(HaveLen(1))
+			Ω(response.Status).Should(Equal(204))
+		})
+
+		It("return empty body", func() {
+			Ω(response.Body).Should(BeEmpty())
 		})
 	})
 })

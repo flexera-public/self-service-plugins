@@ -158,7 +158,6 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		return nil, eh.InvalidParamException("instance_type_id")
 	}
 
-	var networkInterfaces []map[string]interface{}
 	i.requestParams.Name = i.createParams.Name
 	i.requestParams.Location = i.createParams.Location
 
@@ -171,9 +170,9 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		"storageProfile":  osProfile,
 		"osProfile":       i.prepareOSProfile(),
 		"networkProfile": map[string]interface{}{
-			"networkInterfaces": append(networkInterfaces, map[string]interface{}{
-				"id": i.createParams.NetworkInterfaceID,
-			}),
+			"networkInterfaces": []map[string]interface{}{
+				{"id": i.createParams.NetworkInterfaceID},
+			},
 		},
 	}
 
