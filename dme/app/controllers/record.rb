@@ -84,8 +84,9 @@ module V1
     private
 
     def get_api()
-      secrets = JSON.parse(File.read('creds.json'))
-      api = DnsMadeEasy.new(secrets['api_key'], secrets['api_secret'])
+      api_key = ENV["DME_API_KEY"]
+      api_secret = ENV["DME_API_SECRET"]
+      api = DnsMadeEasy.new(api_key, api_secret)
     end
   end
 end
