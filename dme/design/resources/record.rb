@@ -5,9 +5,8 @@ module V1
 
       media_type V1::MediaTypes::Record
       version '1.0'
-      routing do
-        prefix '/dme/accounts/:account_id/records'
-      end
+      prefix '/dme/accounts/:account_id/records'
+      trait :authenticated
 
       action :index do
         use :versionable
@@ -19,6 +18,7 @@ module V1
           attribute :account_id, Attributor::Integer, required: true
         end
         response :ok
+        response :forbidden
       end
 
       action :show do
@@ -34,6 +34,7 @@ module V1
         end
         response :ok
         response :not_found
+        response :forbidden
       end
 
       action :create do
@@ -55,6 +56,7 @@ module V1
 
         response :created
         response :unprocessable_entity
+        response :forbidden
       end
 
       action :update do
@@ -76,6 +78,7 @@ module V1
 
         response :no_content
         response :unprocessable_entity
+        response :forbidden
       end
 
       action :delete do
@@ -90,6 +93,7 @@ module V1
         end
 
         response :no_content
+        response :forbidden
       end
 
 

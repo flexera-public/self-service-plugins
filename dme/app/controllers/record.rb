@@ -5,6 +5,9 @@ module V1
     implements V1::ApiResources::Record
 
     def index(account_id:, **params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       api = get_api
       response.headers['Content-Type'] = 'application/json'
 
@@ -18,6 +21,9 @@ module V1
     end
 
     def show(account_id:, domain:, id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       api = get_api
       records = api.records_for(domain)
       rec = records['data'].select { |r| r['id'] == id }
@@ -34,6 +40,8 @@ module V1
     end
 
     def create(account_id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
 
       api = get_api
       res = api.create_record(request.payload.domain, request.payload.name, request.payload.type, request.payload.value)
@@ -54,6 +62,9 @@ module V1
     end
 
     def delete(domain:, id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       api = get_api
 
       res = api.delete_record(domain, id)
@@ -65,6 +76,8 @@ module V1
     end
 
     def update(domain:, id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
 
       api = get_api
       res = api.update_record(domain, id, request.payload.name, request.payload.type, request.payload.value)
@@ -82,6 +95,16 @@ module V1
     end
 
     private
+
+    def authenticate!(secret)
+      if secret != ENV["PLUGIN_SHARED_SECRET"]
+        self.response = Praxis::Responses::Forbidden.new()
+        response.body = { error: '403: Invalid shared secret'}
+        return response
+      else
+        return nil
+      end
+    end
 
     def get_api()
       api_key = ENV["DME_API_KEY"]
