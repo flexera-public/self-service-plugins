@@ -49,7 +49,7 @@ module V1
         payload do
           attribute :name, required: true
           attribute :template, Attributor::String, required: true
-          attribute :parameters, Attributor::Collection.of(Attributor::Hash)
+          attribute :parameters, Attributor::Hash
         end
 
         response :created

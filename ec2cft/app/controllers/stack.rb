@@ -80,12 +80,17 @@ module V1
 
       cfm = Aws::CloudFormation::Client.new
 
+      params = []
+      request.payload.parameters.each do |k,v|
+        params << {parameter_key: k, parameter_value: v}
+      end
+
       begin
         # Create the stack
         stack_id = cfm.create_stack({
           stack_name: request.payload.name, 
           template_url: request.payload.template, 
-          parameters: request.payload.parameters.dump
+          parameters: params
         }).stack_id
 
         # Get the stack properties
