@@ -5,9 +5,8 @@ module V1
 
       media_type V1::MediaTypes::Stack
       version '1.0'
-      routing do
-        prefix '/ec2cft/accounts/:account_id/stacks'
-      end
+      prefix '/ec2cft/accounts/:account_id/stacks'
+      trait :authenticated
       
       action :index do
         use :versionable
@@ -19,6 +18,7 @@ module V1
           attribute :account_id, Attributor::Integer, required: true
         end
         response :ok
+        response :forbidden
       end
 
       action :show do
@@ -30,10 +30,11 @@ module V1
         params do
           attribute :account_id, Attributor::Integer, required: true
           attribute :name, required: true
-          attribute :view, Attributor::String
+          attribute :view, Attributor::String, default: "default"
         end
         response :ok
         response :not_found
+        response :forbidden
       end
 
       action :create do
@@ -47,32 +48,14 @@ module V1
 
         payload do
           attribute :name, required: true
-          attribute :template, required: true
-          attribute :parameters, Attributor::Hash
+          attribute :template, Attributor::String, required: true
+          attribute :parameters, Attributor::Collection.of(Attributor::Hash)
         end
 
         response :created
         response :unprocessable_entity
+        response :forbidden
       end
-
-      # action :update do
-      #   routing do
-      #     put '/:id'
-      #   end        
-
-      #   params do
-      #     attribute :id, required: true
-      #   end
-
-      #   payload do
-      #     attribute :name, required: true
-      #     attribute :type, required: true
-      #     attribute :value, required: true
-      #   end
-
-      #   response :no_content
-      #   response :unprocessable_entity
-      # end
 
       action :delete do
         routing do
@@ -86,6 +69,7 @@ module V1
 
         response :no_content
         response :unprocessable_entity
+        response :forbidden
       end
 
     end
