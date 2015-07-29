@@ -17,7 +17,7 @@ module V1
         stack = {}
 
         stack["id"] = s["stack_id"]
-        stack["href"] = "/ec2cft/accounts/" + account_id + "/stacks/" + s["stack_name"].to_s
+        stack["href"] = "/ec2cft/accounts/" + account_id.to_s + "/stacks/" + s["stack_name"].to_s
         stack["name"] = s["stack_name"]
         stack["status"] = s["stack_status"]
         stack["status_reason"] = s["stack_status_reason"]
@@ -57,7 +57,7 @@ module V1
         end
         resp = {
           "id" => stack.stack_id,
-          "href" => "/ec2cft/accounts/" + account_id + "/stacks/#{stack.stack_name}",
+          "href" => "/ec2cft/accounts/" + account_id.to_s + "/stacks/#{stack.stack_name}",
           "creation_time" => stack.creation_time,
           "description" => stack.description,
           "name" => stack.stack_name,
@@ -103,7 +103,7 @@ module V1
         self.response = Praxis::Responses::Created.new()
         resp = {
           "id" => stack.stack_id,
-          "href" => "/ec2cft/accounts/" + account_id + "/stacks/#{stack.stack_name}",
+          "href" => "/ec2cft/accounts/" + account_id.to_s + "/stacks/#{stack.stack_name}",
           "creation_time" => stack.creation_time,
           "description" => stack.description,
           "name" => stack.stack_name,
