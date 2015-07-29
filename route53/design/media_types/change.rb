@@ -3,8 +3,10 @@ module V1
     class Change < Praxis::MediaType
 
       identifier 'application/vnd.rightscale.change+json'
+      @@kind = 'route53#change'
 
       attributes do
+        attribute :kind, String
         attribute :id, Attributes::Route53Id
         attribute :href, String
         attribute :status, String
@@ -12,6 +14,7 @@ module V1
       end
 
       view :default do
+        attribute :kind
         attribute :id
         attribute :href
         attribute :status
@@ -24,6 +27,10 @@ module V1
 
       def href()
         V1::ApiResources::Change.prefix+'/'+id
+      end
+
+      def kind()
+        @@kind
       end
     end
   end

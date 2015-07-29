@@ -3,8 +3,10 @@ module V1
     class PublicZone < Praxis::MediaType
 
       identifier 'application/vnd.rightscale.public_zone+json'
+      @@kind = 'route53#public_zone'
 
       attributes do
+        attribute :kind, String
         attribute :id, Attributes::Route53Id
         attribute :href, String
         attribute :name, String
@@ -22,6 +24,7 @@ module V1
       end
 
       view :default do
+        attribute :kind
         attribute :id
         attribute :href
         attribute :name
@@ -37,6 +40,10 @@ module V1
 
       def href()
         V1::ApiResources::PublicZone.prefix+'/'+id
+      end
+
+      def kind()
+        @@kind
       end
     end
   end

@@ -5,6 +5,7 @@ module V1
 
       media_type V1::MediaTypes::PublicZone
       version '1.0'
+      prefix '/public_zones'
 
       action :index do
         routing do
