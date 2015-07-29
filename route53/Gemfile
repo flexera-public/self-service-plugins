@@ -1,0 +1,11 @@
+source 'https://rubygems.org'
+
+gem 'praxis'
+gem 'rake'
+gem 'aws-sdk', '~> 2.0'
+
+group :development, :test do
+  gem 'rspec'
+  gem 'thin'
+  gem 'unicorn'
+end
