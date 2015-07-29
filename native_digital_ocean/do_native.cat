@@ -24,10 +24,18 @@ namespace "do" do
     prefix "/droplets"
 
     # `href` defines the patterns used to build one or more hrefs from a response JSON.
-    # Each pattern may use JMESPath between ':' characters.
+    # Each pattern may use JMESPath expressions delimited with the ':' character.
     # The pattern JMESPaths are matched against the response and the first pattern for which all
     # JMESPath sections match is used to build the response resource collection.
     # Individual actions may override the pattern, see `action` below.
+    # There are two use cases where the href pattern is used (in both cases the action is either
+    # `get`, `create` or a custom action):
+    #   - actions where the resource type is known: `@res.action()` or `namespace.type.action()`.
+    #     The type href pattern is matched against the response body to build the resulting
+    #     collection if any. An error is returned if the action is `get` and no pattern matches.
+    #   - `get` on the namespace: `namespace.get()`. The namespace type href patterns are matched
+    #     against the response. The longest pattern that matches "wins" and the corresponding type
+    #      is used to build the resource collection. An error is returned if none matches.
     href "/:droplet.id:", "/:droplets[*].id:"
 
     # `provision` sets the name of the definition invoked by the `provision` RCL function.
@@ -230,7 +238,7 @@ namespace "do" do
 
   type "ssh_key" do
     prefix "/account/keys"
-    href "/:ssh_key.id", "/:ssh_keys[*].id"
+    href "/:ssh_key.id:", "/:ssh_keys[*].id:"
 
     field "name" do
       type "string"
@@ -255,14 +263,14 @@ namespace "do" do
 
   type "region" do
     prefix "/regions"
-    href "regions[*].slug"
+    href "/:regions[*].slug:"
     output "slug", "name", "sizes", "features", "available", "sizes"
     action "list"
   end
 
   type "size" do
     prefix "/sizes"
-    href ":sizes[*].slug:"
+    href "/:sizes[*].slug:"
     output "slug", "memory", "vcpus", "disk", "transfer", "price_monthly", "price_hourly",
            "available", "regions"
     action "list"
