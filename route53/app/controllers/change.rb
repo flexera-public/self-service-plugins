@@ -10,7 +10,7 @@ module V1
       begin
         change = route53.get_change(id: id)
         response = Praxis::Responses::Ok.new()
-        response.body = JSON.pretty_generate(V1::MediaTypes::Change.dump(change.change_info))
+        response.body = JSON.pretty_generate(V1::MediaTypes::Change.render(change.change_info))
         response.headers['Content-Type'] = V1::MediaTypes::Change.identifier
       rescue Aws::Route53::Errors::NoSuchChange => e
         response = Praxis::Responses::NotFound.new()

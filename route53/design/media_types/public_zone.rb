@@ -7,7 +7,7 @@ module V1
 
       attributes do
         attribute :kind, String
-        attribute :id, Attributes::Route53Id
+        attribute :id, String
         attribute :href, String
         attribute :name, String
         attribute :caller_reference, String
@@ -16,10 +16,10 @@ module V1
           attribute :private_zone, String
         end
         attribute :resource_record_set_count, Integer
-        attribute :change, Change
 
         links do
-          link :change
+          link :change, Change
+          link :records, V1::MediaTypes::RecordCollectionSummary, using: :records_summary
         end
       end
 
@@ -38,13 +38,17 @@ module V1
         attribute :href
       end
 
-      def href()
-        V1::ApiResources::PublicZone.prefix+'/'+id
-      end
+      # def href()
+      #   V1::ApiResources::PublicZone.prefix+'/'+id
+      # end
+      #
+      # def kind()
+      #   @@kind
+      # end
 
-      def kind()
-        @@kind
-      end
+      # def records()
+      #   { href: href+'/records' }
+      # end
     end
   end
 end

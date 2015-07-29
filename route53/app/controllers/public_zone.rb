@@ -17,8 +17,8 @@ module V1
         list_hosted_zones_response = route53.list_hosted_zones
 
         list_hosted_zones_response.hosted_zones.each do |native_zone|
-          zone = Hash[native_zone]
-          zones_mediatype << V1::MediaTypes::PublicZone.dump(zone)
+          zone = V1::Models::PublicZone.new(native_zone)
+          zones_mediatype << V1::MediaTypes::PublicZone.render(zone)
         end
 
         response = Praxis::Responses::Ok.new()
@@ -39,8 +39,8 @@ module V1
       begin
         zone = route53.get_hosted_zone(id: id)
         response = Praxis::Responses::Ok.new()
-        zone_hash = Hash[zone.hosted_zone]
-        response.body = JSON.pretty_generate(V1::MediaTypes::PublicZone.dump(zone_hash))
+        zone_hash = V1::Models::PublicZone.new(zone.hosted_zone)
+        response.body = JSON.pretty_generate(V1::MediaTypes::PublicZone.render(zone_hash))
         response.headers['Content-Type'] = V1::MediaTypes::PublicZone.identifier
       rescue Aws::Route53::Errors::NoSuchHostedZone => e
         response = Praxis::Responses::NotFound.new()
@@ -64,9 +64,11 @@ module V1
         aws_response = route53.create_hosted_zone(zone_params)
 
         response = Praxis::Responses::Created.new()
-        zone_shaped_hash = Hash[aws_response.hosted_zone]
-        zone_shaped_hash[:change] = aws_response.change_info
-        zone = V1::MediaTypes::PublicZone.dump(zone_shaped_hash)
+        zone_model = V1::Models::PublicZone.new(aws_response.hosted_zone, aws_response.change_info)
+        # zone_shaped_hash = Hash[aws_response.hosted_zone]
+        # zone_shaped_hash[:change] = aws_response.change_info
+        # zone = V1::MediaTypes::PublicZone.render(zone_shaped_hash)
+        zone = V1::MediaTypes::PublicZone.render(zone_model)
         response.body = JSON.pretty_generate(zone)
         response.headers['Content-Type'] = V1::MediaTypes::PublicZone.identifier
         response.headers['Location'] = zone[:href]
@@ -87,7 +89,7 @@ module V1
       begin
         delete_response = route53.delete_hosted_zone(id: id)
         response = Praxis::Responses::Ok.new()
-        response.body = JSON.pretty_generate(V1::MediaTypes::Change.dump(delete_response.change_info))
+        response.body = JSON.pretty_generate(V1::MediaTypes::Change.render(delete_response.change_info))
         response.headers['Content-Type'] = V1::MediaTypes::Change.identifier
       rescue Aws::Route53::Errors::NoSuchHostedZone => e
         response = Praxis::Responses::NotFound.new()
