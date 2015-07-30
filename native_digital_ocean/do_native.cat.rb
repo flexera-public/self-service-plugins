@@ -1,18 +1,23 @@
-name ""
-rs_ca_ver 20131202
-short_description ""
-long_description ""
+name "Digital Ocean Self-Service Namespace"
+rs_ca_ver 20150729
+short_description "Digital Ocean integration"
+long_description "This CAT defines a namespace and accompanying definitions that makes it " +
+                 "possible to interact with all the resources exposed by the Digital Ocean " +
+                 "platform."
 
 namespace "do" do
 
+  # Name of RightScale credential used to authenticate with the Digital Ocean APIs
   auth_credentials "DO_TOKEN"
 
+  # Description of the Digital Ocean APIs endpoint
   service do
     host "https://api.digitalocean.com"
     path "/v2"
     headers do {
       "Authorization" => "Bearer $DO_TOKEN"
     } end
+    no_cert_check false # Do check the endpoint SSL cert (default)
   end
 
   type "droplet" do
@@ -277,4 +282,3 @@ namespace "do" do
   end
 
 end
-
