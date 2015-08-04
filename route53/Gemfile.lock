@@ -10,12 +10,12 @@ GEM
     attributor (4.0.0)
       hashie (~> 3)
       randexp (~> 0)
-    aws-sdk (2.1.9)
-      aws-sdk-resources (= 2.1.9)
-    aws-sdk-core (2.1.9)
+    aws-sdk (2.1.10)
+      aws-sdk-resources (= 2.1.10)
+    aws-sdk-core (2.1.10)
       jmespath (~> 1.0)
-    aws-sdk-resources (2.1.9)
-      aws-sdk-core (= 2.1.9)
+    aws-sdk-resources (2.1.10)
+      aws-sdk-core (= 2.1.10)
     daemons (1.2.3)
     diff-lcs (1.2.5)
     eventmachine (1.0.7)
@@ -52,6 +52,10 @@ GEM
       randexp (~> 0)
       sequel (~> 4)
     rack (1.6.4)
+    rainbows (4.6.2)
+      kgio (~> 2.5)
+      rack (~> 1.1)
+      unicorn (~> 4.8)
     raindrops (0.15.0)
     rake (10.4.2)
     randexp (0.1.7)
@@ -91,7 +95,7 @@ PLATFORMS
 DEPENDENCIES
   aws-sdk (~> 2.0)
   praxis
+  rainbows
   rake
   rspec
   thin
-  unicorn

@@ -6,6 +6,30 @@ module V1
 
     implements V1::ApiResources::PublicZone
 
+    def do_delete(id, return_change=false)
+      route53 = V1::Helpers::Aws.get_route53_client
+
+      begin
+        delete_response = route53.delete_hosted_zone(id: id)
+        if return_change
+          response = Praxis::Responses::Ok.new()
+          response.body = JSON.pretty_generate(V1::MediaTypes::Change.render(delete_response.change_info))
+          response.headers['Content-Type'] = V1::MediaTypes::Change.identifier
+        else
+          response = Praxis::Responses::NoContent.new()
+        end
+      rescue Aws::Route53::Errors::NoSuchHostedZone => e
+        response = Praxis::Responses::NotFound.new()
+        response.body = { error: e.message }
+      rescue  Aws::Route53::Errors::InvalidInput,
+              Aws::Route53::Errors::PriorRequestNotComplete,
+              Aws::Route53::Errors::HostedZoneNotEmpty => e
+        response = Praxis::Responses::BadRequest.new()
+        response.body = { error: e.message }
+      end
+      response
+    end
+
     def index(**params)
       route53 = V1::Helpers::Aws.get_route53_client
 
@@ -84,24 +108,11 @@ module V1
     end
 
     def delete(id:, **other_params)
-      route53 = V1::Helpers::Aws.get_route53_client
+      do_delete(id)
+    end
 
-      begin
-        delete_response = route53.delete_hosted_zone(id: id)
-        response = Praxis::Responses::Ok.new()
-        response.body = JSON.pretty_generate(V1::MediaTypes::Change.render(delete_response.change_info))
-        response.headers['Content-Type'] = V1::MediaTypes::Change.identifier
-      rescue Aws::Route53::Errors::NoSuchHostedZone => e
-        response = Praxis::Responses::NotFound.new()
-        response.body = { error: e.message }
-      rescue  Aws::Route53::Errors::InvalidInput,
-              Aws::Route53::Errors::PriorRequestNotComplete,
-              Aws::Route53::Errors::HostedZoneNotEmpty => e
-        response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
-      end
-
-      response
+    def release(id:, **other_params)
+      do_delete(id, true)
     end
 
   end

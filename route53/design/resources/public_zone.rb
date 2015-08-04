@@ -6,6 +6,7 @@ module V1
       media_type V1::MediaTypes::PublicZone
       version '1.0'
       prefix '/public_zones'
+      trait :authorized
 
       action :index do
         routing do
@@ -43,6 +44,18 @@ module V1
         end
         params do
           attribute :id, String, required: true
+        end
+        response :no_content
+        response :bad_request
+        response :not_found
+      end
+
+      action :release do
+        routing do
+          post '/:id/release'
+        end
+        payload do
+          attribute :name, String, required: true
         end
         response :ok
         response :bad_request

@@ -3,11 +3,10 @@ module V1
     class Record < Praxis::MediaType
 
       identifier 'application/vnd.rightscale.record+json'
-      @@kind = 'route53#record'
 
       attributes do
         attribute :kind, String
-        attribute :id, String # Maybe not so much?
+        attribute :id, String
         attribute :href, String
         attribute :name, String
         attribute :type, String
@@ -23,6 +22,7 @@ module V1
         attribute :kind
         attribute :id
         attribute :name
+        attribute :href
         attribute :type
         attribute :values
         attribute :links
@@ -30,14 +30,6 @@ module V1
 
       view :link do
         attribute :href
-      end
-
-      def href()
-        V1::ApiResources::Record.prefix+'/'+id
-      end
-
-      def kind()
-        @@kind
       end
 
     end

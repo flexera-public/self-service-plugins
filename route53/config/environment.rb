@@ -15,10 +15,15 @@ Praxis::Application.instance.layout do
     map :resources, '**/resources/**/*'
   end
   map :app, 'app/' do
+    map :plugins, 'plugins/**/*'
     map :models, 'models/**/*'
     map :controllers, '**/controllers/**/*'
     map :responses, '**/responses/**/*'
     map :helpers, '**/helpers/**/*'
     map :attributes, '**/attributes/**/*'
   end
+end
+
+Praxis::Application.configure do |application|
+  application.bootloader.use SharedSecretAuthenticationPlugin
 end
