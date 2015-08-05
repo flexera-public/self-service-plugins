@@ -8,7 +8,7 @@ long_description "This CAT defines a namespace and accompanying definitions that
 namespace "do" do
 
   # Name of RightScale credential used to authenticate with the Digital Ocean APIs
-  auth_credentials "DO_TOKEN"
+  credential "DO_TOKEN"
 
   # Description of the Digital Ocean APIs endpoint
   service do
@@ -21,12 +21,6 @@ namespace "do" do
   end
 
   type "droplet" do
-
-    # `prefix` defines the path prefix for the resource href and actions.
-    # Individual actions may override the prefix by speciyfing an "absolute" path.
-    # The prefix may define variables that get substituted using values passed as argument
-    # to the actions. See the "record" type below for an example.
-    prefix "/droplets"
 
     # `href` defines the patterns used to build one or more hrefs from a response JSON.
     # Each pattern may use JMESPath expressions delimited with the ':' character.
@@ -41,7 +35,7 @@ namespace "do" do
     #   - `get` on the namespace: `namespace.get()`. The namespace type href patterns are matched
     #     against the response. The longest pattern that matches "wins" and the corresponding type
     #      is used to build the resource collection. An error is returned if none matches.
-    href "/:droplet.id:", "/:droplets[*].id:"
+    href "/droplets/:droplet.id:", "/droplets/:droplets[*].id:"
 
     # `provision` sets the name of the definition invoked by the `provision` RCL function.
     # If not specified the generic provision definition is used.
@@ -149,8 +143,7 @@ namespace "do" do
   end
 
   type "domain" do
-    prefix "/domains"
-    href "/:domain.name:", "/:domains[*].name:"
+    href "/domains/:domain.name:", "/domains/:domains[*].name:"
 
     field "name" do
       type "string"
@@ -169,8 +162,14 @@ namespace "do" do
   end
 
   type "record" do
-    prefix "/:domain_name/records" # all actions must pass a "domain_name" argument
-    href "/:domain_record.id:", "/:domain_records[*].id:"
+    # url_var declares a variable that can be used when defining the "href", actions "path" and
+    # links "url" fields using the notation "$<name of variable>".
+    # The value of the variable is computed by applying the given pattern to the request URL.
+    # The variable only matches a single path segment unless the wildcard character "*" is used
+    # as suffix.
+    url_var "/domains/:domain_name"
+
+    href "/domains/$domain_name/records/:domain_record.id:", "/domains/$domain_name/records/:domain_records[*].id:"
 
     field "type" do
       type "string"
