@@ -14,10 +14,10 @@ module V1
         response.headers['Content-Type'] = V1::MediaTypes::Change.identifier
       rescue Aws::Route53::Errors::NoSuchChange => e
         response = Praxis::Responses::NotFound.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       rescue Aws::Route53::Errors::InvalidInput => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       end
       response
     end

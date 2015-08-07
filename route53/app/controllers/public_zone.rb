@@ -20,12 +20,12 @@ module V1
         end
       rescue Aws::Route53::Errors::NoSuchHostedZone => e
         response = Praxis::Responses::NotFound.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       rescue  Aws::Route53::Errors::InvalidInput,
               Aws::Route53::Errors::PriorRequestNotComplete,
               Aws::Route53::Errors::HostedZoneNotEmpty => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       end
       response
     end
@@ -50,7 +50,7 @@ module V1
         response.headers['Content-Type'] = V1::MediaTypes::PublicZone.identifier+';type=collection'
       rescue Aws::Route53::Errors::InvalidInput => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       end
 
       response
@@ -68,10 +68,10 @@ module V1
         response.headers['Content-Type'] = V1::MediaTypes::PublicZone.identifier
       rescue Aws::Route53::Errors::NoSuchHostedZone => e
         response = Praxis::Responses::NotFound.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       rescue Aws::Route53::Errors::InvalidInput => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       end
       response
     end
@@ -99,9 +99,12 @@ module V1
       rescue  Aws::Route53::Errors::ConflictingDomainExists,
               Aws::Route53::Errors::InvalidInput,
               Aws::Route53::Errors::TooManyHostedZones,
-              Aws::Route53::Errors::HostedZoneAlreadyExists => e
+              Aws::Route53::Errors::InvalidDomainName => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
+      rescue Aws::Route53::Errors::HostedZoneAlreadyExists => e
+        resopnse = Praxis::Responses::Conflict.new()
+        resonse.body = { error: e.inspect }
       end
 
       response

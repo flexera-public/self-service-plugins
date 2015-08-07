@@ -55,12 +55,12 @@ module V1
       rescue Aws::Route53::Errors::InvalidInput => e
         response = Praxis::Responses::BadRequest.new()
         response.body = {
-          error: "While fetching all zone records to locate #{href}\n#{e.message}"
+          error: "While fetching all zone records to locate #{href}\n#{e.inspect}"
         }
       rescue Aws::Route53::Errors::NoSuchHostedZone => e
         response = Praxis::Responses::NotFound.new()
         response.body = {
-          error: "While fetching all zone records to locate #{href}\n#{e.message}"
+          error: "While fetching all zone records to locate #{href}\n#{e.inspect}"
         }
       end
 
@@ -86,12 +86,12 @@ module V1
           rescue  Aws::Route53::Errors::NoSuchHostedZone,
                   Aws::Route53::Errors::NoSuchHealthCheck => e
             response = Praxis::Responses::NotFound.new()
-            response.body = { error: e.message }
+            response.body = { error: e.inspect }
           rescue  Aws::Route53::Errors::PriorRequestNotComplete,
                   Aws::Route53::Errors::InvalidInput,
                   Aws::Route53::Errors::InvalidChangeBatch => e
             response = Praxis::Responses::BadRequest.new()
-            response.body = { error: e.message }
+            response.body = { error: e.inspect }
           end
         else
           response = Praxis::Responses::NotFound.new()
@@ -116,10 +116,10 @@ module V1
         response.headers['Content-Type'] = V1::MediaTypes::Record.identifier+';type=collection'
       rescue Aws::Route53::Errors::InvalidInput => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       rescue Aws::Route53::Errors::NoSuchHostedZone => e
         response = Praxis::Responses::NotFound.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       end
 
       response
@@ -146,12 +146,12 @@ module V1
       rescue  Aws::Route53::Errors::NoSuchHostedZone,
               Aws::Route53::Errors::NoSuchHealthCheck => e
         response = Praxis::Responses::NotFound.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       rescue  Aws::Route53::Errors::PriorRequestNotComplete,
               Aws::Route53::Errors::InvalidInput,
               Aws::Route53::Errors::InvalidChangeBatch => e
         response = Praxis::Responses::BadRequest.new()
-        response.body = { error: e.message }
+        response.body = { error: e.inspect }
       end
 
       response
