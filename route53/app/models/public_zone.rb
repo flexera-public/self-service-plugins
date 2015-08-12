@@ -11,6 +11,7 @@ module V1
         @kind = 'route53#public_zone'
         @id = hosted_zone.id.match(/\/[a-z_]*\/([a-z0-9A-Z_]*)$/)[1]
         @href = V1::ApiResources::PublicZone.prefix+'/'+@id
+        @href = '/'+ENV['SUB_PATH']+@href if ENV.has_key?('SUB_PATH')
         # @name = hosted_zone.name
         # @caller_reference = hosted_zone.caller_reference
         # @config = hosted_zone.config

@@ -13,6 +13,7 @@ module V1
         @kind = 'route53#record'
         @href = V1::ApiResources::PublicZone.prefix+'/'+zone_id+
           V1::ApiResources::Record.prefix+'/'+id
+        @href = '/'+ENV['SUB_PATH']+@href if ENV.has_key?('SUB_PATH')
         @change = change_info if change_info
       end
 
