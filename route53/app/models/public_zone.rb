@@ -33,6 +33,7 @@ module V1
           change_href = '/'+ENV['SUB_PATH']+change_href if ENV.has_key?('SUB_PATH')
           links << { rel: 'change', href: change_href}
         end
+        links
       end
 
       def method_missing(m, **args, &block)
