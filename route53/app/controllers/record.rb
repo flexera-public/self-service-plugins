@@ -157,7 +157,7 @@ module V1
     def create(**other_params)
       route53 = V1::Helpers::Aws.get_route53_client
 
-      response = self.response
+      response = Praxis::Responses::Created.new()
 
       public_zone_id = ''
 
@@ -178,8 +178,16 @@ module V1
         )
 
         aws_response = route53.change_resource_record_sets(resource_set_request)
+        record_struct = OpenStruct.new({
+          name: request.payload.name,
+          type: request.payload.type,
+          ttl: request.payload.ttl,
+          values: request.payload.values
+        })
+        record = V1::Models::Record.new(public_zone_id, record_struct)
         response.body = JSON.pretty_generate(V1::MediaTypes::Change.render(aws_response.change_info))
         response.headers['Content-Type'] = V1::MediaTypes::Change.identifier
+        response.headers['Location'] = record.href
       rescue  Aws::Route53::Errors::NoSuchHostedZone,
               Aws::Route53::Errors::NoSuchHealthCheck => e
         response = Praxis::Responses::NotFound.new()
