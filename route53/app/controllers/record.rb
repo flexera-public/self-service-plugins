@@ -125,10 +125,47 @@ module V1
       response
     end
 
-    def create(public_zone_id:, **other_params)
+    def show(public_zone_id:, id:, **other_params)
       route53 = V1::Helpers::Aws.get_route53_client
 
       response = self.response
+
+      begin
+        records = get_resource_record_sets_as_record_model(route53, public_zone_id)
+        records_mediatype = records.map{|r| V1::MediaTypes::Record.render(r) }
+
+
+        record = records_mediatype.select{|r| r[:id] == id }
+
+        if record.size == 0
+          response = Praxis::Responses::NotFound.new()
+          response.body = { error: "Record ID (#{id}) not found in zone ID (#{public_zone_id})"}
+        else
+          response.body = JSON.pretty_generate(record.first)
+          response.headers['Content-Type'] = V1::MediaTypes::Record.identifier
+        end
+      rescue Aws::Route53::Errors::NoSuchHostedZone => e
+        response = Praxis::Responses::NotFound.new()
+        response.body = { error: e.inspect }
+      rescue Aws::Route53::Errors::InvalidInput => e
+        response = Praxis::Responses::BadRequest.new()
+        response.body = { error: e.inspect }
+      end
+      response
+    end
+
+    def create(**other_params)
+      route53 = V1::Helpers::Aws.get_route53_client
+
+      response = self.response
+
+      public_zone_id = ''
+
+      if request.params && request.params.public_zone_id
+        public_zone_id = request.params.public_zone_id
+      else
+        public_zone_id = request.payload.public_zone_id
+      end
 
       begin
         resource_set_request = get_resource_record_set_request(

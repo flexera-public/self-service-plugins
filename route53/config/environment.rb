@@ -3,6 +3,8 @@ ENV['RACK_ENV'] ||= 'development'
 
 Bundler.require(:default, ENV['RACK_ENV'])
 
+require File.expand_path('../../app/plugins/shared_secret_authentication_plugin', __FILE__)
+
 # Default application layout.
 # NOTE: This layout need NOT be specified explicitly.
 # It is provided just for illustration.

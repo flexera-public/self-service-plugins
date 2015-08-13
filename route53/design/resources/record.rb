@@ -5,10 +5,16 @@ module V1
 
       media_type V1::MediaTypes::Record
       version '1.0'
-      prefix '/records'
       trait :authorized
 
-      parent V1::ApiResources::PublicZone
+      action_defaults do
+        routing do
+          prefix '//public_zones/:public_zone_id/records'
+        end
+        params do
+          attribute :public_zone_id, String
+        end
+      end
 
       action :index do
         routing do
@@ -17,11 +23,25 @@ module V1
         response :ok
       end
 
+      action :show do
+        routing do
+          get '/:id'
+        end
+        params do
+          attribute :id, String, required: true
+        end
+        response :ok
+        response :not_found
+        response :bad_request
+      end
+
       action :create do
         routing do
+          post '//records'
           post ''
         end
-        payload do
+        payload required: true do
+          attribute :public_zone_id, String
           attribute :name, String, required: true
           attribute :type, String,
             required: true,
