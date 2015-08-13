@@ -5,6 +5,7 @@ module V1
 
       media_type V1::MediaTypes::Record
       version '1.0'
+      prefix '/records'
       trait :authorized
 
       action_defaults do
