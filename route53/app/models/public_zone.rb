@@ -23,6 +23,18 @@ module V1
         OpenStruct.new(href: href+'/records')
       end
 
+      def links()
+        links = []
+        links << { rel: 'self', href: href }
+        links << { rel: 'records', href: href+'/records' }
+
+        if @change
+          change_href = V1::ApiResources::Change.prefix+'/'+@change['id']
+          change_href = '/'+ENV['SUB_PATH']+change_href if ENV.has_key?('SUB_PATH')
+          links << { rel: 'change', href: change_href}
+        end
+      end
+
       def method_missing(m, **args, &block)
         @hosted_zone.send(m)
       end

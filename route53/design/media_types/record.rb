@@ -12,10 +12,7 @@ module V1
         attribute :type, String
         attribute :values, Attributor::Collection.of(String)
         attribute :change, Change
-
-        links do
-          link :change
-        end
+        attribute :links, Attributor::Collection.of(Hash)
       end
 
       view :default do

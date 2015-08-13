@@ -16,11 +16,7 @@ module V1
           attribute :private_zone, String
         end
         attribute :resource_record_set_count, Integer
-
-        links do
-          link :change, Change
-          link :records, V1::MediaTypes::RecordCollectionSummary, using: :records_summary
-        end
+        attribute :links, Attributor::Collection.of(Hash)
       end
 
       view :default do
@@ -37,18 +33,6 @@ module V1
       view :link do
         attribute :href
       end
-
-      # def href()
-      #   V1::ApiResources::PublicZone.prefix+'/'+id
-      # end
-      #
-      # def kind()
-      #   @@kind
-      # end
-
-      # def records()
-      #   { href: href+'/records' }
-      # end
     end
   end
 end

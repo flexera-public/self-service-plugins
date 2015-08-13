@@ -11,6 +11,7 @@ module V1
         attribute :href, String
         attribute :status, String
         attribute :submitted_at, String
+        attribute :links, Attributor::Collection.of(Hash)
       end
 
       view :default do
@@ -19,6 +20,7 @@ module V1
         attribute :href
         attribute :status
         attribute :submitted_at
+        attribute :links
       end
 
       view :link do
@@ -26,7 +28,14 @@ module V1
       end
 
       def href()
-        V1::ApiResources::Change.prefix+'/'+id
+        href = V1::ApiResources::Change.prefix+'/'+id
+        href = '/'+ENV['SUB_PATH']+href if ENV.has_key?('SUB_PATH')
+      end
+
+      def links()
+        links = []
+        links << { rel: 'self', href: href }
+        links
       end
 
       def kind()
