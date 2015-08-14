@@ -62,7 +62,7 @@ end
 define provision_record(@raw_record) return @resource do
   $zone_href_parts = split(@raw_record.zone_href,'/')
   $zone_id = last($zone_href_parts)
-  route53.record.create({
+  @resource = route53.record.create({
     public_zone_id: $zone_id,
     name: @raw_record.name,
     type: @raw_record.type,
