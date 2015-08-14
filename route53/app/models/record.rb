@@ -13,7 +13,7 @@ module V1
         @kind = 'route53#record'
         @zone_href = V1::ApiResources::PublicZone.prefix+'/'+zone_id
         @zone_href = '/'+ENV['SUB_PATH']+@zone_href if ENV.has_key?('SUB_PATH')
-        @href = @zone_href+V1::ApiResources::Record.prefix+'/'+id        
+        @href = @zone_href+V1::ApiResources::Record.prefix+'/'+id
         @change = change_info if change_info
       end
 
@@ -26,7 +26,7 @@ module V1
       end
 
       def id
-        to_sha = "#{@record.name}#{@record.type}#{@record.values.first}"
+        to_sha = "#{@record.name}#{@record.type}#{values.first}"
         Digest::SHA1.hexdigest(to_sha)
       end
 

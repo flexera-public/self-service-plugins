@@ -178,12 +178,17 @@ module V1
         )
 
         aws_response = route53.change_resource_record_sets(resource_set_request)
-        record_struct = OpenStruct.new({
-          name: request.payload.name,
+        name = request.payload.name
+        if name[-1, 1] != '.'
+          name = request.payload.name+'.'
+        end
+        record_hash = {
+          name: name,
           type: request.payload.type,
           ttl: request.payload.ttl,
-          values: request.payload.values
-        })
+          resource_records: request.payload.values.map{|r| OpenStruct.new({ value: r }) }
+        }
+        record_struct = OpenStruct.new(record_hash)
         record = V1::Models::Record.new(public_zone_id, record_struct)
         response.body = JSON.pretty_generate(V1::MediaTypes::Change.render(aws_response.change_info))
         response.headers['Content-Type'] = V1::MediaTypes::Change.identifier

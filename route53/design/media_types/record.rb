@@ -10,6 +10,7 @@ module V1
         attribute :href, String
         attribute :name, String
         attribute :type, String
+        attribute :ttl, Integer
         attribute :values, Attributor::Collection.of(String)
         attribute :change, Change
         attribute :links, Attributor::Collection.of(Hash)
@@ -21,6 +22,7 @@ module V1
         attribute :name
         attribute :href
         attribute :type
+        attribute :ttl
         attribute :values
         attribute :links
       end
@@ -29,20 +31,6 @@ module V1
         attribute :href
       end
 
-    end
-
-    class RecordCollectionSummary < Praxis::MediaType
-      attributes do
-        attribute :href, String
-      end
-
-      view :default do
-        attribute :href
-      end
-
-      view :link do
-        attribute :href
-      end
     end
   end
 end
