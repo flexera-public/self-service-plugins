@@ -23,3 +23,6 @@ It also requires an API shared secret. This shared secret should be known only t
 You provide the API shared secret as an environment variable
 
 `API_SHARED_SECRET`
+
+## TODO
+* Pagination.. It only pulls 100 items per page
