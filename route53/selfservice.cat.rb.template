@@ -70,3 +70,13 @@ define provision_record(@raw_record) return @resource do
     values: @raw_record.values
   })
 end
+
+operation "terminate" do
+  definition "terminate"
+  description "Kill the DNS record before the zone"
+end
+
+define terminate(@dns_zone, @dns_record) do
+  delete(@dns_record)
+  delete(@dns_zone)
+end
