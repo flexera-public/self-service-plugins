@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/labstack/echo"
@@ -21,6 +22,7 @@ func SetupImageRoutes(e *echo.Echo) {
 	e.Get("/locations/:location/publishers/:publisher/offers", listOffers)
 	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus", listSkus)
 	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus/:sku/versions", listVersions)
+	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus/:sku/versions/:version", getVersion)
 }
 
 func listImages(c *echo.Context) error {
@@ -150,10 +152,30 @@ func listVersions(c *echo.Context) error {
 }
 
 func getVersions(c *echo.Context, locationName string, publisherName string, offerName string, skuName string) ([]map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, "2015-05-01-preview")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, "2015-06-15")
 	versions, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
 	}
 	return versions, nil
+}
+
+func getVersion(c *echo.Context) error {
+	location := c.Param("location")
+	publisher := c.Param("publisher")
+	offer := c.Param("offer")
+	sku := c.Param("sku")
+	version := c.Param("version")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, location, publisher, offer, sku, version, "2015-06-15")
+	body, err := GetResource(c, path)
+	if err != nil {
+		return err
+	}
+
+	var v map[string]interface{}
+	if err := json.Unmarshal(body, &v); err != nil {
+		return err
+	}
+
+	return c.JSON(200, &v)
 }
