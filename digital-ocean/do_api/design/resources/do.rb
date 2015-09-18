@@ -20,9 +20,11 @@ module V1
           attribute :size
           attribute :image
           attribute :region
+          attribute :deployment
+          attribute :server_template
         end
 
-        response :ok, media_type: "application/json"
+        response :created
       end # create
 
       action :list do

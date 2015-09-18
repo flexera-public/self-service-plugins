@@ -7,19 +7,38 @@ module V1
     implements V1::ApiResources::DoCloud
 
     DO_TOKEN = ENV['TOKEN']
+    RS_TOKEN = ENV['RS_REFRESH_TOKEN']
     DO_DROPLET_API = "https://api.digitalocean.com/v2/droplets"
 
     def create(**params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
+      do_userdata = "#!/bin/bash
+
+cd /tmp
+wget https://rightlink.rightscale.com/rll/uca-0.3.0/rightlink.enable.sh
+chmod +x ./rightlink.enable.sh
+SERVER_NAME='" + request.payload.name + "'
+SERVER_TEMPLATE='" + request.payload.server_template + "'
+DEPLOYMENT_HREF='" + request.payload.deployment + "'         
+CLOUD_NAME='Digital Ocean'
+HOST='us-3.rightscale.com'
+KEY='" + RS_TOKEN + "'
+sudo ./rightlink.enable.sh -l -n \\\"$SERVER_NAME\\\" -k \\\"$KEY\\\" -t \\\"$SERVER_TEMPLATE\\\" -c uca -a \\\"$HOST\\\" -e \\\"$DEPLOYMENT_HREF\\\" -f \\\"$CLOUD_NAME\\\"
+"
       do_uri = DO_DROPLET_API
       do_request = '{"name":"' + request.payload.name + 
         '","region":"' + request.payload.region + 
         '","size":"' + request.payload.size + 
-        '","image":' + request.payload.image.to_s + '}'
+        '","image":' + request.payload.image.to_s + 
+        ',"user_data":"' + do_userdata + '"}'
 
       do_response = do_post(do_uri, do_request)
 
       resp = JSON.parse(do_response.body)["droplet"]
       resp["href"] = "/api/do_proxy/droplets/" + resp["id"].to_s
+      response = Praxis::Responses::Created.new()
       response.headers['Content-Type'] = 'application/json'
       response.headers['Location'] = resp["href"]
       response.body = resp
@@ -27,12 +46,14 @@ module V1
     end
 
     def list(**other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       do_uri = DO_DROPLET_API
       do_response = do_get(do_uri)
 
       response.headers['Content-Type'] = 'vnd.rightscale.droplet+json;type=collection'
 
-      ##### binding.pry
       resp = JSON.parse(do_response.body)["droplets"]
       resp.each do |r|
         r["href"] = "/api/do_proxy/droplets/" + r["id"].to_s
@@ -42,6 +63,9 @@ module V1
     end
 
     def show(id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       do_uri = DO_DROPLET_API + "/" + id.to_s
       do_response = do_get(do_uri)
 
@@ -53,6 +77,9 @@ module V1
     end
 
     def powercycle(id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       do_uri = DO_DROPLET_API + "/" + id.to_s + "/actions"
       do_request = '{"type":"power_cycle"}'
 
@@ -64,6 +91,9 @@ module V1
     end
 
     def poweroff(id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       do_uri = DO_DROPLET_API + "/" + id.to_s + "/actions"
       do_request = '{"type":"power_off"}'
 
@@ -75,6 +105,9 @@ module V1
     end
 
     def delete(id:, **other_params)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       app = Praxis::Application.instance
       do_uri = DO_DROPLET_API + "/" + id.to_s
       app.logger.info("DELETE:" + do_uri)
@@ -95,6 +128,9 @@ module V1
     end
 
     def do_post(do_uri, do_request)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       app = Praxis::Application.instance
       app.logger.info("GET:" + do_uri)
       do_uri = URI.parse(do_uri)
@@ -110,6 +146,9 @@ module V1
     end
 
     def do_get(do_uri)
+      resp = authenticate!(request.headers["X_Api_Shared_Secret"])
+      return resp if resp
+
       app = Praxis::Application.instance
       app.logger.info("POST:" + do_uri)
 
@@ -122,6 +161,18 @@ module V1
          'Authorization' => 'Bearer ' + DO_TOKEN)
       app.logger.info(do_response.body)
       do_response
+    end
+
+    private
+
+    def authenticate!(secret)
+      if secret != ENV["PLUGIN_SHARED_SECRET"]
+        self.response = Praxis::Responses::Forbidden.new()
+        response.body = { error: '403: Invalid shared secret'}
+        return response
+      else
+        return nil
+      end
     end
 
   end

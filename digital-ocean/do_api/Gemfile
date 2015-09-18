@@ -1,8 +1,9 @@
 source 'https://rubygems.org'
 
-gem 'praxis', git: 'git@github.com:rightscale/praxis.git', branch: "master"
+gem 'praxis', git: 'https://github.com/rightscale/praxis.git', branch: "master"
 gem 'rack', '~> 1.0'
 gem 'rake'
+gem 'thin'
 
 # TODO:~ comment out for production
 # gem 'pry'

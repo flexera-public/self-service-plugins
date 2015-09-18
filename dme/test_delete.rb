@@ -2,10 +2,9 @@ require 'uri'
 require 'net/http'
 require 'json'
 
-  def post(path, body)
+  def delete(path)
     request(path) do |uri|
-      req = Net::HTTP::Post.new(uri.path)
-      req.body = body.to_json
+      req = Net::HTTP::Delete.new(uri.path)
       req
     end
 
@@ -28,9 +27,7 @@ require 'json'
 
     puts response.code
     puts response.message
-    puts response.headers
 
-    JSON.parse(unparsed_json)
   end
 
   def request_headers
@@ -41,4 +38,4 @@ require 'json'
     }
   end
 
-  post('http://localhost:8081/dme/accounts/60073/records', {"domain"=>"dev.rightscaleit.com","name"=>"ryanolearytest","type"=>"A","value"=>"1.1.1.1"})
+  delete('http://localhost:8081/dme/accounts/60073/records/dev.rightscaleit.com-23319285')
