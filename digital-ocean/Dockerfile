@@ -2,7 +2,7 @@ FROM  ruby:2.1-onbuild
 
 RUN git clone https://github.com/rightscale/self-service-plugins.git
 
-WORKDIR /usr/src/app/self-service-plugins/digital-ocean
+WORKDIR /usr/src/app/self-service-plugins/digital-ocean/do_api
 
 RUN git checkout dockerize_dme
 

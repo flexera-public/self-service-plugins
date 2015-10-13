@@ -509,6 +509,8 @@ end
 define provision_droplet(@raw_droplet) return @droplet do
   $obj = to_object(@raw_droplet)
   $to_create = $obj["fields"]  
+  $to_create["api_host"] = "us-3.rightscale.com"
+  $to_create["cloud"] = "Digital Ocean"  
   $to_create["deployment"] = @@deployment.href
   @droplet = do.droplet.create($to_create) # Calls .create on the API resource
 end

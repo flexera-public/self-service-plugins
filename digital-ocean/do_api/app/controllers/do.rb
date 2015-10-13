@@ -22,8 +22,8 @@ chmod +x ./rightlink.enable.sh
 SERVER_NAME='" + request.payload.name + "'
 SERVER_TEMPLATE='" + request.payload.server_template + "'
 DEPLOYMENT_HREF='" + request.payload.deployment + "'         
-CLOUD_NAME='Digital Ocean'
-HOST='us-3.rightscale.com'
+CLOUD_NAME='" + request.payload.cloud + "'
+HOST='" + request.payload.api_host + "'
 KEY='" + RS_TOKEN + "'
 sudo ./rightlink.enable.sh -l -n \\\"$SERVER_NAME\\\" -k \\\"$KEY\\\" -t \\\"$SERVER_TEMPLATE\\\" -c uca -a \\\"$HOST\\\" -e \\\"$DEPLOYMENT_HREF\\\" -f \\\"$CLOUD_NAME\\\"
 "

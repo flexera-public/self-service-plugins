@@ -45,6 +45,9 @@ namespace "do" do
       field "deployment_href" do
         type "string"
       end
+      field "server_template" do
+        type "string"
+      end
     end
   end
 end
@@ -53,6 +56,8 @@ end
 define provision_droplet(@raw_droplet) return @droplet do
   $obj = to_object(@raw_droplet)
   $to_create = $obj["fields"]  
+  $to_create["api_host"] = "us-3.rightscale.com"
+  $to_create["cloud"] = "Digital Ocean"
   $to_create["deployment"] = @@deployment.href
   @droplet = do.droplet.create($to_create) # Calls .create on the API resource
 end
@@ -90,6 +95,7 @@ resource "base_server", type: "do.droplet" do
   size                  "512mb"
   region                "sfo1"
   image                 13089493
+  server_template       "RightScale UCA base"
 end
 
 #########
