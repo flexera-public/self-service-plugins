@@ -6,6 +6,7 @@ module V1
 
       media_type V1::MediaTypes::DoCloud
       version "1.0"
+      trait :authenticated
 
       routing do
         prefix "/api/do_proxy/droplets"
@@ -21,7 +22,9 @@ module V1
           attribute :image
           attribute :region
           attribute :deployment
-          attribute :server_template
+          attribute :server_template_href
+          attribute :api_host
+          attribute :cloud
         end
 
         response :created

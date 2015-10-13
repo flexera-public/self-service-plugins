@@ -16,10 +16,11 @@ long_description "Allows you to launch a machine on DigitalOcean
 #########
 namespace "do" do
   service do
-    host "ec2-54-185-180-228.us-west-2.compute.amazonaws.com:3389"        # HTTP endpoint presenting an API defined by self-service to act on resources
+    host "54.188.172.63:3389"        # HTTP endpoint presenting an API defined by self-service to act on resources
     path "/api/do_proxy"                                             # path prefix for all resources, RightScale account_id substituted in for multi-tenancy
     headers do {
-      "X-Api-Version" => "1.0"                                       # special headers as needed
+      "X-Api-Version" => "1.0",
+      "X-Api-Shared-Secret" => "354XZjrZ2sL9F7"                                       # special headers as needed
     } end
   end
   type "droplet" do                       # defines resource of type "droplet"
@@ -95,7 +96,7 @@ resource "base_server", type: "do.droplet" do
   size                  "512mb"
   region                "sfo1"
   image                 13089493
-  server_template       "RightScale UCA base"
+  server_template_href  "/api/server_templates/367541003"
 end
 
 #########

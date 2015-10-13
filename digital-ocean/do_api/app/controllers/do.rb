@@ -20,12 +20,12 @@ cd /tmp
 wget https://rightlink.rightscale.com/rll/uca-0.3.0/rightlink.enable.sh
 chmod +x ./rightlink.enable.sh
 SERVER_NAME='" + request.payload.name + "'
-SERVER_TEMPLATE='" + request.payload.server_template + "'
+SERVER_TEMPLATE='" + request.payload.server_template_href + "'
 DEPLOYMENT_HREF='" + request.payload.deployment + "'         
 CLOUD_NAME='" + request.payload.cloud + "'
 HOST='" + request.payload.api_host + "'
 KEY='" + RS_TOKEN + "'
-sudo ./rightlink.enable.sh -l -n \\\"$SERVER_NAME\\\" -k \\\"$KEY\\\" -t \\\"$SERVER_TEMPLATE\\\" -c uca -a \\\"$HOST\\\" -e \\\"$DEPLOYMENT_HREF\\\" -f \\\"$CLOUD_NAME\\\"
+sudo ./rightlink.enable.sh -l -n \\\"$SERVER_NAME\\\" -k \\\"$KEY\\\" -r \\\"$SERVER_TEMPLATE\\\" -c uca -a \\\"$HOST\\\" -e \\\"$DEPLOYMENT_HREF\\\" -f \\\"$CLOUD_NAME\\\"
 "
       do_uri = DO_DROPLET_API
       do_request = '{"name":"' + request.payload.name + 
