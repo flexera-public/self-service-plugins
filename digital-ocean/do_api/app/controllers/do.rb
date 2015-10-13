@@ -6,7 +6,7 @@ module V1
     include Praxis::Controller
     implements V1::ApiResources::DoCloud
 
-    DO_TOKEN = ENV['TOKEN']
+    DO_TOKEN = ENV['DO_TOKEN']
     RS_TOKEN = ENV['RS_REFRESH_TOKEN']
     DO_DROPLET_API = "https://api.digitalocean.com/v2/droplets"
 
