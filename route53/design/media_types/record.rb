@@ -2,7 +2,7 @@ module V1
   module MediaTypes
     class Record < Praxis::MediaType
 
-      identifier 'application/vnd.rightscale.record+json'
+      identifier 'application/vnd.rightscale.records+json'
 
       attributes do
         attribute :kind, String
