@@ -13,12 +13,19 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
+// httpError writes an error to the HTTP response and returns an error object with that same
+// error for logging
+func httpError(w http.ResponseWriter, httpCode int, format string, args ...interface{}) error {
+	w.WriteHeader(httpCode)
+	fmt.Fprintf(w, format, args...)
+	return fmt.Errorf(format, args...)
+}
+
 func serviceMeta(svcName, region string, w http.ResponseWriter) (*Service, error) {
 	svcMeta, ok := services[svcName]
 	if !ok {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "Sorry, service %s does not exist or is not supported", svcName)
-		return nil, fmt.Errorf("service %s does not exist", svcName)
+		return nil, httpError(w, 404,
+			"Sorry, service %s does not exist or is not supported", svcName)
 	}
 	return &svcMeta, nil
 }
@@ -26,10 +33,9 @@ func serviceMeta(svcName, region string, w http.ResponseWriter) (*Service, error
 func serviceResource(svc *Service, resource string, w http.ResponseWriter) (*Resource, error) {
 	res, ok := svc.Resources[inflect.Singularize(resource)]
 	if !ok {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "Sorry, %s does not have resource %s, available resources: %+v",
+		return nil, httpError(w, 404,
+			"Sorry, %s does not have resource %s, available resources: %+v",
 			svc.Name, resource, svc.ResourceNames())
-		return nil, fmt.Errorf("%s does not have resource %s", svc.Name, resource)
 	}
 	return res, nil
 }
@@ -38,11 +44,9 @@ func findAction(actionMap map[string]*Action, action, actionType, container stri
 	w http.ResponseWriter) (*Action, error) {
 	act, ok := actionMap[(action)]
 	if !ok {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "Sorry, %s does not have %s action %s, available aactions: %+v",
+		return nil, httpError(w, 404,
+			"Sorry, %s does not have %s action %s, available aactions: %+v",
 			container, actionType, action, ActionNames(actionMap))
-		return nil, fmt.Errorf("%s does not have %s action %s",
-			container, actionType, action)
 	}
 	return act, nil
 }

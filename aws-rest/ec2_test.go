@@ -17,7 +17,7 @@ var _ = Describe("EC2 service", func() {
 	client := &http.Client{}
 
 	It("lists zones", func() {
-		resp, err := client.Get(SRV + "/ec2/us-east-1/availability_zones")
+		resp, err := client.Get(SRV + "/rest/ec2/us-east-1/availability_zones")
 		Ω(err).ShouldNot(HaveOccurred())
 		body, err := ioutil.ReadAll(resp.Body)
 		Ω(err).ShouldNot(HaveOccurred())
