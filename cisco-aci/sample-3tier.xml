@@ -1,0 +1,55 @@
+<fvTenant name="rs-test">
+
+    <fvAp name="OnlineStore">
+        <fvAEPg name="web">
+            <fvRsBd tnFvBDName="rs-test-br"/>
+            <fvRsCons tnVzBrCPName="rmi"/>
+            <fvRsProv tnVzBrCPName="web"/>
+            <fvRsDomAtt tDn="uni/vmmp-VMware/dom-datacenter"/>
+        </fvAEPg>
+
+        <fvAEPg name="db">
+            <fvRsBd tnFvBDName="rs-test-br"/>
+            <fvRsProv tnVzBrCPName="sql"/>
+            <fvRsDomAtt tDn="uni/vmmp-VMware/dom-datacenter"/>
+        </fvAEPg>
+
+        <fvAEPg name="app">
+            <fvRsBd tnFvBDName="rs-test-br"/>
+            <fvRsProv tnVzBrCPName="rmi"/>
+            <fvRsCons tnVzBrCPName="sql"/>
+            <fvRsDomAtt tDn="uni/vmmp-VMware/dom-datacenter"/>
+        </fvAEPg>
+    </fvAp>
+
+    <vzFilter name="http" >
+        <vzEntry dFromPort="80" name="DPort-80" prot="tcp" etherT="ip" />
+        <vzEntry dFromPort="443" name="DPort-443" prot="tcp" etherT="ip" />
+    </vzFilter>
+
+    <vzFilter name="rmi" >
+        <vzEntry dFromPort="1099" name="DPort-1099" prot="tcp" etherT="ip" />
+    </vzFilter>
+
+    <vzFilter name="sql">
+        <vzEntry dFromPort="1521" name="DPort-1521" prot="tcp" etherT="ip" />
+    </vzFilter>
+
+    <vzBrCP name="web">
+        <vzSubj name="web">
+            <vzRsSubjFiltAtt tnVzFilterName="http"/>
+        </vzSubj>
+    </vzBrCP>
+
+    <vzBrCP name="rmi">
+        <vzSubj name="rmi">
+            <vzRsSubjFiltAtt tnVzFilterName="rmi"/>
+        </vzSubj>
+    </vzBrCP>
+
+    <vzBrCP name="sql">
+        <vzSubj name="sql">
+           <vzRsSubjFiltAtt tnVzFilterName="sql"/>
+        </vzSubj>
+    </vzBrCP>
+</fvTenant>

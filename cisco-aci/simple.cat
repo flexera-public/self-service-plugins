@@ -1,0 +1,70 @@
+name "Simple Cisco ACI CAT"
+rs_ca_ver 20131202
+short_description "Simple Cisco ACI Demo
+
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+
+long_description "Simple Cisco ACI Demo
+
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+
+output 'db_ip' do
+  label "Database IP"
+  category "General"
+  description "IP address to connect to the database (mysql)"
+end
+
+# Tier Selection
+parameter "tier" do
+  type "string"
+  label "Database tier (size)"
+  category "General"
+  allowed_values "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"
+  default "D1"
+  description "The database instance size, from D0=128MB to D8=huge"
+end
+
+# Database instance
+resource 'db', type: 'cisco_aci.instance' do
+  instance join(['sample-db3-', last(split(@@deployment.href, "/"))])
+  tier $tier
+  #region 'us-east1'
+end
+
+namespace "cisco_aci" do
+  service do
+    host "https://wstunnel1-1.rightscale.com"
+    path "/_tunnel/cisco-aci-tve-20151022-hello/acct/:account_id"
+    headers do {
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+      "Content-Wish" => "application/json",
+    } end
+  end
+  # SQL instances
+  type "instance" do
+    provision "provision_google_sql_instance"
+    delete "delete_google_sql_instance"
+    fields do
+      field 'instance' do                         # database instance name
+        type "string"
+        regexp "[a-zA-Z0-9\-\.]+"
+        required true
+      end
+      field 'tier' do                             # database instance type/size
+        type "string"
+        regexp "D[0-8]"
+        required true
+      end
+    end
+  end
+end
+
+define provision_google_sql_instance(@raw_instance) return @instance do
+  @instance = google_sql.instance.create(i: to_object(@raw_instance))
+end
+
+define delete_google_sql_instance(@instance) do
+  @instance.destroy()
+end
+
