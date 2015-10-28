@@ -1,4 +1,4 @@
-  class Bd < App
+  class Bds < App
     require 'acirb'
 
     before do
@@ -8,56 +8,6 @@
     end
 
     helpers do
-
-      def add_stuff(obj, stuff)
-        links = stuff.delete('links')
-        stuff.each_pair do |k,v|
-          if obj.props.key?(k)
-            obj.set_prop(k, v)
-          else
-            halt 400, "Oops: #{obj.class_name} does not have attribute #{k}, valid attributes: #{obj.props.keys.sort.join(' ')}"
-          end
-        end
-        if links.is_a?(Hash)
-          links.each do |k, v|
-            puts "Link: #{k}->#{v}"
-            child = nil
-            begin
-              child = Object.const_get("ACIrb::Fv#{k}").new(obj)
-              #obj.add_child(child)
-            rescue
-              begin
-                child = Object.const_get("ACIrb::FvRs#{k}").new(obj)
-                #obj.add_child(child)
-              rescue
-                halt 400, "Cannot create link '#{k}' for '#{obj.class}'"
-              end
-            end
-            if child.props.key?("name")
-              child.set_prop('name', v)
-            else
-              name_props = child.props.select{|p,v| p.end_with?('Name')}
-              if name_props.size == 1
-                puts "Setting prop #{name_props.first[0]}=#{v} (#{name_props.inspect})"
-                child.set_prop(name_props.first[0], v)
-              else
-                halt 400, "Cannot set name for link '#{k}': #{name_props.sort.join(' ')}"
-              end
-            end
-            puts "Child #{k}:#{v} is: #{child.inspect}"
-          end
-          stuff.delete('links')
-        end
-        obj
-      end
-
-      def gen_json(obj)
-        if obj.is_a?(Array)
-          obj.map{|o|o.to_json}
-        else
-          obj.to_json
-        end
-      end
 
     end
 
@@ -110,3 +60,9 @@
     end
 
   end
+
+__END__
+
+curl -g -XPOST -HContent-Length:0 'http://localhost:9292/tenant/rs-test/bd?bd[name]=rs-test-br2&bd[links][Ctx]=rs-test-net'
+curl -g -XDELETE 'http://localhost:9292/tenant/rs-test/bd/rs-test-br2'
+

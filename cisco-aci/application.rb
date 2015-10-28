@@ -46,6 +46,7 @@ class App < Sinatra::Base
     #puts "REQUEST_LOGGER=#{request.logger.inspect}"
     #request.logger.info("Processing #{self.class}# #{request.env["REQUEST_URI"].inspect} " +
     #    "(for #{request.env["HTTP_X_FORWARDED_FOR"]}) [#{request.env["REQUEST_METHOD"]}] ")
+    $logger.info("***************");
     $logger.info("Processing #{self.class}# #{request.env["REQUEST_URI"].inspect} " +
         "(for #{request.env["HTTP_X_FORWARDED_FOR"]}) [#{request.env["REQUEST_METHOD"]}] ")
   end
@@ -59,9 +60,10 @@ class App < Sinatra::Base
       #$logger.info "JSON PUT/POST"
       begin
         parsed = request.body ? Yajl::Parser.parse(request.body) : {}
+        #$logger.info "Body parsed: #{parsed.inspect}"
         if parsed.is_a?(Hash)
           $logger.info "Reading json content-body, merging #{parsed.keys.sort.join(' ')}"
-          parsed.each_pair{|k,v| params[k] = v} # .merge! doesn't work...
+          parsed.each_pair{|k,v| params[k.to_sym] = v} # .merge! doesn't work...
           $logger.info "Params after merge: #{params.keys.sort.join(' ')}"
         end
       rescue StandardError => e
@@ -107,6 +109,57 @@ class App < Sinatra::Base
 
   # Global helpers that can be called from within any controller class
   helpers do
+
+      def add_stuff(obj, stuff)
+        links = stuff.delete('links')
+        stuff.each_pair do |k,v|
+          if obj.props.key?(k)
+            obj.set_prop(k, v)
+          else
+            halt 400, "Oops: #{obj.class_name} does not have attribute #{k}, valid attributes: #{obj.props.keys.sort.join(' ')}"
+          end
+        end
+        if links.is_a?(Hash)
+          links.each do |k, v|
+            puts "Link: #{k}->#{v}"
+            child = nil
+            begin
+              child = Object.const_get("ACIrb::Fv#{k}").new(obj)
+              #obj.add_child(child)
+            rescue
+              begin
+                child = Object.const_get("ACIrb::FvRs#{k}").new(obj)
+                #obj.add_child(child)
+              rescue
+                halt 400, "Cannot create link '#{k}' for '#{obj.class}'"
+              end
+            end
+            if child.props.key?("name")
+              child.set_prop('name', v)
+            else
+              name_props = child.props.select{|p,v| p.end_with?('Name')}
+              if name_props.size == 1
+                puts "Setting prop #{name_props.first[0]}=#{v} (#{name_props.inspect})"
+                child.set_prop(name_props.first[0], v)
+              else
+                halt 400, "Cannot set name for link '#{k}': #{name_props.sort.join(' ')}"
+              end
+            end
+            puts "Child #{k}:#{v} is: #{child.inspect}"
+          end
+          stuff.delete('links')
+        end
+        obj
+      end
+
+      def gen_json(obj)
+        if obj.is_a?(Array)
+          obj.map{|o|o.to_json}
+        else
+          obj.to_json
+        end
+      end
+
 
   end
 

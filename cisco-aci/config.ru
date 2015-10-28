@@ -32,12 +32,13 @@ def mount_dir(route_set, path, prefix)
     if file =~ /\.rb$/
       require "#{path}/#{file}"
       resource_name = file.split(".").first
-      r_class = resource_name.split('-').map{|e| e.capitalize}.join
+      r_class = resource_name.split('_').map{|e| e.capitalize}.join
       $logger.info "Loading resource type #{r_class} as #{prefix}#{resource_name}"
       route_set.add_route(Object.const_get(r_class),
           { :path_info => Rack::Mount::Strexp.compile("#{prefix}#{resource_name}",{},[],false) })
     elsif Dir.exist?("#{path}/#{file}")
-      mount_dir(route_set, "#{path}/#{file}", "#{prefix}#{file}/:#{file}/")
+      singular = file.sub(/s$/, "")
+      mount_dir(route_set, "#{path}/#{file}", "#{prefix}#{file}/:#{singular}/")
     else
       $logger.warning "Skipping ./app/#{file}"
     end
