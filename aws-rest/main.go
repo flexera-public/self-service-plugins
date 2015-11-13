@@ -50,7 +50,7 @@ func serviceStats() {
 }
 
 func defineHandlers() {
-	pref := "/:service/:region"
+	pref := "/rest/:service/:region"
 	goji.Get(pref+"/:resource", indexHandler)
 	goji.Get(pref+"/:resource/:id", showHandler)
 	goji.Put(pref+"/:resource/:id", updateHandler)

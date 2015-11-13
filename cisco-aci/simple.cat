@@ -1,0 +1,118 @@
+name "Simple Cisco ACI CAT"
+rs_ca_ver 20131202
+short_description "Simple Cisco ACI Demo
+
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+
+long_description "Simple Cisco ACI Demo
+
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+
+output 'db_ip' do
+  label "Database IP"
+  category "General"
+  description "IP address to connect to the database (mysql)"
+end
+
+# Port Selection
+parameter "port" do
+  type "number"
+  label "Web server port"
+  category "General"
+  default 80
+  description "The port for the web server"
+end
+
+# Port filtering
+resource 'web_filter', type: 'cisco_aci.filter' do
+  name 'web-filter'
+end
+
+resource 'web_filter_entry', type: 'cisco_aci.filter_entry' do
+  name 'web-filter-port'
+  dFromPort 80 # should be $port
+  dToPort 80   # should be $port
+  filter @web_filter
+  prot "tcp"
+end
+
+namespace "cisco_aci" do
+  service do
+    host "https://wstunnel1-1.rightscale.com"
+    path "/tenants/rs-test"
+    headers do {
+      "x-token" => "cisco-aci-tve-20151022-hello",
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+    } end
+  end
+
+  type "filter" do
+    provision "provision_filter"
+    delete "delete_filter"
+    fields do
+      field 'name' do
+        type "string"
+        regexp "[a-zA-Z0-9_\-\.]+"
+        required true
+      end
+    end
+  end
+
+  type "filter_entry" do
+    provision "provision_filter_entry"
+    delete "delete_filter_entry"
+    fields do
+      field 'name' do
+        type "string"
+        regexp "[a-zA-Z0-9_\-\.]+"
+        required true
+      end
+      field 'filter' do
+        type "string"
+        regexp "[a-zA-Z0-9_\-\.]+"
+        required true
+      end
+      field 'dFromPort' do
+        type "number"
+        required true
+      end
+      field 'dToPort' do
+        type "number"
+        required true
+      end
+      field 'sFromPort' do
+        type "number"
+        required false
+      end
+      field 'sToPort' do
+        type "number"
+        required false
+      end
+      field 'prot' do
+        type "string"
+        regexp "tcp|udp|icmp"
+        required true
+      end
+    end
+  end
+end
+
+define provision_filter(@raw_filter) return @filter do
+  @filter = cisco_aci.filter.create(Filter: to_object(@raw_filter)["fields"])
+end
+
+define delete_filter(@filter) do
+  @filter.destroy()
+end
+
+define provision_filter_entry(@raw_filter_entry) return @filter_entry do
+  @filter_entry = cisco_aci.filter_entry.create(
+    filter_entry: to_object(@raw_filter_entry)["fields"],
+    Filter: to_object(@raw_filter_entry)["fields"]["filter"])
+end
+
+define delete_filter_entry(@filter_entry) do
+  @filter_entry.destroy()
+end
+

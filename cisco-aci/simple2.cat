@@ -1,0 +1,252 @@
+name "Simple Cisco ACI CAT #2"
+rs_ca_ver 20131202
+short_description "Simple Cisco ACI Demo
+
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+
+long_description "Simple Cisco ACI Demo
+
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+
+output 'db_ip' do
+  label "Database IP"
+  category "General"
+  description "IP address to connect to the database (mysql)"
+end
+
+# Port Selection
+parameter "port" do
+  type "number"
+  label "Web server port"
+  category "General"
+  default 80
+  description "The port for the web server"
+end
+
+# Application
+resource 'application', type: 'cisco_aci.Ap' do
+  name 'online-store'
+end
+
+# Web tier
+resource 'web_epg', type: 'cisco_aci.AEPg' do
+  name 'web'
+  parent @application
+  bd find(type: 'cisco_aci.FvBD', name: 'rs-test-br')
+  cons @app_brcp
+  prov @web_brcp
+  #domAtt find(type: 'cisco_aci.Cons', name: '...
+end
+
+# Database tier
+resource 'db_epg', type: 'cisco_aci.AEPg' do
+  name 'db'
+  parent @application
+  bd 'rs-test-br' # find(type: 'cisco_aci.FvBD', name: 'rs-test-br')
+  prov @db_brcp
+  #domAtt find(type: 'cisco_aci.Cons', name: '...
+end
+
+# App tier
+resource 'app_epg', type: 'cisco_aci.AEPg' do
+  name 'app'
+  parent @application
+  bd 'rs-test-br' # find(type: 'cisco_aci.FvBD', name: 'rs-test-br')
+  cons @db_brcp
+  prov @app_brcp
+  #domAtt find(type: 'cisco_aci.Cons', name: '...
+end
+
+# Web tier Port filtering
+resource 'web_filter', type: 'cisco_aci.Filter' do
+  name 'http'
+end
+resource 'web_filter_80', type: 'cisco_aci.Entry' do
+  name 'web-filter-80'
+  dFromPort 80 # should be $port
+  dToPort 80   # should be $port
+  parent @web_filter
+  prot "tcp"
+end
+resource 'web_filter_443', type: 'cisco_aci.Entry' do
+  name 'web-filter-443'
+  dFromPort 443
+  dToPort 443
+  parent @web_filter
+  prot "tcp"
+end
+
+# App tier port filering
+resource 'app_filter', type: 'cisco_aci.Filter' do
+  name 'rmi'
+end
+resource 'app_filter_1099', type: 'cisco_aci.Entry' do
+  name 'rmi-filter-1099'
+  dFromPort 1099
+  dToPort 1099
+  parent @app_filter
+  prot "tcp"
+end
+
+# DB tier port filering
+resource 'db_filter', type: 'cisco_aci.Filter' do
+  name 'sql'
+end
+resource 'db_filter_1521', type: 'cisco_aci.Entry' do
+  name 'db-filter-1521'
+  dFromPort 1521
+  dToPort 1521
+  parent @db_filter
+  prot "tcp"
+end
+
+# Contracts
+resource 'web_brcp', type: 'cisco_aci.BrCP' do
+  name 'web'
+end
+resource 'web_subj', type: 'cisco_aci.Subj' do
+  name 'web'
+  parent @web_brcp
+  subjFiltAtt @web_filter
+end
+
+resource 'app_brcp', type: 'cisco_aci.BrCP' do
+  name 'rmi'
+end
+resource 'app_subj', type: 'cisco_aci.Subj' do
+  name 'rmi'
+  parent @app_brcp
+  subjFiltAtt @app_filter
+end
+
+resource 'db_brcp', type: 'cisco_aci.BrCP' do
+  name 'sql'
+end
+resource 'db_subj', type: 'cisco_aci.Subj' do
+  name 'sql'
+  parent @db_brcp
+  subjFiltAtt @db_filter
+end
+
+# ===== Cisco ACI namespace plug-in definition
+
+namespace "cisco_aci" do
+  service do
+    host "https://wstunnel1-1.rightscale.com"
+    path "/mo/FvTenant/rs-test"
+    headers do {
+      "x-token" => "cisco-aci-tve-20151022-hello",
+      "user-agent" => "self_service",      # special headers as needed
+      "Content-Type" => "application/json",
+    } end
+  end
+
+  type "Ap" do # fvAp - "Application"
+    provision "provision_cisco_aci"
+    fields do
+      field 'name' do type "string"; required true end
+    end
+  end
+
+  type "AEPg" do # fvAEPg - "Application Endpoint Group"
+    provision "provision_cisco_aci"
+    fields do
+      field 'name'   do type "string"; required true end
+      field 'parent' do type "string"; required true end
+      field 'bd'     do type "string"; required true end
+      field 'cons'   do type "string"; required false end
+      field 'prov'   do type "string"; required false end
+      field 'domAtt' do type "string"; required false end
+    end
+  end
+
+  type "BD" do # fvBD - "Bridge Domain"
+    provision "provision_cisco_aci"
+    fields do
+      field 'name' do type "string"; required true end
+    end
+  end
+  type "FvBD" do
+    fields do
+      field 'name' do type "string"; required true end
+    end
+  end
+
+  type "BrCP" do # vzBrCP - "Binary Contract Profile"
+    provision "provision_cisco_aci"
+    fields do
+      field 'name' do type "string"; required true end
+    end
+  end
+
+  type "Subj" do # vzSubj - "Contract Subject"
+    provision "provision_cisco_aci"
+    fields do
+      field 'name'        do type "string"; required true end
+      field 'parent'      do type "string"; required true end
+      field 'subjFiltAtt' do type "string"; required false end
+    end
+  end
+
+  type "Filter" do
+    provision "provision_cisco_aci"
+    fields do
+      field 'name' do
+        type "string"
+        regexp "[a-zA-Z0-9_\-\.]+"
+        required true
+      end
+    end
+  end
+
+  type "Entry" do
+    provision "provision_filter_entry"
+    fields do
+      field 'name' do
+        type "string"
+        regexp "[a-zA-Z0-9_\-\.]+"
+        required true
+      end
+      field 'parent' do
+        type "string"
+        regexp "[a-zA-Z0-9_\-\.]+"
+        required true
+      end
+      field 'dFromPort' do
+        type "number"
+        required true
+      end
+      field 'dToPort' do
+        type "number"
+        required true
+      end
+      field 'sFromPort' do
+        type "number"
+        required false
+      end
+      field 'sToPort' do
+        type "number"
+        required false
+      end
+      field 'prot' do
+        type "string"
+        regexp "tcp|udp|icmp"
+        required true
+      end
+    end
+  end
+end
+
+define provision_filter_entry(@raw_filter_entry) return @filter_entry do
+  $pp = to_object(@raw_filter_entry)["fields"]
+  $pp["etherT"] = "ip"
+  @filter_entry = cisco_aci.Entry.create(props: $pp,
+    parent: to_object(@raw_filter_entry)["fields"]["parent"])
+end
+
+# provision any cisco aci resource
+define provision_cisco_aci(@props) return @resource do
+  $obj = to_object(@props)
+  $type = $obj["type"]
+  @resource = cisco_aci.$type.create(props: $obj["fields"])
+end
