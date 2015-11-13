@@ -1,10 +1,16 @@
-FROM  ruby:2.1-onbuild 
+FROM ruby:2.1
+
+RUN mkdir -p /usr/src/app
+
+WORKDIR /usr/src/app
 
 RUN git clone https://github.com/rightscale/self-service-plugins.git
 
-WORKDIR /usr/src/app/self-service-plugins/digital-ocean/do_api
+WORKDIR /usr/src/app/self-service-plugins
 
 RUN git checkout dockerize_dme
+
+WORKDIR /usr/src/app/self-service-plugins/digital-ocean/do_api
 
 RUN bundle install
 

@@ -16,11 +16,11 @@ long_description "Allows you to launch a machine on DigitalOcean
 #########
 namespace "do" do
   service do
-    host "54.188.172.63:3389"        # HTTP endpoint presenting an API defined by self-service to act on resources
+    host "54.244.233.0:8083"        # HTTP endpoint presenting an API defined by self-service to act on resources
     path "/api/do_proxy"                                             # path prefix for all resources, RightScale account_id substituted in for multi-tenancy
     headers do {
       "X-Api-Version" => "1.0",
-      "X-Api-Shared-Secret" => "354XZjrZ2sL9F7"                                       # special headers as needed
+      "X-Api-Shared-Secret" => "&y$&*q&P9jJeZG@#Gf"                                       # special headers as needed
     } end
   end
   type "droplet" do                       # defines resource of type "droplet"
