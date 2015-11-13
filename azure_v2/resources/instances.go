@@ -76,7 +76,7 @@ type (
 )
 
 // SetupInstanceRoutes declares routes for Instance resource
-func SetupInstanceRoutes(e *echo.Echo) {
+func SetupInstanceRoutes(e *echo.Group) {
 	//get all instances from all groups
 	e.Get("/instances", listInstances)
 	// e.Get("/instances/:id", listOneInstance)
@@ -311,7 +311,7 @@ func (i *Instance) HandleResponse(c *echo.Context, body []byte, actionName strin
 		href = i.GetHref(i.responseParams.ID)
 	}
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		i.responseParams.Href = href
 	}

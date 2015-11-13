@@ -46,7 +46,7 @@ type (
 )
 
 // SetupIPAddressesRoutes declares routes for IPAddress resource
-func SetupIPAddressesRoutes(e *echo.Echo) {
+func SetupIPAddressesRoutes(e *echo.Group) {
 	e.Get("/ip_addresses", listIPAddresses)
 	// e.Get("/ip_addresses/:id", listOneIPAddress)
 	// e.Post("/ip_addresses", createIPAddress)
@@ -133,7 +133,7 @@ func (ip *IPAddress) HandleResponse(c *echo.Context, body []byte, actionName str
 	}
 	href := ip.GetHref(ip.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		ip.responseParams.Href = href
 	}

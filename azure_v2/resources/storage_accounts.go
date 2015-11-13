@@ -42,7 +42,7 @@ type (
 )
 
 // SetupStorageAccountsRoutes declares routes for Storage account resource
-func SetupStorageAccountsRoutes(e *echo.Echo) {
+func SetupStorageAccountsRoutes(e *echo.Group) {
 	e.Get("/storage_accounts", listStorageAccounts)
 	// e.Get("/storage_accounts/:id", listOneStorageAccount)
 	// e.Post("/storage_accounts", createStorageAccount)
@@ -124,7 +124,7 @@ func (s *StorageAccount) HandleResponse(c *echo.Context, body []byte, actionName
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}
 	if actionName == "create" {
-		c.Response.Header().Add("Location", fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", s.createParams.Group, s.createParams.Name))
+		c.Response().Header().Add("Location", fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", s.createParams.Group, s.createParams.Name))
 	} else if actionName == "get" {
 		s.responseParams.Href = s.GetHref(s.responseParams.ID)
 	}

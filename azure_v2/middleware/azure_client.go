@@ -49,14 +49,14 @@ func AzureClientInitializer() echo.Middleware {
 				return err
 			}
 
-			if c.Request.Header.Get("Content-Type") == "application/json" {
-				bodyDecoder := json.NewDecoder(c.Request.Body)
+			if c.Request().Header.Get("Content-Type") == "application/json" {
+				bodyDecoder := json.NewDecoder(c.Request().Body)
 				c.Set("bodyDecoder", bodyDecoder)
 			} else {
 				return eh.GenericException("Azure plugin supports only \"application/json\" Content-Type.")
 			}
 			// prepare request params to use from form
-			if err := c.Request.ParseForm(); err != nil {
+			if err := c.Request().ParseForm(); err != nil {
 				return eh.GenericException(fmt.Sprintf("Error has occurred while parsing params: %v", err))
 			}
 
@@ -81,7 +81,7 @@ func AzureClientInitializer() echo.Middleware {
 }
 
 func getCookie(c *echo.Context, name string) (string, error) {
-	cookie, err := c.Request.Cookie(name)
+	cookie, err := c.Request().Cookie(name)
 	if err != nil {
 		return "", eh.GenericException(fmt.Sprintf("cookie '%s' is missing", cookie))
 	}
@@ -134,7 +134,7 @@ func refreshAccessToken(c *echo.Context) (string, error) {
 	}
 	// use client specific access token only while app registration
 	//TODO: use regexp here
-	if c.Request.RequestURI == *config.AppPrefix+"/application/register" || c.Request.RequestURI == *config.AppPrefix+"/application/unregister" {
+	if c.Request().RequestURI == *config.AppPrefix+"/application/register" || c.Request().RequestURI == *config.AppPrefix+"/application/unregister" {
 		creds.GrantType = "refresh_token"
 		creds.Resource = ""
 	} else {
@@ -146,12 +146,12 @@ func refreshAccessToken(c *echo.Context) (string, error) {
 		return "", err
 	}
 	// set Access Token in the cookie
-	http.SetCookie(c.Response.Writer(), &http.Cookie{
+	http.SetCookie(c.Response().Writer(), &http.Cookie{
 		Name:  "AccessToken",
 		Value: authResponse.AccessToken,
 	})
 	// set ExpiresOn in the cookie
-	http.SetCookie(c.Response.Writer(), &http.Cookie{
+	http.SetCookie(c.Response().Writer(), &http.Cookie{
 		Name:  "ExpiresOn",
 		Value: authResponse.ExpiresOn,
 	})

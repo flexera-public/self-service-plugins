@@ -49,7 +49,7 @@ type (
 )
 
 // SetupNetworkInterfacesRoutes declares routes for IPAddress resource
-func SetupNetworkInterfacesRoutes(e *echo.Echo) {
+func SetupNetworkInterfacesRoutes(e *echo.Group) {
 	e.Get("/network_interfaces", listNetworkInterfaces)
 	// e.Get("/network_interfaces/:id", listOneNetworkInterface)
 	// e.Post("/network_interfaces", createNetworkInterface)
@@ -166,7 +166,7 @@ func (ni *NetworkInterface) HandleResponse(c *echo.Context, body []byte, actionN
 	}
 	href := ni.GetHref(ni.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		ni.responseParams.Href = href
 	}

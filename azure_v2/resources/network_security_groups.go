@@ -45,7 +45,7 @@ type (
 )
 
 // SetupNetworkSecurityGroupRoutes declares routes for NetworkSecurityGroup resource
-func SetupNetworkSecurityGroupRoutes(e *echo.Echo) {
+func SetupNetworkSecurityGroupRoutes(e *echo.Group) {
 	e.Get("/network_security_groups", listNetworkSecurityGroup)
 
 	//nested routes
@@ -126,7 +126,7 @@ func (nsg *NetworkSecurityGroup) HandleResponse(c *echo.Context, body []byte, ac
 	}
 	href := nsg.GetHref(nsg.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		nsg.responseParams.Href = href
 	}

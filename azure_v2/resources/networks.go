@@ -48,7 +48,7 @@ type (
 )
 
 // SetupNetworkRoutes declares routes for IPAddress resource
-func SetupNetworkRoutes(e *echo.Echo) {
+func SetupNetworkRoutes(e *echo.Group) {
 	e.Get("/networks", listNetworks)
 
 	//nested routes
@@ -154,7 +154,7 @@ func (n *Network) HandleResponse(c *echo.Context, body []byte, actionName string
 	}
 	href := n.GetHref(n.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		n.responseParams.Href = href
 	}

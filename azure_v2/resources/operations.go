@@ -27,7 +27,7 @@ type (
 )
 
 // SetupOperationRoutes declares routes for Operation resource
-func SetupOperationRoutes(e *echo.Echo) {
+func SetupOperationRoutes(e *echo.Group) {
 	e.Get("/locations/:location/operations/:id", listOneOperation)
 }
 

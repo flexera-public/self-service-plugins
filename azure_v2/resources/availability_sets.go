@@ -44,7 +44,7 @@ type (
 )
 
 // SetupAvailabilitySetRoutes declares routes for AvailabilitySet resource
-func SetupAvailabilitySetRoutes(e *echo.Echo) {
+func SetupAvailabilitySetRoutes(e *echo.Group) {
 	e.Get("/availability_sets", listAllAvailabilitySets)
 
 	//nested routes
@@ -149,7 +149,7 @@ func (as *AvailabilitySet) HandleResponse(c *echo.Context, body []byte, actionNa
 	}
 	href := as.GetHref(as.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		as.responseParams.Href = href
 	}

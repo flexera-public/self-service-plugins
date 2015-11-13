@@ -33,7 +33,7 @@ const (
 )
 
 // SetupProviderRoutes declares routes for Provider resource
-func SetupProviderRoutes(e *echo.Echo) {
+func SetupProviderRoutes(e *echo.Group) {
 	e.Get("/providers", listProviders)
 	e.Get("/providers/:provider_name", listOneProvider)
 	e.Post("/providers/:provider_name/register", registerProvider)

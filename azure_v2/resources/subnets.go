@@ -39,7 +39,7 @@ type (
 )
 
 // SetupSubnetsRoutes declares routes for Subnet resource
-func SetupSubnetsRoutes(e *echo.Echo) {
+func SetupSubnetsRoutes(e *echo.Group) {
 	e.Get("/subnets", listAllSubnets)
 	// e.Post("/subnets", createSubnet)
 	// e.Delete("/subnets/:id", deleteSubnet)
@@ -161,7 +161,7 @@ func (s *Subnet) HandleResponse(c *echo.Context, body []byte, actionName string)
 	}
 	href := s.GetHref(s.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		s.responseParams.Href = href
 	}

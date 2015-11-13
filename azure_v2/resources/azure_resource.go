@@ -74,7 +74,7 @@ func Create(c *echo.Context, r AzureResource) error {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
 	}
 	if response.Header.Get("azure-asyncoperation") != "" {
-		c.Response.Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
+		c.Response().Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
 	}
 
 	if err := r.HandleResponse(c, b, "create"); err != nil {
@@ -208,7 +208,7 @@ func GetResource(c *echo.Context, path string) ([]byte, error) {
 
 // Render sends a JSON resource specific content type response with status code.
 func Render(c *echo.Context, code int, resources interface{}, contentType string) error {
-	c.Response.Header().Set(echo.ContentType, contentType)
-	c.Response.WriteHeader(code)
-	return json.NewEncoder(c.Response).Encode(resources)
+	c.Response().Header().Set(echo.ContentType, contentType)
+	c.Response().WriteHeader(code)
+	return json.NewEncoder(c.Response()).Encode(resources)
 }

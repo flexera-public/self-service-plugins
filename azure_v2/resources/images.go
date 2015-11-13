@@ -13,7 +13,7 @@ const (
 )
 
 // SetupImageRoutes declares routes for Image resource
-func SetupImageRoutes(e *echo.Echo) {
+func SetupImageRoutes(e *echo.Group) {
 	e.Get("/locations", listLocations)
 	e.Get("/locations/:location/images", listImages)
 

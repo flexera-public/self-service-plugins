@@ -24,7 +24,7 @@ type Subscription struct {
 }
 
 // SetupSubscriptionRoutes declares routes for Subscription resource
-func SetupSubscriptionRoutes(e *echo.Echo) {
+func SetupSubscriptionRoutes(e *echo.Group) {
 	// get a current subscription
 	e.Get("/subscription", getSubscription)
 }

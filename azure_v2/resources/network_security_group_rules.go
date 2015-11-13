@@ -48,7 +48,7 @@ type (
 )
 
 // SetupNetworkSecurityGroupRuleRoutes declares routes for NetworkSecurityGroupRule resource
-func SetupNetworkSecurityGroupRuleRoutes(e *echo.Echo) {
+func SetupNetworkSecurityGroupRuleRoutes(e *echo.Group) {
 	e.Get("/network_security_group_rules", listAllNetworkSecurityGroupRules)
 
 	//nested routes
@@ -204,7 +204,7 @@ func (r *NetworkSecurityGroupRule) HandleResponse(c *echo.Context, body []byte, 
 	}
 	href := r.GetHref(r.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		r.responseParams.Href = href
 	}

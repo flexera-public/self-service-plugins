@@ -36,7 +36,7 @@ type (
 )
 
 // SetupGroupsRoutes declares routes for resource group resource
-func SetupGroupsRoutes(e *echo.Echo) {
+func SetupGroupsRoutes(e *echo.Group) {
 	group := e.Group("/resource_groups")
 	group.Get("", listResourceGroups)
 	group.Get("/:id", listOneResourceGroup)
@@ -105,7 +105,7 @@ func (rg *ResourceGroup) HandleResponse(c *echo.Context, body []byte, actionName
 	}
 	href := rg.GetHref(rg.responseParams.ID)
 	if actionName == "create" {
-		c.Response.Header().Add("Location", href)
+		c.Response().Header().Add("Location", href)
 	} else if actionName == "get" {
 		rg.responseParams.Href = href
 	}

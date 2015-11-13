@@ -28,7 +28,7 @@ type servicePrincipal struct {
 }
 
 // SetupAuthRoutes declares routes for Application resource
-func SetupAuthRoutes(e *echo.Echo) {
+func SetupAuthRoutes(e *echo.Group) {
 	e.Post("/application/register", assignRoleToApp)
 	e.Delete("/application/unregister", unassignRoleFromApp)
 }
