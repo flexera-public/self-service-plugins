@@ -17,6 +17,10 @@ module V1
         attribute :region, Attributor::String
         attribute :size, Attributor::String
         attribute :status, Attributor::String
+        attribute :deployment, Attributor::String
+        attribute :server_template_href, Attributor::String
+        attribute :api_host, Attributor::String
+        attribute :cloud, Attributor::String
       end
 
       view :default do

@@ -1,4 +1,4 @@
-name "Test for CloudFormation Template"
+name "Test for CloudFormation Wordpress Template"
 rs_ca_ver 20131202
 short_description "Test for a CloudFormation Template
 
@@ -8,7 +8,7 @@ short_description "Test for a CloudFormation Template
 parameter "cft_url" do
   type "string"
   label "URL of the CloudFormation Template"
-  default "https://s3-us-west-2.amazonaws.com/cloudformation-templates-us-west-2/EC2InstanceWithSecurityGroupSample.template"
+  default "https://s3-us-west-2.amazonaws.com/cloudformation-templates-us-west-2/WordPress_Single_Instance.template"
 end
 
 parameter "cft_param_instance_type" do
@@ -24,12 +24,49 @@ parameter "cft_param_key" do
   default "default"
 end
 
+parameter "cft_dbrootpw" do
+  label "DBRootPassword"
+  type "string"
+  allowed_pattern "[a-zA-Z0-9]*"
+  min_length 8
+  max_length 41
+  description "MySQL root password"
+  constraint_description "must contain only alphanumeric characters."
+  default "asdlk9u43iou"
+end
+
+parameter "cft_dbuser" do
+  label "DBUser"
+  type "string"
+  allowed_pattern "[a-zA-Z][a-zA-Z0-9]*"
+  min_length 1
+  max_length 16
+  description "The WordPress database admin account username"
+  constraint_description "must begin with a letter and contain only alphanumeric characters."
+  default "sqluser"
+end
+
+
+parameter "cft_dbpw" do
+  label "DBPassword"
+  type "string"
+  allowed_pattern "[a-zA-Z0-9]*"
+  min_length 8
+  max_length 41
+  description "The WordPress database admin account password"
+  constraint_description "must contain only alphanumeric characters."
+  default "sdfaoi9u0fdsa"
+end
+
 resource 'cft_template', type: 'ec2cft.stack' do
   name @@deployment.name
   template $cft_url
   parameters do {
     "KeyName" => $cft_param_key,
-    "InstanceType" => $cft_param_instance_type
+    "InstanceType" => $cft_param_instance_type,
+    "DBRootPassword" => $cft_dbrootpw,
+    "DBUser" => $cft_dbuser,
+    "DBPassword" => $cft_dbpw
   } end
 end
 

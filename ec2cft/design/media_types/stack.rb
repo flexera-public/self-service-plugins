@@ -8,11 +8,10 @@ module V1
         attribute :id, Attributor::String, description: "Unique stack identifier"
         attribute :href, Attributor::String
         attribute :creation_time, Attributor::DateTime, description: "The time the stack was created"
-        attribute :template_description, Attributor::String, description: "User defined description associated with the stack"
+        attribute :description, Attributor::String, description: "User defined description associated with the stack"
         attribute :name, Attributor::String, description: "Returns the stack name"
         attribute :status, Attributor::String, description: "The status of the stack"
         attribute :status_reason, Attributor::String, description: "Success/Failure message associated with the status"
-        attribute :template, Attributor::String, description: "Returns the stack's template as a JSON string"
         attribute :outputs, Attributor::Collection.of(V1::MediaTypes::StackOutput)
       end
 
@@ -20,7 +19,7 @@ module V1
         attribute :id
         attribute :href
         attribute :creation_time
-        attribute :template_description
+        attribute :description
         attribute :name
         attribute :status
         attribute :status_reason
@@ -31,11 +30,10 @@ module V1
         attribute :id
         attribute :href
         attribute :creation_time
-        attribute :template_description
+        attribute :description
         attribute :name
         attribute :status
         attribute :status_reason
-        attribute :template
       end
 
       view :link do
