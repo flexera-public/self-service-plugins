@@ -45,7 +45,7 @@ curl -v -b ... 'http://localhost:8080/application/unregister'
 
 ##Make requests
 With no access token passed in the cookies
-curl -v -b "TenantID=...;ClientID=...;ClientSecret=...;SubscriptionID=..."'http://localhost:8080/instances'
+curl -v -b "TenantID=...;ClientID=...;ClientSecret=...;SubscriptionID=...;RefreshToken=..." 'http://localhost:8080/instances'
 This kind of call will go through azure oauth to get application specific access token.
 Note: application should be registered in advance
 

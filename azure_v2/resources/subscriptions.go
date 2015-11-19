@@ -58,7 +58,7 @@ func (s *Subscription) GetHref(_ string) string {
 }
 
 // GetResponseParams is accessor function for getting access to responseParams struct
-func (s *Subscription) GetResponseParams() interface{} { return nil }
+func (s *Subscription) GetResponseParams() interface{} { return s }
 
 //GetCollectionPath is a fake function to support AzureResource by Subscription
 func (s *Subscription) GetCollectionPath(groupName string) string { return "" }

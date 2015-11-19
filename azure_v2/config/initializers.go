@@ -25,7 +25,7 @@ var (
 	// Env is environment name
 	Env = app.Flag("env", "Environment name: 'development' (default) or 'production'.").Default("development").String()
 	// AppPrefix is URL prefix
-	AppPrefix = app.Flag("prefix", "URL prefix.").Default("/azure_plugin").String()
+	AppPrefix = app.Flag("prefix", "URL prefix.").Default("").String()
 	// ClientIDCred is the client id of the application that is registered in Azure Active Directory.
 	ClientIDCred = app.Arg("client", "The client id of the application that is registered in Azure Active Directory.").String()
 	// ClientSecretCred is the client key of the application that is registered in Azure Active Directory.
