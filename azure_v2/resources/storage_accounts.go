@@ -107,15 +107,15 @@ func (s *StorageAccount) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle storage account
 func (s *StorageAccount) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, storageAccountPath, s.createParams.Name, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, storageAccountPath, s.createParams.Name, "2015-06-15")
 }
 
 // GetCollectionPath returns full path to the collection of storage accounts
 func (s *StorageAccount) GetCollectionPath(groupName string) string {
 	if groupName == "" {
-		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, config.APIVersion)
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, "2015-06-15")
 	}
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, storageAccountPath, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, storageAccountPath, "2015-06-15")
 }
 
 // HandleResponse manage raw cloud response

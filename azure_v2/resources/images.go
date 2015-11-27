@@ -22,7 +22,7 @@ func SetupImageRoutes(e *echo.Group) {
 	e.Get("/locations/:location/publishers/:publisher/offers", listOffers)
 	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus", listSkus)
 	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus/:sku/versions", listVersions)
-	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus/:sku/versions/:version", getVersion)
+	e.Get("/locations/:location/publishers/:publisher/offers/:offer/skus/:sku/versions/:version", getVersionInfo)
 }
 
 func listImages(c *echo.Context) error {
@@ -38,7 +38,10 @@ func listImages(c *echo.Context) error {
 			skus, _ := getSkus(c, location, publisher["name"].(string), offer["name"].(string))
 			for _, sku := range skus {
 				versions, _ := getVersions(c, location, publisher["name"].(string), offer["name"].(string), sku["name"].(string))
-				result = append(result, versions...)
+				for _, version := range versions {
+					version, _ := getVersion(c, location, publisher["name"].(string), offer["name"].(string), sku["name"].(string), version["name"].(string))
+					result = append(result, version)
+				}
 			}
 		}
 	}
@@ -160,20 +163,29 @@ func getVersions(c *echo.Context, locationName string, publisherName string, off
 	return versions, nil
 }
 
-func getVersion(c *echo.Context) error {
+func getVersion(c *echo.Context, locationName string, publisherName string, offerName string, skuName string, versionName string) (map[string]interface{}, error) {
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, versionName, "2015-06-15")
+	body, err := GetResource(c, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var v map[string]interface{}
+	if err := json.Unmarshal(body, &v); err != nil {
+		return nil, err
+	}
+	return v, nil
+}
+
+func getVersionInfo(c *echo.Context) error {
 	location := c.Param("location")
 	publisher := c.Param("publisher")
 	offer := c.Param("offer")
 	sku := c.Param("sku")
 	version := c.Param("version")
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, location, publisher, offer, sku, version, "2015-06-15")
-	body, err := GetResource(c, path)
-	if err != nil {
-		return err
-	}
 
-	var v map[string]interface{}
-	if err := json.Unmarshal(body, &v); err != nil {
+	v, err := getVersion(c, location, publisher, offer, sku, version)
+	if err != nil {
 		return err
 	}
 

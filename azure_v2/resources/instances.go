@@ -50,7 +50,7 @@ type (
 		Location           string                 `json:"location,omitempty"`
 		Size               string                 `json:"instance_type_uid,omitempty"`
 		Group              string                 `json:"group_name,omitempty"`
-		NetworkInterfaceID string                 `json:"network_interface_id,omitempty"`
+		NetworkInterfaceID []interface{}          `json:"network_interfaces_ids,omitempty"`
 		ImageID            string                 `json:"image_id,omitempty"`
 		PrivateImageID     string                 `json:"private_image_id,omitempty"`
 		StorageAccountID   string                 `json:"storage_account_id,omitempty"`
@@ -170,9 +170,7 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 		"storageProfile":  osProfile,
 		"osProfile":       i.prepareOSProfile(),
 		"networkProfile": map[string]interface{}{
-			"networkInterfaces": []map[string]interface{}{
-				{"id": i.createParams.NetworkInterfaceID},
-			},
+			"networkInterfaces": i.createParams.NetworkInterfaceID,
 		},
 	}
 
