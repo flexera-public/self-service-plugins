@@ -1,8 +1,12 @@
 package resources
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -51,9 +55,10 @@ func SetupStorageAccountsRoutes(e *echo.Group) {
 	//nested routes
 	group := e.Group("/resource_groups/:group_name/storage_accounts")
 	group.Get("", listStorageAccounts)
-	group.Get("/:id", listOneStorageAccount)
+	group.Get("/:name", listOneStorageAccount)
+	group.Get("/:name/check_name", checkNameAvailability)
 	group.Post("", createStorageAccount)
-	group.Delete("/:id", deleteStorageAccount)
+	group.Delete("/:name", deleteStorageAccount)
 	//group.Delete("/:id/keys", getStorageAccountKeys)
 }
 
@@ -64,7 +69,7 @@ func listStorageAccounts(c *echo.Context) error {
 func listOneStorageAccount(c *echo.Context) error {
 	storageAccount := StorageAccount{
 		createParams: storageAccountCreateParams{
-			Name:  c.Param("id"),
+			Name:  c.Param("name"),
 			Group: c.Param("group_name"),
 		},
 	}
@@ -79,7 +84,7 @@ func createStorageAccount(c *echo.Context) error {
 func deleteStorageAccount(c *echo.Context) error {
 	storageAccount := StorageAccount{
 		createParams: storageAccountCreateParams{
-			Name:  c.Param("id"),
+			Name:  c.Param("name"),
 			Group: c.Param("group_name"),
 		},
 	}
@@ -140,4 +145,41 @@ func (s *StorageAccount) GetContentType() string {
 func (s *StorageAccount) GetHref(accountID string) string {
 	array := strings.Split(accountID, "/")
 	return fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", array[len(array)-5], array[len(array)-1])
+}
+
+func checkNameAvailability(c *echo.Context) error {
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
+	path := fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Storage/checkNameAvailability?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-06-15")
+	by, err := json.Marshal(map[string]interface{}{
+		"name": c.Param("name"),
+		"type": "Microsoft.Storage/storageAccounts",
+	})
+	if err != nil {
+		eh.GenericException(fmt.Sprintf("Error has occurred while marshaling data: %v", err))
+	}
+	var reader io.Reader
+	reader = bytes.NewBufferString(string(by))
+	req, err := http.NewRequest("POST", path, reader)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
+	return Render(c, 200, response, "application/json")
+
 }
