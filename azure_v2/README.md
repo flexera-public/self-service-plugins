@@ -58,3 +58,21 @@ Note: could be used either user or app specific access token but take into accou
 ```
 go test ./resources
 ```
+
+## Nginx config for SS box
+```
+location /azure_v2 {
+      proxy_pass http://azure_v2;
+}
+
+upstream azure_v2  {
+    server localhost:8083;
+}
+```
+
+## To run on SS box
+
+```
+tar zxvf binary/azure_v2-linux-amd64.tgz
+nohup ./azure_v2 --listen="localhost:8083" --prefix="/azure_v2" > ./azure_v2.log 2>&1 &
+```
