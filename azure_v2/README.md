@@ -62,7 +62,10 @@ go test ./resources
 ## Nginx config for SS box
 ```
 location /azure_v2 {
-      proxy_pass http://azure_v2;
+    proxy_connect_timeout       600;
+    proxy_send_timeout          600;
+    proxy_read_timeout          600;
+    proxy_pass http://azure_v2;
 }
 
 upstream azure_v2  {

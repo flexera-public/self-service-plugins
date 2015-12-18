@@ -78,6 +78,15 @@ func (rg *ResourceGroup) GetRequestParams(c *echo.Context) (interface{}, error) 
 		return nil, eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
 	}
 
+	//TODO: make a func for validating createParams and return all errors at once
+	if rg.createParams.Name == "" {
+		return nil, eh.InvalidParamException("name")
+	}
+
+	if rg.createParams.Location == "" {
+		return nil, eh.InvalidParamException("location")
+	}
+
 	rg.requestParams.Location = rg.createParams.Location
 
 	return rg.requestParams, nil
