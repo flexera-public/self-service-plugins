@@ -22,19 +22,21 @@ type (
 	Operation struct {
 		Name           string `json:"name,omitempty"`
 		Location       string `json:"location,omitempty"`
+		Service        string `json:"service,omitempty"`
 		responseParams operationResponseParams
 	}
 )
 
 // SetupOperationRoutes declares routes for Operation resource
 func SetupOperationRoutes(e *echo.Group) {
-	e.Get("/locations/:location/operations/:id", listOneOperation)
+	e.Get("/locations/:location/services/:service/operations/:id", listOneOperation)
 }
 
 func listOneOperation(c *echo.Context) error {
 	operation := Operation{
 		Name:     c.Param("id"),
 		Location: c.Param("location"),
+		Service:  c.Param("service"),
 	}
 	return Get(c, &operation)
 }
@@ -46,11 +48,22 @@ func (o *Operation) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle operation
 func (o *Operation) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/operations/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, o.Location, o.Name, "2015-05-01-preview")
+	if o.Service == "storage" {
+		return fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Storage/operations/%s?monitor=true&api-version=%s", config.BaseURL, *config.SubscriptionIDCred, o.Name, "2015-06-15")
+	} else {
+		return fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/operations/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, o.Location, o.Name, "2015-06-15")
+	}
+
 }
 
 // HandleResponse manage raw cloud response
 func (o *Operation) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	//handle empty response while getting operation for Storage service
+	if string(body) == "" {
+		//emulate operation 'in-progress' state if resource isn't ready yet
+		o.responseParams.Status = "in-progress"
+		return nil
+	}
 	if err := json.Unmarshal(body, &o.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}

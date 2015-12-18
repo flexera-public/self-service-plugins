@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -73,13 +74,24 @@ func Create(c *echo.Context, r AzureResource) error {
 	if response.StatusCode >= 400 {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
 	}
+	//TODO: make sure we need that
 	if response.Header.Get("azure-asyncoperation") != "" {
 		c.Response().Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
+	}
+
+	//https://msdn.microsoft.com/en-us/library/azure/mt163601.aspx
+	if response.Header.Get("Location") != "" {
+		log.Printf(response.Header.Get("Location"))
+		array := strings.Split(response.Header.Get("Location"), "/")
+		operationId := strings.Split(array[len(array)-1], "?")[0]
+		c.Response().Header().Add("OperationId", operationId)
+		return c.NoContent(202)
 	}
 
 	if err := r.HandleResponse(c, b, "create"); err != nil {
 		return err
 	}
+
 	return c.NoContent(201)
 }
 
