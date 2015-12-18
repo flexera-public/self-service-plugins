@@ -148,5 +148,5 @@ func (ip *IPAddress) GetContentType() string {
 // GetHref returns ip address href
 func (ip *IPAddress) GetHref(ipAddressID string) string {
 	array := strings.Split(ipAddressID, "/")
-	return fmt.Sprintf("/resource_groups/%s/ip_addresses/%s", array[len(array)-5], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/ip_addresses/%s", array[len(array)-5], array[len(array)-1])
 }

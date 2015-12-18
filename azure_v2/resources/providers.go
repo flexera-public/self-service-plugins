@@ -84,7 +84,7 @@ func (p *Provider) GetContentType() string {
 
 // GetHref returns provider href
 func (p *Provider) GetHref(namespace string) string {
-	return fmt.Sprintf("/providers/%s", namespace)
+	return fmt.Sprintf("providers/%s", namespace)
 }
 
 func registerProvider(c *echo.Context) error {

@@ -129,5 +129,5 @@ func (rg *ResourceGroup) GetContentType() string {
 // GetHref returns resource group href
 func (rg *ResourceGroup) GetHref(groupID string) string {
 	array := strings.Split(groupID, "/")
-	return fmt.Sprintf("/resource_groups/%s", array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s", array[len(array)-1])
 }

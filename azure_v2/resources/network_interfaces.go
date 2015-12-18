@@ -181,5 +181,5 @@ func (ni *NetworkInterface) GetContentType() string {
 // GetHref returns network interface href
 func (ni *NetworkInterface) GetHref(networkInterfaceID string) string {
 	array := strings.Split(networkInterfaceID, "/")
-	return fmt.Sprintf("/resource_groups/%s/network_interfaces/%s", array[len(array)-5], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/network_interfaces/%s", array[len(array)-5], array[len(array)-1])
 }

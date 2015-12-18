@@ -219,5 +219,5 @@ func (r *NetworkSecurityGroupRule) GetContentType() string {
 // GetHref returns network security group rule href
 func (r *NetworkSecurityGroupRule) GetHref(networkSecurityGroupRuleID string) string {
 	array := strings.Split(networkSecurityGroupRuleID, "/")
-	return fmt.Sprintf("/resource_groups/%s/network_security_groups/%s/network_security_group_rules/%s", array[len(array)-7], array[len(array)-3], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/network_security_groups/%s/network_security_group_rules/%s", array[len(array)-7], array[len(array)-3], array[len(array)-1])
 }

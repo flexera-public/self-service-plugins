@@ -54,7 +54,7 @@ func (s *Subscription) GetContentType() string {
 
 // GetHref returns subscription href
 func (s *Subscription) GetHref(_ string) string {
-	return "/subscription"
+	return "subscription"
 }
 
 // GetResponseParams is accessor function for getting access to responseParams struct

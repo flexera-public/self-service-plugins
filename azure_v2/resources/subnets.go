@@ -176,5 +176,5 @@ func (s *Subnet) GetContentType() string {
 // GetHref returns subnet href
 func (s *Subnet) GetHref(subnetID string) string {
 	array := strings.Split(subnetID, "/")
-	return fmt.Sprintf("/resource_groups/%s/networks/%s/subnets/%s", array[len(array)-7], array[len(array)-3], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/networks/%s/subnets/%s", array[len(array)-7], array[len(array)-3], array[len(array)-1])
 }

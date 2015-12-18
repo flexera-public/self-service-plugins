@@ -144,7 +144,7 @@ func (s *StorageAccount) GetContentType() string {
 // GetHref returns storage account href
 func (s *StorageAccount) GetHref(accountID string) string {
 	array := strings.Split(accountID, "/")
-	return fmt.Sprintf("/resource_groups/%s/storage_accounts/%s", array[len(array)-5], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/storage_accounts/%s", array[len(array)-5], array[len(array)-1])
 }
 
 func checkNameAvailability(c *echo.Context) error {

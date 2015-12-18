@@ -324,5 +324,5 @@ func (i *Instance) GetContentType() string {
 // GetHref returns instance href
 func (i *Instance) GetHref(instanceID string) string {
 	array := strings.Split(instanceID, "/")
-	return fmt.Sprintf("/resource_groups/%s/instances/%s", array[len(array)-5], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/instances/%s", array[len(array)-5], array[len(array)-1])
 }

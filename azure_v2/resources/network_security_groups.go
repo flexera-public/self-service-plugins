@@ -141,5 +141,5 @@ func (nsg *NetworkSecurityGroup) GetContentType() string {
 // GetHref returns network security group href
 func (nsg *NetworkSecurityGroup) GetHref(networkSecurityGroupID string) string {
 	array := strings.Split(networkSecurityGroupID, "/")
-	return fmt.Sprintf("/resource_groups/%s/network_security_groups/%s", array[len(array)-5], array[len(array)-1])
+	return fmt.Sprintf("resource_groups/%s/network_security_groups/%s", array[len(array)-5], array[len(array)-1])
 }

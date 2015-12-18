@@ -66,7 +66,7 @@ func (o *Operation) GetContentType() string {
 // GetHref returns operation href
 func (o *Operation) GetHref(operationID string) string {
 	// operationID doesn't contain location so that get it from params
-	return fmt.Sprintf("/locations/%s/operations/%s", o.Location, o.Name)
+	return fmt.Sprintf("locations/%s/operations/%s", o.Location, o.Name)
 }
 
 //GetCollectionPath is a fake function to support AzureResource by Operation
