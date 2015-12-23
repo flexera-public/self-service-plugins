@@ -48,7 +48,7 @@ type (
 	}
 )
 
-// SetupNetworkInterfacesRoutes declares routes for IPAddress resource
+// SetupNetworkInterfacesRoutes declares routes for NetworkInterface resource
 func SetupNetworkInterfacesRoutes(e *echo.Group) {
 	e.Get("/network_interfaces", listNetworkInterfaces)
 	// e.Get("/network_interfaces/:id", listOneNetworkInterface)
