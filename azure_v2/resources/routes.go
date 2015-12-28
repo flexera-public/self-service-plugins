@@ -81,6 +81,7 @@ func listAllRoutes(c *echo.Context) error {
 	return Render(c, 200, routes, "vnd.rightscale.route+json;type=collection")
 }
 
+// it doesn't return 'location' as listRoutes or listAllRoutes
 func listRoutes(c *echo.Context) error {
 	groupName := c.Param("group_name")
 	tableID := c.Param("route_table_name")
@@ -92,7 +93,6 @@ func listRoutes(c *echo.Context) error {
 	//add href for each rule
 	for _, route := range routes {
 		route["href"] = fmt.Sprintf("/resource_groups/%s/route_tables/%s/routes/%s", groupName, tableID, route["name"])
-		route["location"] = table["location"]
 	}
 	return Render(c, 200, routes, "vnd.rightscale.routes+json;type=collection")
 }

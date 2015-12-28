@@ -59,6 +59,7 @@ func httpServer() *echo.Echo {
 	resources.SetupInstanceTypesRoutes(prefix)
 	resources.SetupRouteTablesRoutes(prefix)
 	resources.SetupRoutes(prefix)
+	resources.SetupVirtualNetworkGatewayRoutes(prefix)
 
 	return e
 }
