@@ -40,7 +40,16 @@ func listImages(c *echo.Context) error {
 				versions, _ := getVersions(c, location, publisher["name"].(string), offer["name"].(string), sku["name"].(string))
 				for _, version := range versions {
 					version, _ := getVersion(c, location, publisher["name"].(string), offer["name"].(string), sku["name"].(string), version["name"].(string))
-					result = append(result, version)
+					// skip images with invalid version name
+					// workaround for versions like - "/Subscriptions/2d2b2267-ff0a-46d3-9912-8577acb18a0a/Providers/Microsoft.Compute/Locations/westus/Publishers/Canonical/ArtifactTypes/VMImage/Offers/Ubuntu15.04Snappy/Skus/15.04-Snappy/Versions/15.04.201511272055"
+					// "error": {
+					//   "code": "InvalidParameter",
+					//   "target": "version",
+					//   "message": "The value of parameter 'version' is invalid."
+					// }
+					if version != nil {
+						result = append(result, version)
+					}
 				}
 			}
 		}

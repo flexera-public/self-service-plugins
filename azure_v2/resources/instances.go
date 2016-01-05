@@ -44,6 +44,7 @@ type (
 		Name       string                 `json:"name"`
 		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
+		Plan       map[string]interface{} `json:"plan,omitempty"`
 	}
 	createParams struct {
 		Name               string                 `json:"name,omitempty"`
@@ -52,6 +53,7 @@ type (
 		Group              string                 `json:"group_name,omitempty"`
 		NetworkInterfaceID []interface{}          `json:"network_interfaces_ids,omitempty"`
 		ImageID            string                 `json:"image_id,omitempty"`
+		Plan               map[string]interface{} `json:"image_plan,omitempty"`
 		PrivateImageID     string                 `json:"private_image_id,omitempty"`
 		StorageAccountID   string                 `json:"storage_account_id,omitempty"`
 		HostName           string                 `json:"host_name,omitempty"`
@@ -168,16 +170,24 @@ func (i *Instance) GetRequestParams(c *echo.Context) (interface{}, error) {
 	i.requestParams.Properties = map[string]interface{}{
 		"hardwareProfile": map[string]interface{}{"vmSize": i.createParams.Size},
 		"storageProfile":  osProfile,
-		"osProfile":       i.prepareOSProfile(),
 		"networkProfile": map[string]interface{}{
 			"networkInterfaces": i.createParams.NetworkInterfaceID,
 		},
+	}
+
+	if i.createParams.PrivateImageID == "" {
+		i.requestParams.Properties["osProfile"] = i.prepareOSProfile()
 	}
 
 	if i.createParams.AvailabilitySet != "" {
 		i.requestParams.Properties["availabilitySet"] = map[string]string{
 			"id": i.createParams.AvailabilitySet,
 		}
+	}
+
+	//Add plan if needed
+	if i.createParams.Plan != nil {
+		i.requestParams.Plan = i.createParams.Plan
 	}
 	return i.requestParams, nil
 }
@@ -257,7 +267,8 @@ func (i *Instance) prepareStorageProfile() (map[string]interface{}, error) {
 		}
 	} else {
 		storageProfile["osDisk"].(map[string]interface{})["osType"] = "Linux" // or Windows
-		storageProfile["osDisk"].(map[string]interface{})["image"] = map[string]interface{}{
+		storageProfile["osDisk"].(map[string]interface{})["createOption"] = "attach"
+		storageProfile["osDisk"].(map[string]interface{})["vhd"] = map[string]interface{}{
 			"uri": i.createParams.PrivateImageID,
 		}
 	}

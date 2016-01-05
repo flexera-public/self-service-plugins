@@ -1,6 +1,7 @@
 #Azure plugin
 
 Azure plugin is a Go application which serves REST HTTP requests and provides ability to iterate with Azure V2 API
+TODO: investigate new azure repo - https://github.com/Azure/azure-sdk-for-go/tree/master/arm
 
 ##Build application
 
