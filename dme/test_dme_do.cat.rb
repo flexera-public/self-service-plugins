@@ -67,47 +67,53 @@ end
                
 namespace "dme" do
   service do
-    host "http://54.227.94.207:8080"        # HTTP endpoint presenting an API defined by self-serviceto act on resources
+    host "dme.test.rightscale.com"        # HTTP endpoint presenting an API defined by self-serviceto act on resources
     path "/dme/accounts/:account_id"      # path prefix for all resources, RightScale account_id substituted in for multi-tenancy
     headers do {
-      "user-agent" => "self_service",      # special headers as needed
-      "X-API-Version" => "1.0"
+      "user-agent" => "self_service"      # special headers as needed
     } end
   end
   type "record" do                          
     provision "provision_record"            
     delete "delete_record"                  
-    # path "/records" # Unneeded since we'll use the name of the type by default
     fields do
-      domain do
-        type "string"
+      field "id" do                              
+        type "number",
         required true
       end
-      name do
-        type "string"
+      field "domain" do
+        type "string",
         required true
       end
-      value do
-        type "string"
+      field "name" do
+        type "string",
         required true
       end
-      type do
-        type "string"
+      field "value" do
+        type "string",
+        default "1.1.1.1"
         required true
       end
-      dynamicDns do
+      field "type" do
+        type "string"
+      end
+      field "dynamicDns" do
         type "boolean"
       end
-      ttl do
+      field "ttl" do
         type "number"
       end
+      field "password" do
+        type "string"
+      end
     end
-    # outputs ["domain", "name", "value", "type", "ttl"]
   end
 end 
 
 define provision_record(@raw_record) return @resource do
-  @resource = dme.record.create(record: to_object(@raw_record))
+  $obj = to_object(@raw_record)
+  $to_create = $obj["fields"]
+  @resource = dme.record.create($to_create)
 end
 
 define delete_record(@record) do
@@ -137,19 +143,19 @@ namespace "do" do
     provision "provision_droplet"         # name of RCL definition to use to provision the resource
     delete "delete_droplet"               # name of RCL definition to use to delete the resource
     fields do                             # field of a droplet with rules for validation
-      name do                               
+      field "name" do                               
         type "string"
         required true
       end
-      region do                               
+      field "region" do                               
         type "string"
         required true
       end
-      size do                               
+      field "size" do                               
         type "string"
         required true
       end
-      image do                               
+      field "image" do                               
         type "number"
         required true
       end

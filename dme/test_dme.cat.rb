@@ -4,19 +4,6 @@ short_description "Test for a DME A name
 
 ![logo](http://www.dnsmadeeasy.com/wp-content/uploads/2013/09/logo1.png)"
 
-
-# output 'dns_name' do
-#   label "Domain name"
-#   category "General"
-#   default_value join([@dns_entry.name,".dev.rightscaleit.com"])
-# end
-
-# output 'dns_ip' do
-#   label "IP Address"
-#   category "General"
-#   default_value @dns_entry.value
-# end
-
 # Cloud Selection
 parameter "domain_name" do
   type "string"
@@ -60,18 +47,17 @@ end
 
 namespace "dme" do
   service do
-    host "http://ss-plugins.test.rightscale.com:8000" # HTTP endpoint presenting an API defined by self-serviceto act on resources
-    path "/dme/accounts/:account_id"      # path prefix for all resources, RightScale account_id substituted in for multi-tenancy
+    host "http://ssplugins.ryanoleary.com:8081" # HTTP endpoint presenting an API defined by self-serviceto act on resources
+    path "/dme/accounts/:account_id"  # path prefix for all resources, RightScale account_id substituted in for multi-tenancy
     headers do {
       "user-agent" => "self_service" ,     # special headers as needed
       "X-Api-Version" => "1.0",
-      "X-Api-Shared-Secret" => "my-secret-credential"
+      "X-Api-Shared-Secret" => "3<54XZjrZ2sL9F7"
     } end
   end
   type "record" do
     provision "provision_record"
     delete "delete_record"
-    # path "/records" # Unneeded since we'll use the name of the type by default
     fields do
       field "domain" do
         type "string"
@@ -96,7 +82,6 @@ namespace "dme" do
         type "number"
       end
     end
-    # outputs "domain", "name", "value", "type", "ttl"
   end
 end
 

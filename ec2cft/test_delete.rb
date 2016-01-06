@@ -2,10 +2,9 @@ require 'uri'
 require 'net/http'
 require 'json'
 
-  def post(path, body)
+  def delete(path)
     request(path) do |uri|
-      req = Net::HTTP::Post.new(uri.path)
-      req.body = body.to_json
+      req = Net::HTTP::Delete.new(uri.path)
       req
     end
 
@@ -24,11 +23,11 @@ require 'json'
 
     response = http.request(request)
     puts response.body
-    unparsed_json = response.body == "" ? "{}" : response.body
+    unparsed_json = response.body == nil || "" ? "{}" : response.body
 
     puts response.code
     puts response.message
-    puts response.headers
+    puts response.header.to_hash
 
     JSON.parse(unparsed_json)
   end
@@ -37,8 +36,10 @@ require 'json'
     {
       'Content-type' => 'application/json',
       'X-Api-Version' => '1.0',
-      "X-Api-Shared-Secret" => "blah"
+      "X-Api-Shared-Secret" => "blah"      
     }
   end
 
-  post('http://localhost:8081/dme/accounts/60073/records', {"domain"=>"dev.rightscaleit.com","name"=>"ryanolearytest","type"=>"A","value"=>"1.1.1.1"})
+  delete('http://localhost:8082/ec2cft/accounts/60073/stacks/ROLtestinstance')
+
+

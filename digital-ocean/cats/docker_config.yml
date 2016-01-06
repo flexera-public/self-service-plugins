@@ -1,0 +1,12 @@
+dme:
+  image: ryanolearyrs/public_plugins:dme
+  ports: 
+   - "8081:8088"
+ec2cft:
+  image: ryanolearyrs/public_plugins:ec2cft
+  ports: 
+   - "8082:8088"
+digitalocean:
+  image: ryanolearyrs/public_plugins:digitalocean
+  ports:
+   - "8083:8088"

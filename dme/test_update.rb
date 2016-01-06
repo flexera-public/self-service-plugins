@@ -34,8 +34,9 @@ require 'json'
   def request_headers
     {
       'Content-type' => 'application/json',
-      'X-Api-Version' => '1.0'
-    }
+      'X-Api-Version' => '1.0',
+      "X-Api-Shared-Secret" => "blah"
+}
   end
 
-  put('http://localhost:9292/record/dev.rightscaleit.com/15984155', {"name"=>"ryanolearytest","type"=>"A","value"=>"5.5.5.5"})
+  put('http://localhost:8081/dme/accounts/60073/records/dev.rightscaleit.com-23295819', {"name"=>"ryanolearytest","type"=>"A","value"=>"5.5.5.5"})
