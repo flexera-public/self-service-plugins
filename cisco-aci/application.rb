@@ -23,6 +23,10 @@ $apic_url = 'https://10.10.1.49'
 $username = 'admin'
 $password = 'rightscale11'
 
+require 'acirb'
+$api = ACIrb::RestClient.new(url: $apic_url, user: $username, password: $password,
+                             format: "json", debug: false)
+
 class App < Sinatra::Base
   helpers Sinatra::JSON
 
@@ -47,8 +51,8 @@ class App < Sinatra::Base
     #request.logger.info("Processing #{self.class}# #{request.env["REQUEST_URI"].inspect} " +
     #    "(for #{request.env["HTTP_X_FORWARDED_FOR"]}) [#{request.env["REQUEST_METHOD"]}] ")
     $logger.info("***************");
-    $logger.info("Processing #{self.class}# #{request.env["REQUEST_URI"].inspect} " +
-        "(for #{request.env["HTTP_X_FORWARDED_FOR"]}) [#{request.env["REQUEST_METHOD"]}] ")
+    $logger.info("Processing #{self.class}# #{request.env["REQUEST_METHOD"]} #{request.env["REQUEST_URI"].inspect} " +
+        "(for #{request.env["HTTP_X_FORWARDED_FOR"]})] ")
   end
 
   # for PUT/POST requests, if there is a json body then parse the params from the
@@ -111,43 +115,40 @@ class App < Sinatra::Base
   helpers do
 
       def add_stuff(obj, stuff)
-        links = stuff.delete('links')
+        #$logger.debug "Add stuff #{obj.class_name}: #{stuff.inspect}"
         stuff.each_pair do |k,v|
+          # if it's a property, just set it
           if obj.props.key?(k)
             obj.set_prop(k, v)
-          else
-            halt 400, "Oops: #{obj.class_name} does not have attribute #{k}, valid attributes: #{obj.props.keys.sort.join(' ')}"
+            next
           end
-        end
-        if links.is_a?(Hash)
-          links.each do |k, v|
-            puts "Link: #{k}->#{v}"
-            child = nil
-            begin
-              child = Object.const_get("ACIrb::Fv#{k}").new(obj)
-              #obj.add_child(child)
-            rescue
-              begin
-                child = Object.const_get("ACIrb::FvRs#{k}").new(obj)
-                #obj.add_child(child)
-              rescue
-                halt 400, "Cannot create link '#{k}' for '#{obj.class}'"
-              end
-            end
+
+          # see whether it's a child relationship resource
+          cap_k = k[0].capitalize + k[1,k.length-1]
+          cc = obj.child_classes.select{|cc| cc == cap_k || cc =~ /Rs#{cap_k}\z/} # also Rt?
+          halt 400, "Ambiguous child class #{k} in #{obj.ruby_class}, choices: #{cc.sort.join(' ')}" \
+            if cc.size > 1
+          v.sub!(%r{^/mo.*/}, '') # convert value from href to name
+          if cc.size == 1
+            cc = cc.first
+            child = Object.const_get("ACIrb::#{cc}").new(obj)
             if child.props.key?("name")
               child.set_prop('name', v)
             else
               name_props = child.props.select{|p,v| p.end_with?('Name')}
               if name_props.size == 1
-                puts "Setting prop #{name_props.first[0]}=#{v} (#{name_props.inspect})"
+                #$logger.debug "Setting prop #{name_props.first[0]}=#{v} (#{name_props.inspect})"
                 child.set_prop(name_props.first[0], v)
               else
                 halt 400, "Cannot set name for link '#{k}': #{name_props.sort.join(' ')}"
               end
             end
-            puts "Child #{k}:#{v} is: #{child.inspect}"
+            next
           end
-          stuff.delete('links')
+
+          halt 400, "Oops: #{obj.class_name} does not have attribute or child class #{k},\n" +
+            "valid attributes: #{obj.props.keys.sort.join(' ')},\n" +
+            "valid child classes: #{obj.child_classes.sort.join(' ')}"
         end
         obj
       end
