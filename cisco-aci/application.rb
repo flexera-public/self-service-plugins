@@ -20,6 +20,7 @@ $stdout = STDOUT = IOToLog.new($logger)
 #$stderr.puts "Hello $stderr"
 =end
 $apic_url = 'https://10.10.1.49'
+#$apic_url = 'https://173.227.0.80'
 $username = 'admin'
 $password = 'rightscale11'
 
@@ -40,6 +41,10 @@ class App < Sinatra::Base
   error 400..599 do
     content_type "plain/text"
     nil  # apparently this preserves the error returned by a 'halt' statement
+  end
+
+  before do
+    halt 403, "Permission denied" unless request.env["HTTP_X_TOKEN"] == "cisco-aci-demo-20151022"
   end
 
   before do
