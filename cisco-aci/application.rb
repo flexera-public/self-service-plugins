@@ -19,8 +19,8 @@ $stdout = STDOUT = IOToLog.new($logger)
 #STDERR.puts "Hello STDERR"
 #$stderr.puts "Hello $stderr"
 =end
-$apic_url = 'https://10.10.1.49'
-#$apic_url = 'https://173.227.0.80'
+#$apic_url = 'https://10.10.1.49'
+$apic_url = 'https://173.227.0.89'
 $username = 'admin'
 $password = 'rightscale11'
 
