@@ -1,12 +1,17 @@
-name "Simple Cisco ACI CAT #2"
+name "3-tier network for Cisco ACI"
 rs_ca_ver 20131202
-short_description "Simple Cisco ACI Demo
+short_description "3-tier Cisco ACI Demo
 
 ![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
 
-long_description "Simple Cisco ACI Demo
+long_description "3-tier Cisco ACI Demo
 
-![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)"
+![logo](http://www.pearsonvue.com/pvueImages/clients/cisco/cisco_logo.gif)
+
+Creates the network in a Cisco ACI environment for a 3-tier application stack, including the
+endpoint groups for a web tier, an app tier and a db tier. Contracts with filters govern the
+allowed traffic between the tiers.
+"
 
 output 'db_ip' do
   label "Database IP"
@@ -129,11 +134,14 @@ resource 'db_subj', type: 'cisco_aci.Subj' do
 end
 
 # ===== Cisco ACI namespace plug-in definition
+#
+# This should come from an include, but is here verbatim for convenience
 
 namespace "cisco_aci" do
   service do
     #host "https://wstunnel1-1.rightscale.com"
-    host "https://52.71.130.210"
+    #host "https://52.71.130.210:8008" # in acct 60073
+    host "http://52.24.182.133:80" # in acct 80263
     path "/mo/FvTenant/rs-test"
     headers do {
       "x-token" => "cisco-aci-demo-20151022",

@@ -1,11 +1,11 @@
 #! /bin/bash
 
-ACCT=80263
-
 if [[ ! -f .rsc ]]; then
   echo "Please init rsc using rsc -c .rsc setup"
   exit 1
 fi
+
+ACCT=`rsc --x1 '.Account' json <.rsc`
 
 cat="$1"
 if [[ ! -f "$cat" ]]; then
@@ -13,7 +13,7 @@ if [[ ! -f "$cat" ]]; then
   exit 1
 fi
 
-echo "Launching..."
+echo "Launching $cat ..."
 cat=`cat "$cat"`
 exec_href=`rsc -c .rsc --xh Location ss create manager/projects/$ACCT/executions "source=$cat"`
 if [[ "$?" != 0 ]]; then exit $?; fi
