@@ -1,5 +1,7 @@
 #! /bin/bash
 
+ACCT=80263
+
 if [[ ! -f .rsc ]]; then
   echo "Please init rsc using rsc -c .rsc setup"
   exit 1
@@ -13,7 +15,7 @@ fi
 
 echo "Launching..."
 cat=`cat "$cat"`
-exec_href=`rsc -c .rsc --xh Location ss create manager/projects/60073/executions "source=$cat"`
+exec_href=`rsc -c .rsc --xh Location ss create manager/projects/$ACCT/executions "source=$cat"`
 if [[ "$?" != 0 ]]; then exit $?; fi
 echo "Execution href: $exec_href"
 re='/([0-9a-z]*)$'
@@ -27,7 +29,7 @@ while true; do
   if [[ "$status" == failed ]]; then
     # Print error
     echo "Error..."
-    rsc -c .rsc --x1 'object:has(.category:val("error")).message:contains("Problem:")' ss index "/api/manager/projects/60073/notifications" "filter[]=execution_id==$exec_id"
+    rsc -c .rsc --x1 'object:has(.category:val("error")).message:contains("Problem:")' ss index "/api/manager/projects/$ACCT/notifications" "filter[]=execution_id==$exec_id"
     echo
     exit 1
   fi

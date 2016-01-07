@@ -26,6 +26,7 @@ end
 # To support rackup (instead of rainbows)
 $logger ||= ::Logger.new(STDERR)
 
+# recursively mount all controllers in a directory
 def mount_dir(route_set, path, prefix)
   Dir.entries(path).each do |file|
     next if file[0] == '.' # skip silently
