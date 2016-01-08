@@ -99,12 +99,12 @@ func (rg *ResourceGroup) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle resource group
 func (rg *ResourceGroup) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, rg.createParams.Name, "2015-01-01")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, rg.createParams.Name, "2015-06-15")
 }
 
 // GetCollectionPath returns full path to the collection of resource groups
 func (rg *ResourceGroup) GetCollectionPath(_ string) string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-06-15")
 }
 
 // HandleResponse manage raw cloud response
