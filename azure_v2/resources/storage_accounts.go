@@ -100,7 +100,7 @@ func (s *StorageAccount) GetRequestParams(c *echo.Context) (interface{}, error) 
 	s.createParams.Group = c.Param("group_name")
 
 	s.requestParams.Location = s.createParams.Location
-	s.requestParams.Properties = map[string]interface{}{"accountType": "Standard_GRS"}
+	s.requestParams.Properties = map[string]interface{}{"accountType": "Standard-RAGRS"}
 
 	return s.requestParams, nil
 }
