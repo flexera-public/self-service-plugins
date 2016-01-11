@@ -1,15 +1,9 @@
   class Mo < App
     require 'acirb'
 
-    #before do
-    #  @api = ACIrb::RestClient.new(url: $apic_url, user: $username, password: $password,
-    #                               format: "json", debug: false)
-    #  @api.debug = true
-    #end
-
     helpers do
 
-      # construct an resource object of the correct class with all the parent resources
+      # construct a resource object of the correct class with all the parent resources
       # instantiated as well, returns resource object and it's canonical href
       def make_resource_path(context)
         # start with the policy universe root and traverse down to the resource requested
@@ -39,6 +33,75 @@
         [node, href]
       end
 
+      # add parameters as properties or child relationship to an object
+      def add_stuff(obj, stuff)
+        #$logger.debug "Add stuff #{obj.class_name}: #{stuff.inspect}"
+        stuff.each_pair do |k,v|
+          # if it's a property, just set it
+          if obj.props.key?(k)
+            obj.set_prop(k, v)
+            next
+          end
+
+          # see whether it's a child relationship resource
+          cap_k = k[0].capitalize + k[1,k.length-1]
+          cc = obj.child_classes.select{|cc| cc == cap_k || cc =~ /Rs#{cap_k}\z/} # also Rt?
+          halt 400, "Ambiguous child class #{k} in #{obj.ruby_class}, choices: #{cc.sort.join(' ')}" \
+            if cc.size > 1
+          v.sub!(%r{^/mo.*/}, '') # convert value from href to name
+          if cc.size == 1
+            cc = cc.first
+            child = Object.const_get("ACIrb::#{cc}").new(obj)
+            if child.props.key?("name")
+              child.set_prop('name', v)
+            else
+              name_props = child.props.select{|p,v| p.end_with?('Name')}
+              if name_props.size == 1
+                #$logger.debug "Setting prop #{name_props.first[0]}=#{v} (#{name_props.inspect})"
+                child.set_prop(name_props.first[0], v)
+              else
+                halt 400, "Cannot set name for link '#{k}': #{name_props.sort.join(' ')}"
+              end
+            end
+            next
+          end
+
+          halt 400, "Oops: #{obj.class_name} does not have attribute or child class #{k},\n" +
+            "valid attributes: #{obj.props.keys.sort.join(' ')},\n" +
+            "valid child classes: #{obj.child_classes.sort.join(' ')}"
+        end
+        obj
+      end
+
+      # convert an object, a hash, or an array to JSON
+      def gen_json(obj)
+        if obj.is_a?(Array)
+          obj.map{|o|o.to_json}
+        else
+          obj.to_json
+        end
+      end
+
+      # run a block that accesses the ACI API and rescue exceptions, retry if the auth token
+      # has expired
+      def aci_op
+        count = 0
+        begin
+          yield
+        rescue ACIrb::RestClient::ApicErrorResponse => e
+          puts e.message
+          if count < 1 && e.message =~ /Error: Token timeout/
+            $api = ACIrb::RestClient.new(url: $apic_url, user: $username, password: $password,
+                                         format: "json", debug: false)
+            count += 1
+            puts "Retrying"
+            retry
+          end
+          #halt 400, e.message
+          [ 400, e.message ]
+        end
+      end
+
     end
 
     # INDEX resources with filter
@@ -64,7 +127,7 @@
       node, href = make_resource_path(ctx)
 
       # fetch and return
-      begin
+      aci_op do
         result = $api.get(url: "/api/mo/#{node.dn}.#{$api.format}")
         $logger.debug "ACI returned #{result.inspect}"
         halt 404, "#{href} not found" if result.size == 0
@@ -72,11 +135,7 @@
         result["href"] = href
         $logger.info "Returning #{result.inspect}"
         [ 200, { 'Content-Type' => 'application/json' }, gen_json(result) ]
-      rescue ACIrb::RestClient::ApicErrorResponse => e
-        puts "Error: #{e.message}"
-        halt 500, e.message
       end
-
     end
 
     # GET a resource
@@ -86,7 +145,7 @@
       node, href = make_resource_path(ctx)
 
       # fetch and return
-      begin
+      aci_op do
         result = $api.get(url: "/api/mo/#{node.dn}.#{$api.format}")
         #puts "ACI returned #{result.inspect}"
         halt 404, "#{href} not found" if result.size == 0
@@ -94,12 +153,10 @@
         result["href"] = href
         $logger.info "Returning #{result.inspect}"
         [ 200, { 'Content-Type' => 'application/json' }, gen_json(result) ]
-      rescue ACIrb::RestClient::ApicErrorResponse => e
-        puts "Error: #{e.message}"
-        halt 500, e.message
       end
     end
 
+    # CREATE a resource
     post %r{\A((/[\w]+/[^/]+)*/[\w]+)\z} do |*ctx| # match (/class/:id)*/class
       halt 400, "parameter props must be a hash" \
         if params[:props] && !params[:props].is_a?(Hash)
@@ -129,29 +186,24 @@
 
       puts "Resource is: #{node.inspect}"
       puts "Resource href: #{href}"
-      begin
+      aci_op do
         result = node.create($api)
         puts "ACI returned #{result.inspect}"
         [ 201, { 'Location' => href }, "" ]
-      rescue ACIrb::RestClient::ApicErrorResponse => e
-        puts "Error: #{e.message}"
-        halt 500, e.message
       end
     end
 
+    # DELETE a resource
     delete %r{\A((/[\w]+/[^/]+)+)\z} do |*ctx| # match (/class/:id)+
       puts "Route match: #{ctx[0].inspect}"
       ctx = ctx[0].sub(%r{^/}, "").split('/')
       node, href = make_resource_path(ctx)
 
       # delete and return
-      begin
+      aci_op do
         result = node.destroy($api)
         puts "ACI returned #{result.inspect}"
         [ 204, { 'Content-Type' => 'application/json' }, "" ]
-      rescue ACIrb::RestClient::ApicErrorResponse => e
-        puts "Error: #{e.message}"
-        halt 500, e.message
       end
     end
 

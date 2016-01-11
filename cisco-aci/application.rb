@@ -20,9 +20,9 @@ $stdout = STDOUT = IOToLog.new($logger)
 #$stderr.puts "Hello $stderr"
 =end
 #$apic_url = 'https://10.10.1.49'
-$apic_url = 'https://173.227.0.89'
-$username = 'admin'
-$password = 'rightscale11'
+$apic_url = ENV['APIC_URL']
+$username = ENV['APIC_USER']
+$password = ENV['APIC_PASS']
 
 require 'acirb'
 $api = ACIrb::RestClient.new(url: $apic_url, user: $username, password: $password,
@@ -44,7 +44,7 @@ class App < Sinatra::Base
   end
 
   before do
-    halt 403, "Permission denied" unless request.env["HTTP_X_TOKEN"] == "cisco-aci-demo-20151022"
+    halt 403, "Permission denied" unless request.env["HTTP_X_TOKEN"] == "cisco-aci-demo-20160110"
   end
 
   before do
@@ -81,31 +81,6 @@ class App < Sinatra::Base
     end
   end
 
-=begin
-  before do
-    #puts "request #{request.path} is: #{request.inspect}"
-    #binding.pry
-    creds_str = request.cookies['google-cloud']
-    unless creds_str || (request.get? && request.path =~ /^\/auth/)
-      $logger.info "google-cloud cookie missing, path is #{request.path_info}"
-      halt 400, "google-cloud cookie missing"
-    end
-
-    if creds_str
-      begin
-        creds = GoogleCloud.decode_creds(creds_str)
-        @client = GoogleCloud.client(creds)
-      rescue StandardError => e
-        halt 400, "Cannot decode authentication credentials (#{e})"
-      end
-    end
-
-    # we allow a header to set the project
-    request.params[:project] ||= request.env['X_PROJECT']
-    $logger.info "Project: #{request.params[:project]}"
-  end
-=end
-
   before do
     logger.info("Params: #{params.map{|k,v| "#{k}=\"#{v}\""}.join(", ")}") unless params.size == 0
   end
@@ -118,54 +93,6 @@ class App < Sinatra::Base
 
   # Global helpers that can be called from within any controller class
   helpers do
-
-      def add_stuff(obj, stuff)
-        #$logger.debug "Add stuff #{obj.class_name}: #{stuff.inspect}"
-        stuff.each_pair do |k,v|
-          # if it's a property, just set it
-          if obj.props.key?(k)
-            obj.set_prop(k, v)
-            next
-          end
-
-          # see whether it's a child relationship resource
-          cap_k = k[0].capitalize + k[1,k.length-1]
-          cc = obj.child_classes.select{|cc| cc == cap_k || cc =~ /Rs#{cap_k}\z/} # also Rt?
-          halt 400, "Ambiguous child class #{k} in #{obj.ruby_class}, choices: #{cc.sort.join(' ')}" \
-            if cc.size > 1
-          v.sub!(%r{^/mo.*/}, '') # convert value from href to name
-          if cc.size == 1
-            cc = cc.first
-            child = Object.const_get("ACIrb::#{cc}").new(obj)
-            if child.props.key?("name")
-              child.set_prop('name', v)
-            else
-              name_props = child.props.select{|p,v| p.end_with?('Name')}
-              if name_props.size == 1
-                #$logger.debug "Setting prop #{name_props.first[0]}=#{v} (#{name_props.inspect})"
-                child.set_prop(name_props.first[0], v)
-              else
-                halt 400, "Cannot set name for link '#{k}': #{name_props.sort.join(' ')}"
-              end
-            end
-            next
-          end
-
-          halt 400, "Oops: #{obj.class_name} does not have attribute or child class #{k},\n" +
-            "valid attributes: #{obj.props.keys.sort.join(' ')},\n" +
-            "valid child classes: #{obj.child_classes.sort.join(' ')}"
-        end
-        obj
-      end
-
-      def gen_json(obj)
-        if obj.is_a?(Array)
-          obj.map{|o|o.to_json}
-        else
-          obj.to_json
-        end
-      end
-
 
   end
 
