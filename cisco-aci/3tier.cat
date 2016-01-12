@@ -140,8 +140,6 @@ end
 namespace "cisco_aci" do
   service do
     host "https://wstunnel10-1.rightscale.com"
-    #host "https://52.71.130.210:8008" # in acct 60073
-    #host "http://52.24.182.133:80" # in acct 80263
     path "/mo/FvTenant/rs-test"
     headers do {
       "x-token" => "cisco-aci-demo-20160110",
