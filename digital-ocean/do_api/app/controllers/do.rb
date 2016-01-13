@@ -16,7 +16,7 @@ module V1
 
       do_userdata = "#!/bin/bash
 
-sudo apt-get install curl
+sudo apt-get install -y curl
 cd /tmp
 wget https://rightlink.rightscale.com/rll/uca-0.3.0/rightlink.enable.sh
 chmod +x ./rightlink.enable.sh
