@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -109,6 +110,7 @@ func (rg *ResourceGroup) GetCollectionPath(_ string) string {
 
 // HandleResponse manage raw cloud response
 func (rg *ResourceGroup) HandleResponse(c *echo.Context, body []byte, actionName string) error {
+	log.Printf("-------Body:%s\n", body)
 	if err := json.Unmarshal(body, &rg.responseParams); err != nil {
 		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
 	}

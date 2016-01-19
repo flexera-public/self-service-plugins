@@ -74,14 +74,9 @@ func Create(c *echo.Context, r AzureResource) error {
 	if response.StatusCode >= 400 {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while creating resource: %s", string(b)))
 	}
-	//TODO: make sure we need that
-	if response.Header.Get("azure-asyncoperation") != "" {
-		c.Response().Header().Add("azure-asyncoperation", response.Header.Get("azure-asyncoperation"))
-	}
 
 	//https://msdn.microsoft.com/en-us/library/azure/mt163601.aspx
 	if response.Header.Get("Location") != "" {
-		log.Printf(response.Header.Get("Location"))
 		array := strings.Split(response.Header.Get("Location"), "/")
 		operationId := strings.Split(array[len(array)-1], "?")[0]
 		c.Response().Header().Add("OperationId", operationId)
@@ -120,6 +115,14 @@ func Delete(c *echo.Context, r AzureResource) error {
 			return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
 		}
 		return eh.GenericException(fmt.Sprintf("Error has occurred while deleting resource: %v", string(b)))
+	}
+
+	//https://msdn.microsoft.com/en-us/library/azure/mt163601.aspx
+	if resp.Header.Get("Location") != "" {
+		array := strings.Split(resp.Header.Get("Location"), "/")
+		operationId := strings.Split(array[len(array)-1], "?")[0]
+		c.Response().Header().Add("OperationId", operationId)
+		return c.NoContent(202)
 	}
 
 	return c.NoContent(204)
