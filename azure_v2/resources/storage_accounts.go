@@ -57,6 +57,7 @@ func SetupStorageAccountsRoutes(e *echo.Group) {
 	group.Get("", listStorageAccounts)
 	group.Get("/:name", listOneStorageAccount)
 	group.Get("/:name/check_name", checkNameAvailability)
+	group.Get("/:name/keys", listKeys)
 	group.Post("", createStorageAccount)
 	group.Delete("/:name", deleteStorageAccount)
 	//group.Delete("/:id/keys", getStorageAccountKeys)
@@ -182,4 +183,36 @@ func checkNameAvailability(c *echo.Context) error {
 	}
 	return Render(c, 200, response, "application/json")
 
+}
+
+func listKeys(c *echo.Context) error {
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s/listKeys?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("group_name"), c.Param("name"), "2015-06-15")
+	req, err := http.NewRequest("POST", path, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
+
+	if resp.StatusCode >= 400 {
+		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(body)))
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
+	return Render(c, 200, response, "application/json")
 }

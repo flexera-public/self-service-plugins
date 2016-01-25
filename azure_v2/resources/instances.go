@@ -1,9 +1,13 @@
 package resources
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -92,6 +96,8 @@ func SetupInstanceRoutes(e *echo.Group) {
 	group.Get("/:id/instance_view", listOneInstanceView)
 	group.Post("", createInstance)
 	group.Delete("/:id", deleteInstance)
+
+	group.Put("/:id", updateInstance)
 }
 
 func listInstances(c *echo.Context) error {
@@ -336,4 +342,51 @@ func (i *Instance) GetContentType() string {
 func (i *Instance) GetHref(instanceID string) string {
 	array := strings.Split(instanceID, "/")
 	return fmt.Sprintf("resource_groups/%s/instances/%s", array[len(array)-5], array[len(array)-1])
+}
+
+func updateInstance(c *echo.Context) error {
+	client, err := GetAzureClient(c)
+	if err != nil {
+		return err
+	}
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("group_name"), virtualMachinesPath, c.Param("id"), "2015-05-01-preview")
+	var bodyParams responseParams
+	err = c.Get("bodyDecoder").(*json.Decoder).Decode(&bodyParams)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("Error has occurred while decoding params: %v", err))
+	}
+	by, err := json.Marshal(bodyParams)
+	if err != nil {
+		eh.GenericException(fmt.Sprintf("Error has occurred while marshaling data: %v", err))
+	}
+
+	var reader io.Reader
+	reader = bytes.NewBufferString(string(by))
+	req, err := http.NewRequest("PUT", path, reader)
+	req.Header.Add("Content-Type", config.MediaType)
+	req.Header.Add("Accept", config.MediaType)
+	req.Header.Add("User-Agent", config.UserAgent)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return eh.GenericException(fmt.Sprintf("failed to load response body: %s", err))
+	}
+
+	if resp.StatusCode >= 400 {
+		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(body)))
+	}
+
+	var response responseParams
+	if err := json.Unmarshal(body, &response); err != nil {
+		return eh.GenericException(fmt.Sprintf("got bad response from server: %s", string(body)))
+	}
+	return Render(c, 200, response, "application/json")
 }
