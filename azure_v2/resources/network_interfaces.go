@@ -148,15 +148,15 @@ func (ni *NetworkInterface) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle network interface
 func (ni *NetworkInterface) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ni.createParams.Group, networkInterfacePath, ni.createParams.Name, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ni.createParams.Group, networkInterfacePath, ni.createParams.Name, "2015-06-15")
 }
 
 // GetCollectionPath returns full path to the collection of network interfaces
 func (ni *NetworkInterface) GetCollectionPath(groupName string) string {
 	if groupName == "" {
-		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkInterfacePath, config.APIVersion)
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkInterfacePath, "2015-06-15")
 	}
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkInterfacePath, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkInterfacePath, "2015-06-15")
 }
 
 // HandleResponse manage raw cloud response
