@@ -22,8 +22,11 @@ func SetupOperationRoutes(e *echo.Group) {
 func getOperation(c *echo.Context) error {
 	service := c.Param("service")
 	var path string
+	//Crasy stuff
 	if service == "storage" {
 		path = fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Storage/operations/%s?monitor=true&api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("id"), "2015-06-15")
+	} else if service == "microsoft.compute" {
+		path = fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Compute/locations/%s/operations/%s?monitor=true&api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("location"), c.Param("id"), "2015-05-01-preview")
 	} else {
 		path = fmt.Sprintf("%s/subscriptions/%s/operationresults/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("id"), "2015-11-01")
 	}
@@ -38,7 +41,6 @@ func getOperation(c *echo.Context) error {
 	if err != nil {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
 	}
-
 	var responseParams operationResponseParams
 	responseParams.Href = fmt.Sprintf("locations/%s/operations/%s", c.Param("location"), c.Param("id"))
 	if resp.StatusCode == 202 {
