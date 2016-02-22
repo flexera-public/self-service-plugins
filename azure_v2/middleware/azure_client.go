@@ -66,7 +66,7 @@ func AzureClientInitializer() echo.Middleware {
 					subscriptionID = *config.SubscriptionIDCred
 				}
 				if subscriptionID == "" {
-					return eh.GenericException("The'SubscriptionID' cookie is required.")
+					return eh.GenericException("The 'SubscriptionID' cookie is required.")
 				}
 			} else {
 				*config.SubscriptionIDCred = subscriptionID
