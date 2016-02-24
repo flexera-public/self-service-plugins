@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
@@ -244,14 +245,15 @@ func (i *Instance) prepareStorageProfile() (map[string]interface{}, error) {
 	}
 	array := strings.Split(i.createParams.StorageAccountID, "/")
 	storageName := array[len(array)-1]
+	diskName := i.createParams.Name + uuid.New()
 
 	storageProfile := map[string]interface{}{
 		"osDisk": map[string]interface{}{
-			"name":         "os-" + i.createParams.Name + "-rs",
+			"name":         "os-" + diskName + "-rs",
 			"caching":      "ReadWrite",
 			"createOption": "FromImage",
 			"vhd": map[string]interface{}{
-				"uri": "https://" + storageName + ".blob.core.windows.net/vhds/os-" + i.createParams.Name + "-rs.vhd",
+				"uri": "https://" + storageName + ".blob.core.windows.net/vhds/os-" + diskName + "-rs.vhd",
 			},
 		},
 	}
