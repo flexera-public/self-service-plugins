@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strings"
 
-	"code.google.com/p/go-uuid/uuid"
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
@@ -65,7 +64,8 @@ type (
 		AdminUserName      string                 `json:"admin_user_name,omitempty"`
 		AdminPassword      string                 `json:"admin_password,omitempty"`
 		AvailabilitySet    string                 `json:"availability_set,omitempty"`
-		Disks              []interface{}          `json:"disks,omitempty"`     // [{ "name" : "datadisk1", "diskSizeGB" : "1", "lun" : 0, "vhd":{ "uri" : "http://mystore1.blob.core.windows.net/vhds/dd1.vhd" }, "createOption":"Empty"}]},
+		Disks              []interface{}          `json:"disks,omitempty"` // [{ "name" : "datadisk1", "diskSizeGB" : "1", "lun" : 0, "vhd":{ "uri" : "http://mystore1.blob.core.windows.net/vhds/dd1.vhd" }, "createOption":"Empty"}]},
+		OSDiskName         string                 `json:"os_disk_name,omitempty"`
 		UserData           string                 `json:"user_data,omitempty"` // Specifies a base-64 encoded string of custom data. The base-64 encoded string is decoded to a binary array that is saved as a file on the Virtual Machine. The maximum length of the binary array is 65535 bytes.
 		WindowsConfig      map[string]interface{} `json:"windows_config,omitempty"`
 		LinuxConfig        map[string]interface{} `json:"linux_config,omitempty"`
@@ -245,15 +245,15 @@ func (i *Instance) prepareStorageProfile() (map[string]interface{}, error) {
 	}
 	array := strings.Split(i.createParams.StorageAccountID, "/")
 	storageName := array[len(array)-1]
-	diskName := i.createParams.Name + uuid.New()
+	diskName := i.createParams.OSDiskName
 
 	storageProfile := map[string]interface{}{
 		"osDisk": map[string]interface{}{
-			"name":         "os-" + diskName + "-rs",
+			"name":         diskName,
 			"caching":      "ReadWrite",
 			"createOption": "FromImage",
 			"vhd": map[string]interface{}{
-				"uri": "https://" + storageName + ".blob.core.windows.net/vhds/os-" + diskName + "-rs.vhd",
+				"uri": "https://" + storageName + ".blob.core.windows.net/vhds/" + diskName + ".vhd",
 			},
 		},
 	}
