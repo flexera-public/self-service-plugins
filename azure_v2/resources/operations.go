@@ -27,6 +27,8 @@ func getOperation(c *echo.Context) error {
 		path = fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Storage/operations/%s?monitor=true&api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("id"), "2015-06-15")
 	} else if service == "microsoft.compute" {
 		path = fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Compute/locations/%s/operations/%s?monitor=true&api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("location"), c.Param("id"), "2015-05-01-preview")
+	} else if service == "microsoft.network" {
+		path = fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Network/locations/%s/operationResults/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("location"), c.Param("id"), "2015-06-15")
 	} else {
 		path = fmt.Sprintf("%s/subscriptions/%s/operationresults/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("id"), "2015-11-01")
 	}
@@ -45,7 +47,7 @@ func getOperation(c *echo.Context) error {
 	responseParams.Href = fmt.Sprintf("locations/%s/operations/%s", c.Param("location"), c.Param("id"))
 	if resp.StatusCode == 202 {
 		responseParams.Status = "in-progress"
-	} else if resp.StatusCode == 200 {
+	} else if resp.StatusCode == 200 || resp.StatusCode == 204 {
 		responseParams.Status = "succeeded"
 	} else {
 		details := resp.Header.Get("Location")
