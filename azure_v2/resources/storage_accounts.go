@@ -169,7 +169,7 @@ func checkNameAvailability(c *echo.Context) error {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while checking name availability: %v", err))
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -197,7 +197,7 @@ func listKeys(c *echo.Context) error {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while listing storage account keys: %v", err))
 	}
 	defer resp.Body.Close()
 
@@ -207,7 +207,7 @@ func listKeys(c *echo.Context) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(body)))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while listing storage account keys: %s", string(body)))
 	}
 
 	var response map[string]interface{}

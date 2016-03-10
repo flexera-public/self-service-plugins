@@ -373,7 +373,7 @@ func updateInstance(c *echo.Context) error {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while registering provider: %v", err))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while updating instance: %v", err))
 	}
 	defer resp.Body.Close()
 
@@ -383,7 +383,7 @@ func updateInstance(c *echo.Context) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %s", string(body)))
+		return eh.GenericException(fmt.Sprintf("Error has occurred while updating instance: %s", string(body)))
 	}
 
 	var response responseParams
