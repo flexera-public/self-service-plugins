@@ -10,6 +10,10 @@ import (
 	eh "github.com/rightscale/self-service-plugins/azure_v2/error_handler"
 )
 
+const (
+	resourceGroupApiVersion = "2016-02-01"
+)
+
 type (
 	resourceGroupResponseParams struct {
 		ID         string      `json:"id,omitempty"`
@@ -103,12 +107,12 @@ func (rg *ResourceGroup) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle resource group
 func (rg *ResourceGroup) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, rg.createParams.Name, "2015-11-01")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, rg.createParams.Name, resourceGroupApiVersion)
 }
 
 // GetCollectionPath returns full path to the collection of resource groups
 func (rg *ResourceGroup) GetCollectionPath(_ string) string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-11-01")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, resourceGroupApiVersion)
 }
 
 // HandleResponse manage raw cloud response

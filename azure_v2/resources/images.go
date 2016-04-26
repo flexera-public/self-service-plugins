@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	computePath = "providers/Microsoft.Compute"
+	computePath        = "providers/Microsoft.Compute"
+	locationApiVersion = "2016-02-01"
 )
 
 // SetupImageRoutes declares routes for Image resource
@@ -68,7 +69,7 @@ func listLocations(c *echo.Context) error {
 }
 
 func getLocations(c *echo.Context) ([]map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/locations?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-01-01")
+	path := fmt.Sprintf("%s/subscriptions/%s/locations?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, locationApiVersion)
 	locations, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
@@ -101,7 +102,7 @@ func listPublishers(c *echo.Context) error {
 }
 
 func getPublishers(c *echo.Context, locationName string) ([]map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, "2015-05-01-preview")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, microsoftComputeApiVersion)
 	publishers, err := GetResources(c, path)
 	if err != nil {
 		fmt.Printf("SKIP FOR %s because of error: %s\n", locationName, err)
@@ -123,7 +124,7 @@ func listOffers(c *echo.Context) error {
 }
 
 func getOffers(c *echo.Context, locationName string, publisherName string) ([]map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, "2015-05-01-preview")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, microsoftComputeApiVersion)
 	offers, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
@@ -143,7 +144,7 @@ func listSkus(c *echo.Context) error {
 }
 
 func getSkus(c *echo.Context, locationName string, publisherName string, offerName string) ([]map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, "2015-05-01-preview")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, microsoftComputeApiVersion)
 	skus, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
@@ -164,7 +165,7 @@ func listVersions(c *echo.Context) error {
 }
 
 func getVersions(c *echo.Context, locationName string, publisherName string, offerName string, skuName string) ([]map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, "2015-06-15")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, microsoftComputeApiVersion)
 	versions, err := GetResources(c, path)
 	if err != nil {
 		return nil, err
@@ -173,7 +174,7 @@ func getVersions(c *echo.Context, locationName string, publisherName string, off
 }
 
 func getVersion(c *echo.Context, locationName string, publisherName string, offerName string, skuName string, versionName string) (map[string]interface{}, error) {
-	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, versionName, "2015-06-15")
+	path := fmt.Sprintf("%s/subscriptions/%s/%s/locations/%s/publishers/%s/artifacttypes/vmimage/offers/%s/skus/%s/versions/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, computePath, locationName, publisherName, offerName, skuName, versionName, microsoftComputeApiVersion)
 	body, err := GetResource(c, path)
 	if err != nil {
 		return nil, err

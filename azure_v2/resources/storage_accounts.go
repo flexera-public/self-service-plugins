@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	storageAccountPath = "providers/Microsoft.Storage/storageAccounts"
+	storageAccountPath         = "providers/Microsoft.Storage/storageAccounts"
+	microsoftStorageApiVersion = "2016-01-01"
 )
 
 type (
@@ -113,15 +114,15 @@ func (s *StorageAccount) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle storage account
 func (s *StorageAccount) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, storageAccountPath, s.createParams.Name, "2015-06-15")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, storageAccountPath, s.createParams.Name, microsoftStorageApiVersion)
 }
 
 // GetCollectionPath returns full path to the collection of storage accounts
 func (s *StorageAccount) GetCollectionPath(groupName string) string {
 	if groupName == "" {
-		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, "2015-06-15")
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, storageAccountPath, microsoftStorageApiVersion)
 	}
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, storageAccountPath, "2015-06-15")
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, storageAccountPath, microsoftStorageApiVersion)
 }
 
 // HandleResponse manage raw cloud response
@@ -153,7 +154,7 @@ func checkNameAvailability(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	path := fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Storage/checkNameAvailability?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, "2015-06-15")
+	path := fmt.Sprintf("%s/subscriptions/%s/providers/Microsoft.Storage/checkNameAvailability?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, microsoftStorageApiVersion)
 	by, err := json.Marshal(map[string]interface{}{
 		"name": c.Param("name"),
 		"type": "Microsoft.Storage/storageAccounts",
@@ -190,7 +191,7 @@ func listKeys(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s/listKeys?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("group_name"), c.Param("name"), "2015-06-15")
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s/listKeys?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, c.Param("group_name"), c.Param("name"), microsoftStorageApiVersion)
 	req, err := http.NewRequest("POST", path, nil)
 	if err != nil {
 		return err

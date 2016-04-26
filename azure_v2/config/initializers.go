@@ -11,6 +11,7 @@ import (
 const (
 	version = "0.0.1"
 	// APIVersion is a default Azure API version
+	// TODO: remove this const or introduce api version per service
 	APIVersion = "2014-12-01-Preview"
 	// MediaType is default media type for requests to the Azure cloud
 	MediaType = "application/json"

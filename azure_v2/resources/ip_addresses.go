@@ -115,15 +115,15 @@ func (ip *IPAddress) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle ip address
 func (ip *IPAddress) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ip.createParams.Group, ipAddressPath, ip.createParams.Name, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ip.createParams.Group, ipAddressPath, ip.createParams.Name, microsoftNetworkApiVersion)
 }
 
 // GetCollectionPath returns full path to the collection of ip addresses
 func (ip *IPAddress) GetCollectionPath(groupName string) string {
 	if groupName == "" {
-		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ipAddressPath, config.APIVersion)
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, ipAddressPath, microsoftNetworkApiVersion)
 	}
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, ipAddressPath, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, ipAddressPath, microsoftNetworkApiVersion)
 }
 
 // HandleResponse manage raw cloud response

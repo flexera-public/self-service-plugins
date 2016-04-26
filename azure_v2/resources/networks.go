@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	networkPath = "providers/Microsoft.Network/virtualNetworks"
+	networkPath                = "providers/Microsoft.Network/virtualNetworks"
+	microsoftNetworkApiVersion = "2016-03-30"
 )
 
 type (
@@ -136,15 +137,15 @@ func (n *Network) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle network
 func (n *Network) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, n.createParams.Group, networkPath, n.createParams.Name, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, n.createParams.Group, networkPath, n.createParams.Name, microsoftNetworkApiVersion)
 }
 
 // GetCollectionPath returns full path to the collection of network
 func (n *Network) GetCollectionPath(groupName string) string {
 	if groupName == "" {
-		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, config.APIVersion)
+		return fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, microsoftNetworkApiVersion)
 	}
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, microsoftNetworkApiVersion)
 }
 
 // HandleResponse manage raw cloud response

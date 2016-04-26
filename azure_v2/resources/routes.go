@@ -58,7 +58,7 @@ func SetupRoutes(e *echo.Group) {
 
 func listAllRoutes(c *echo.Context) error {
 	routes := make([]map[string]interface{}, 0)
-	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, routeTablePath, apiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, routeTablePath, microsoftNetworkApiVersion)
 	tables, err := GetResources(c, path)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func listAllRoutes(c *echo.Context) error {
 		array := strings.Split(table["id"].(string), "/")
 		groupName := array[len(array)-5]
 		tableID := table["name"].(string)
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/routes?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, routeTablePath, tableID, apiVersion)
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/routes?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, routeTablePath, tableID, microsoftNetworkApiVersion)
 		resp, err := GetResources(c, path)
 		if err != nil {
 			return err
@@ -85,7 +85,7 @@ func listAllRoutes(c *echo.Context) error {
 func listRoutes(c *echo.Context) error {
 	groupName := c.Param("group_name")
 	tableID := c.Param("route_table_name")
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/routes?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, routeTablePath, tableID, apiVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/routes?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, routeTablePath, tableID, microsoftNetworkApiVersion)
 	routes, err := GetResources(c, path)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func (r *Route) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle route
 func (r *Route) GetPath() string {
-	rr := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/routes/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, r.createParams.Group, routeTablePath, r.createParams.RouteTableName, r.createParams.Name, apiVersion)
+	rr := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/routes/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, r.createParams.Group, routeTablePath, r.createParams.RouteTableName, r.createParams.Name, microsoftNetworkApiVersion)
 	log.Printf("Path: %s\n", rr)
 	return rr
 }

@@ -55,7 +55,7 @@ func SetupSubnetsRoutes(e *echo.Group) {
 func listSubnets(c *echo.Context) error {
 	groupName := c.Param("group_name")
 	networkID := c.Param("network_id")
-	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, config.APIVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, microsoftNetworkApiVersion)
 	subnets, err := GetResources(c, path)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func listSubnets(c *echo.Context) error {
 // To get all subnets faster could be used Network resource since each network contains set of subnets
 func listAllSubnets(c *echo.Context) error {
 	subnets := make([]map[string]interface{}, 0)
-	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, config.APIVersion)
+	path := fmt.Sprintf("%s/subscriptions/%s/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, networkPath, microsoftNetworkApiVersion)
 	networks, err := GetResources(c, path)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func listAllSubnets(c *echo.Context) error {
 		array := strings.Split(network["id"].(string), "/")
 		groupName := array[len(array)-5]
 		networkID := network["name"].(string)
-		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, config.APIVersion)
+		path := fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, groupName, networkPath, networkID, microsoftNetworkApiVersion)
 		resp, err := GetResources(c, path)
 		if err != nil {
 			return err
@@ -148,7 +148,7 @@ func (s *Subnet) GetResponseParams() interface{} {
 
 // GetPath returns full path to the sigle subnet
 func (s *Subnet) GetPath() string {
-	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, networkPath, s.createParams.NetworkID, s.createParams.Name, config.APIVersion)
+	return fmt.Sprintf("%s/subscriptions/%s/resourceGroups/%s/%s/%s/subnets/%s?api-version=%s", config.BaseURL, *config.SubscriptionIDCred, s.createParams.Group, networkPath, s.createParams.NetworkID, s.createParams.Name, microsoftNetworkApiVersion)
 }
 
 // GetCollectionPath is a fake function to support AzureResource by Subnet
