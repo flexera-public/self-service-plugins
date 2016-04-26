@@ -15,16 +15,19 @@ type (
 		ID         string      `json:"id,omitempty"`
 		Name       string      `json:"name,omitempty,omitempty"`
 		Location   string      `json:"location,omitempty"`
+		Tags       interface{} `json:"tags,omitempty"`
 		Properties interface{} `json:"properties,omitempty"`
 		Href       string      `json:"href,omitempty"`
 	}
 
 	resourceGroupRequestParams struct {
-		Location string `json:"location"`
+		Location string                 `json:"location"`
+		Tags     map[string]interface{} `json:"tags,omitempty"`
 	}
 	resourceGroupCreateParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
+		Name     string                 `json:"name,omitempty"`
+		Location string                 `json:"location,omitempty"`
+		Tags     map[string]interface{} `json:"tags,omitempty"`
 	}
 	// ResourceGroup is base struct for Azure Resource Group resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -88,6 +91,7 @@ func (rg *ResourceGroup) GetRequestParams(c *echo.Context) (interface{}, error) 
 	}
 
 	rg.requestParams.Location = rg.createParams.Location
+	rg.requestParams.Tags = rg.createParams.Tags
 
 	return rg.requestParams, nil
 }

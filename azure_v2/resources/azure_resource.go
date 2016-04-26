@@ -119,6 +119,7 @@ func Delete(c *echo.Context, r AzureResource) error {
 
 	//https://msdn.microsoft.com/en-us/library/azure/mt163601.aspx
 	if resp.Header.Get("Location") != "" {
+		log.Printf("Location: %s\n", resp.Header.Get("Location"))
 		array := strings.Split(resp.Header.Get("Location"), "/")
 		operationId := strings.Split(array[len(array)-1], "?")[0]
 		c.Response().Header().Add("OperationId", operationId)

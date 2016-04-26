@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/labstack/echo"
 	"github.com/rightscale/self-service-plugins/azure_v2/config"
@@ -43,6 +44,7 @@ func getOperation(c *echo.Context) error {
 	if err != nil {
 		return eh.GenericException(fmt.Sprintf("Error has occurred while requesting resource: %v", err))
 	}
+	log.Printf("Operation: %s\n", resp.StatusCode)
 	var responseParams operationResponseParams
 	responseParams.Href = fmt.Sprintf("locations/%s/operations/%s", c.Param("location"), c.Param("id"))
 	if resp.StatusCode == 202 {
