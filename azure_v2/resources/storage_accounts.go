@@ -25,17 +25,24 @@ type (
 		Name       string      `json:"name,omitempty"`
 		Location   string      `json:"location"`
 		Properties interface{} `json:"properties,omitempty"`
+		Kind       string      `json:"kind,omitempty"`
+		Sku        interface{} `json:"sku,omitempty"`
 		Href       string      `json:"href,omitempty"`
 	}
 
 	storageAccountRequestParams struct {
 		Location   string                 `json:"location"`
 		Properties map[string]interface{} `json:"properties,omitempty"`
+		Sku        map[string]interface{} `json:"sku,omitempty"`
+		Kind       string                 `json:"kind"`
 	}
 	storageAccountCreateParams struct {
-		Name     string `json:"name,omitempty"`
-		Location string `json:"location,omitempty"`
-		Group    string `json:"group_name,omitempty"`
+		Name        string                 `json:"name,omitempty"`
+		Location    string                 `json:"location,omitempty"`
+		Properties  map[string]interface{} `json:"properties,omitempty"`
+		AccountType string                 `json:"account_type,omitempty"`
+		Kind        string                 `json:"kind,omitempty"`
+		Group       string                 `json:"group_name,omitempty"`
 	}
 	// StorageAccount is base struct for Azure Storage Account resource to store input create params,
 	// request create params and response params gotten from cloud.
@@ -102,7 +109,9 @@ func (s *StorageAccount) GetRequestParams(c *echo.Context) (interface{}, error) 
 	s.createParams.Group = c.Param("group_name")
 
 	s.requestParams.Location = s.createParams.Location
-	s.requestParams.Properties = map[string]interface{}{"accountType": "Standard_GRS"}
+	s.requestParams.Properties = s.createParams.Properties
+	s.requestParams.Kind = s.createParams.Kind
+	s.requestParams.Sku = map[string]interface{}{"name": s.createParams.AccountType}
 
 	return s.requestParams, nil
 }
