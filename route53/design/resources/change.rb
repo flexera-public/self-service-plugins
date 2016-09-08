@@ -5,7 +5,7 @@ module V1
 
       media_type V1::MediaTypes::Change
       version '1.0'
-      prefix '/changes'
+      prefix '/route53/changes'
       trait :authorized
 
       action :show do

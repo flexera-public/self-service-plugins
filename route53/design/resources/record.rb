@@ -5,12 +5,12 @@ module V1
 
       media_type V1::MediaTypes::Record
       version '1.0'
-      prefix '/records'
+      prefix '/route53/records'
       trait :authorized
 
       action_defaults do
         routing do
-          prefix '//public_zones/:public_zone_id/records'
+          prefix '//route53/public_zones/:public_zone_id/route53/records'
         end
         params do
           attribute :public_zone_id, String
@@ -38,7 +38,7 @@ module V1
 
       action :create do
         routing do
-          post '//records'
+          post '//route53/records'
           post ''
         end
         payload required: true do
