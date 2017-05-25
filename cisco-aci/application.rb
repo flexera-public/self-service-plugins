@@ -3,6 +3,8 @@
 #
 
 require 'pry'
+require 'sinatra'
+require 'sinatra/json'
 
 # Redirect stderr/stdout through the logger
 # This breaks forking, we get a IOError - uninitialized stream
