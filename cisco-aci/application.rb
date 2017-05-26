@@ -3,6 +3,8 @@
 #
 
 require 'pry'
+require 'sinatra'
+require 'sinatra/json'
 
 # Redirect stderr/stdout through the logger
 # This breaks forking, we get a IOError - uninitialized stream
@@ -34,6 +36,11 @@ class App < Sinatra::Base
   configure do
     disable :show_exceptions
     set :logging, nil  # this prevents sinatra from mucking with env['rack.logger']
+
+    # listening on 127.0.0.1 will not be suffice
+    # for docker usage with port mappings from the host
+    set :bind, '0.0.0.0'
+
     enable :logging   # this is useful when using rackup
   end
 
