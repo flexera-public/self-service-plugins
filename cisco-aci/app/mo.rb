@@ -105,7 +105,7 @@
     end
 
     # INDEX resources with filter
-    get %r{\A((/[\w]+/[^/]+)*/[\w]+)\z} do |*ctx| # match (/class/:id)*/class
+    get %r{[\A]((/[\w]+/[^/]+)*/[\w]+)} do |*ctx| # match (/class/:id)*/class
       puts "***** INDEX ***** INDEX *****"
 
       halt 400, "parameter parent must be a string" \
@@ -139,7 +139,7 @@
     end
 
     # GET a resource
-    get %r{\A((/[\w]+/[^/]+)+)\z} do |*ctx| # match (/class/:id)+
+    get %r{[\A]((/[\w]+/[^/]+)+)} do |*ctx| # match (/class/:id)+
       puts "Route match: #{ctx[0].inspect}"
       ctx = ctx[0].sub(%r{^/}, "").split('/')
       node, href = make_resource_path(ctx)
@@ -157,7 +157,7 @@
     end
 
     # CREATE a resource
-    post %r{\A((/[\w]+/[^/]+)*/[\w]+)\z} do |*ctx| # match (/class/:id)*/class
+    post %r{[\A]((/[\w]+/[^/]+)*/[\w]+)} do |*ctx| # match (/class/:id)*/class
       halt 400, "parameter props must be a hash" \
         if params[:props] && !params[:props].is_a?(Hash)
       halt 400, "parameter parent must be a string" \
@@ -194,7 +194,7 @@
     end
 
     # DELETE a resource
-    delete %r{\A((/[\w]+/[^/]+)+)\z} do |*ctx| # match (/class/:id)+
+    delete %r{[\A]((/[\w]+/[^/]+)+)} do |*ctx| # match (/class/:id)+
       puts "Route match: #{ctx[0].inspect}"
       ctx = ctx[0].sub(%r{^/}, "").split('/')
       node, href = make_resource_path(ctx)
@@ -213,4 +213,3 @@ __END__
 
 curl -g -XPOST -HContent-Length:0 'http://localhost:9292/tenants/rs-test/filter?filter[name]=web-filter'
 curl -g -XDELETE 'http://localhost:9292/tenants/rs-test/filter/web-filter'
-
