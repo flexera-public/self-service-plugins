@@ -5,7 +5,8 @@ ENV APIC_USER admin
 ENV APIC_PASSWORD admin
 
 ENV APP_ENV production
+ENV RACK_ENV production
 
-EXPOSE 4567
+EXPOSE 9292
 
-CMD ["ruby", "application.rb"]
+CMD ["bundle", "exec", "rackup", "config.ru"]
